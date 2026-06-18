@@ -7,7 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- Suppress Tailwind Play CDN production warning (harmless for this standalone tool) -->
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    
     <script>
         (function() {
             const originalWarn = console.warn;
@@ -21,7 +22,7 @@
         })();
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Poppins:wght@600;700&amp;display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@600;700&display=swap');
         
         :root {
             --gold: #C5A85C;
@@ -164,13 +165,10 @@
     </style>
 </head>
 <body class="bg-[#F1F4F9] text-[#102A43]">
-    <!-- LOGIN SCREEN -->
     <div id="login-screen" class="min-h-screen login-bg flex items-center justify-center p-6">
         <div class="w-full max-w-md">
-            <!-- Logo - Updated to new official design -->
             <div class="flex justify-center mb-8">
                 <div class="flex items-center gap-x-3">
-                    <!-- Left Dumbbell -->
                     <svg width="46" height="34" viewBox="0 0 46 34" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <defs>
                             <linearGradient id="gold1" x1="0%" y1="20%" x2="0%" y2="100%">
@@ -180,13 +178,10 @@
                                 <stop offset="100%" stop-color="#8A641B"/>
                             </linearGradient>
                         </defs>
-                        <!-- Central bar -->
                         <rect x="3" y="13" width="40" height="8" rx="2" fill="url(#gold1)"/>
-                        <!-- Left plates -->
                         <rect x="5" y="8" width="5" height="18" rx="1.5" fill="url(#gold1)"/>
                         <rect x="12" y="4" width="5" height="26" rx="1.5" fill="url(#gold1)"/>
                         <rect x="19" y="1" width="5" height="32" rx="2" fill="url(#gold1)"/>
-                        <!-- Right plates -->
                         <rect x="27" y="1" width="5" height="32" rx="2" fill="url(#gold1)"/>
                         <rect x="34" y="4" width="5" height="26" rx="1.5" fill="url(#gold1)"/>
                         <rect x="39" y="8" width="5" height="18" rx="1.5" fill="url(#gold1)"/>
@@ -200,7 +195,6 @@
                                     -webkit-text-fill-color: transparent;">POWER</div>
                     </div>
 
-                    <!-- Right Dumbbell -->
                     <svg width="46" height="34" viewBox="0 0 46 34" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <defs>
                             <linearGradient id="gold2" x1="0%" y1="20%" x2="0%" y2="100%">
@@ -210,13 +204,10 @@
                                 <stop offset="100%" stop-color="#8A641B"/>
                             </linearGradient>
                         </defs>
-                        <!-- Central bar -->
                         <rect x="3" y="13" width="40" height="8" rx="2" fill="url(#gold2)"/>
-                        <!-- Left plates -->
                         <rect x="5" y="8" width="5" height="18" rx="1.5" fill="url(#gold2)"/>
                         <rect x="12" y="4" width="5" height="26" rx="1.5" fill="url(#gold2)"/>
                         <rect x="19" y="1" width="5" height="32" rx="2" fill="url(#gold2)"/>
-                        <!-- Right plates -->
                         <rect x="27" y="1" width="5" height="32" rx="2" fill="url(#gold2)"/>
                         <rect x="34" y="4" width="5" height="26" rx="1.5" fill="url(#gold2)"/>
                         <rect x="39" y="8" width="5" height="18" rx="1.5" fill="url(#gold2)"/>
@@ -229,7 +220,6 @@
                 <div class="text-white text-sm mt-1">Campeonato Manabí Power • Manta, Ecuador</div>
             </div>
 
-            <!-- Login Card -->
             <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
                 <div class="mb-6">
                     <div class="text-white text-xl font-bold">Acceso Administrador</div>
@@ -237,7 +227,6 @@
                 </div>
 
                 <div class="space-y-4">
-                    <!-- Usuario -->
                     <div>
                         <label class="text-white/80 text-xs font-semibold block mb-1.5">USUARIO</label>
                         <div class="relative">
@@ -247,7 +236,6 @@
                         </div>
                     </div>
 
-                    <!-- Contraseña -->
                     <div>
                         <label class="text-white/80 text-xs font-semibold block mb-1.5">CONTRASEÑA</label>
                         <div class="relative">
@@ -259,13 +247,11 @@
 
                     <div id="login-error" class="hidden text-red-400 text-xs font-bold bg-red-500/10 px-3 py-2 rounded-xl"></div>
 
-                    <!-- Login Button -->
                     <button onclick="attemptLogin()"
                             class="w-full bg-[#C5A85C] hover:bg-[#b89a4f] transition-all text-white font-extrabold py-4 rounded-2xl text-sm tracking-wider shadow-lg active:scale-[0.985]">
                         INGRESAR AL PANEL DE CONTROL
                     </button>
 
-                    <!-- Quick access -->
                     <div class="pt-2">
                         <div class="text-center text-white/50 text-xs mb-2">ACCESO RÁPIDO</div>
                         <div class="flex gap-2">
@@ -286,16 +272,12 @@
         </div>
     </div>
 
-    <!-- MAIN APP -->
     <div id="main-app" class="hidden min-h-screen bg-[#F1F4F9]">
-        <!-- Top Header -->
         <div class="app-header sticky top-0 z-50">
             <div class="max-w-screen-2xl mx-auto">
                 <div class="px-6 py-4 flex items-center justify-between">
                     <div class="flex items-center gap-x-4">
-                        <!-- Mini Logo - Updated -->
                         <div class="flex items-center gap-x-2">
-                            <!-- Left small dumbbell -->
                             <svg width="28" height="20" viewBox="0 0 46 34" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <defs>
                                     <linearGradient id="goldMini" x1="0%" y1="20%" x2="0%" y2="100%">
@@ -319,7 +301,6 @@
                                 <span class="text-[#C5A85C] font-black text-[21px] tracking-[2px] -ml-0.5">POWER</span>
                             </div>
 
-                            <!-- Right small dumbbell -->
                             <svg width="28" height="20" viewBox="0 0 46 34" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <defs>
                                     <linearGradient id="goldMini2" x1="0%" y1="20%" x2="0%" y2="100%">
@@ -366,7 +347,6 @@
         </div>
 
         <div class="max-w-screen-2xl mx-auto px-6 pt-6 pb-20">
-            <!-- Navigation Tabs -->
             <div class="flex flex-wrap gap-2 mb-6 border-b border-[#0F3057]/10 pb-1">
                 <button onclick="switchSection(0)" id="nav-0"
                         class="nav-item active flex items-center gap-x-2 px-5 py-2.5 text-sm font-bold text-[#0F3057]">
@@ -395,10 +375,8 @@
                 </button>
             </div>
 
-            <!-- SECTION 0: DASHBOARD -->
             <div id="section-0" class="section active">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <!-- Welcome Card -->
                     <div class="lg:col-span-12 bg-[#0A1931] rounded-3xl p-8 text-white">
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-y-6">
                             <div>
@@ -420,7 +398,6 @@
                         </div>
                     </div>
 
-                    <!-- Metrics -->
                     <div class="lg:col-span-12">
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div class="metric-card bg-white border border-[#0F3057]/10 rounded-3xl p-5">
@@ -462,7 +439,6 @@
                         </div>
                     </div>
 
-                    <!-- Quick Actions -->
                     <div class="lg:col-span-5 bg-white border border-[#0F3057]/10 rounded-3xl p-6">
                         <div class="font-extrabold text-sm mb-4 flex items-center gap-x-2 text-[#0F3057]">
                             <i class="fa-solid fa-bolt text-[#C5A85C]"></i> 
@@ -484,7 +460,6 @@
                         </div>
                     </div>
 
-                    <!-- Modalities Overview -->
                     <div class="lg:col-span-7 bg-white border border-[#0F3057]/10 rounded-3xl p-6">
                         <div class="font-extrabold text-sm mb-4 flex items-center justify-between">
                             <div class="flex items-center gap-x-2 text-[#0F3057]">
@@ -499,7 +474,6 @@
                 </div>
             </div>
 
-            <!-- SECTION 1: REGISTRATION -->
             <div id="section-1" class="section">
                 <div class="max-w-4xl mx-auto">
                     <div class="flex items-center justify-between mb-6">
@@ -517,14 +491,12 @@
                     <div class="bg-white border border-[#0F3057]/10 shadow-sm rounded-3xl p-8">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                             
-                            <!-- Nombre -->
                             <div class="md:col-span-2">
                                 <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">NOMBRE COMPLETO DEL ATLETA *</label>
                                 <input id="fullName" type="text" placeholder="Ej: Carlos Francisco Pérez Mendoza"
                                        class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
                             </div>
 
-                            <!-- Cédula + Ficha -->
                             <div>
                                 <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">CÉDULA / DOCUMENTO DE IDENTIDAD *</label>
                                 <input id="idCard" type="text" placeholder="1312345678" maxlength="13"
@@ -536,7 +508,6 @@
                                        class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
                             </div>
 
-                            <!-- Club + Provincia -->
                             <div>
                                 <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">CLUB O ENTRENADOR</label>
                                 <input id="club" type="text" placeholder="Manta Fitness Club / Entrenador particular"
@@ -548,20 +519,17 @@
                                        class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
                             </div>
 
-                            <!-- Modalidad -->
                             <div class="md:col-span-2">
                                 <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-2">MODALIDAD OFICIAL IFBB *</label>
                                 <div id="modality-chips" class="flex flex-wrap gap-2"></div>
                             </div>
 
-                            <!-- Categoría -->
                             <div class="md:col-span-2">
                                 <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">CATEGORÍA / DIVISIÓN *</label>
                                 <input id="category" type="text" placeholder="Ej: Senior Open, Junior Sub-21, Master +40, Novice..."
                                        class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
                             </div>
 
-                            <!-- Clasificación -->
                             <div class="md:col-span-2">
                                 <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-2">CLASIFICACIÓN DEL ATLETA *</label>
                                 <div class="flex gap-3">
@@ -584,7 +552,6 @@
                                 </div>
                             </div>
 
-                            <!-- Biometric Card (conditional) -->
                             <div id="biometric-card" class="md:col-span-2 border border-amber-200 bg-amber-50/30 rounded-3xl p-6">
                                 <div class="flex items-center gap-x-2 mb-4">
                                     <i class="fa-solid fa-weight-hanging text-amber-600"></i>
@@ -604,10 +571,8 @@
                                     </div>
                                 </div>
 
-                                <!-- Dynamic Advice -->
                                 <div id="weight-advice" class="hidden mt-3 text-xs bg-white border border-amber-300 rounded-2xl p-3 text-amber-700"></div>
 
-                                <!-- Pass Status -->
                                 <div class="mt-5">
                                     <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-2">¿HIZO EL PESO REGLAMENTARIO?</label>
                                     <div class="flex gap-2">
@@ -621,7 +586,6 @@
                                 </div>
                             </div>
 
-                            <!-- Observations -->
                             <div class="md:col-span-2">
                                 <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">OBSERVACIONES / NOVEDADES</label>
                                 <textarea id="observations" rows="2" placeholder="Ej: Pagó inscripción el día del evento, llegó con 300g de sobrepeso..."
@@ -629,7 +593,6 @@
                             </div>
                         </div>
 
-                        <!-- Submit -->
                         <div class="mt-8 flex gap-3">
                             <button onclick="registerAthlete()"
                                     class="flex-1 bg-[#0F3057] hover:bg-[#0A1931] transition text-white font-extrabold py-4 rounded-2xl flex items-center justify-center gap-x-3 text-sm tracking-wider">
@@ -643,7 +606,6 @@
                 </div>
             </div>
 
-            <!-- SECTION 2: SEARCH / WEIGHING -->
             <div id="section-2" class="section">
                 <div class="max-w-screen-2xl">
                     <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-y-4 mb-5">
@@ -675,7 +637,6 @@
                 </div>
             </div>
 
-            <!-- SECTION 3: PLANILLAS -->
             <div id="section-3" class="section">
                 <div class="max-w-screen-2xl">
                     <div class="flex items-center justify-between mb-6">
@@ -716,7 +677,6 @@
                 </div>
             </div>
 
-            <!-- SECTION 4: ADMIN V2 -->
             <div id="section-4" class="section">
                 <div class="max-w-4xl mx-auto space-y-6">
                     <div class="bg-[#0A1931] text-white rounded-3xl p-8">
@@ -732,7 +692,6 @@
                         </div>
                     </div>
 
-                    <!-- Users -->
                     <div class="bg-white border border-[#0F3057]/10 rounded-3xl p-6">
                         <div class="font-extrabold mb-4 flex items-center gap-x-2">
                             <i class="fa-solid fa-users-cog text-[#C5A85C]"></i>
@@ -742,7 +701,6 @@
                         <div class="space-y-2" id="admin-users-list"></div>
                     </div>
 
-                    <!-- Backups -->
                     <div class="bg-white border border-[#0F3057]/10 rounded-3xl p-6">
                         <div class="flex justify-between items-center mb-4">
                             <div class="font-extrabold flex items-center gap-x-2">
@@ -766,7 +724,6 @@
                         </div>
                     </div>
 
-                    <!-- Activity Log -->
                     <div class="bg-white border border-[#0F3057]/10 rounded-3xl p-6">
                         <div class="font-extrabold mb-4 flex items-center gap-x-2">
                             <i class="fa-solid fa-history text-[#C5A85C]"></i>
@@ -779,7 +736,6 @@
         </div>
     </div>
 
-    <!-- Toast Container -->
     <div id="toast-container" class="fixed bottom-6 right-6 z-[100]"></div>
 
     <script>
@@ -788,7 +744,7 @@
             document.documentElement.style.setProperty('--accent-gold', '#C5A85C');
         }
 
-        // ==================== DATA & STATE ====================
+        // ==================== DATA & STATE & SOCKET ====================
         let athletes = [];
         let currentUser = null;
         let editingAthleteId = null;
@@ -808,20 +764,42 @@
             "Parejas Fitness", "Parejas Culturistas"
         ];
 
-        // ==================== PERSISTENCE ====================
-        function loadData() {
-            const savedAthletes = localStorage.getItem('manabi_athletes');
-            if (savedAthletes) athletes = JSON.parse(savedAthletes);
+        // --- CONEXIÓN A RAILWAY ---
+        // ¡IMPORTANTE! Reemplaza este enlace por el que te dio Railway en Settings -> Public Domain
+        const URL_DEL_BOT = "TU_LINK_DE_RAILWAY_AQUI"; 
+        const socket = io(URL_DEL_BOT);
 
+        socket.on('cargarAtletas', (datosDeDiscord) => {
+            athletes = datosDeDiscord;
+            if (currentSection === 0) updateDashboardMetrics();
+            if (currentSection === 2) filterAthletes();
+            if (currentSection === 3) renderPlanillasList();
+        });
+
+        socket.on('nuevoAtleta', (nuevoAtleta) => {
+            // Revisar que no esté duplicado
+            if (!athletes.find(a => a.id === nuevoAtleta.id)) {
+                athletes.unshift(nuevoAtleta);
+                if (currentSection === 0) updateDashboardMetrics();
+                if (currentSection === 2) filterAthletes();
+                if (currentSection === 3) renderPlanillasList();
+                showToast(`Registro remoto: ${nuevoAtleta.fullName}`, 'success');
+            }
+        });
+
+        // ==================== PERSISTENCE (LOCAL PARA LOGIN) ====================
+        function loadData() {
             const savedLogs = localStorage.getItem('manabi_logs');
             if (savedLogs) activityLogs = JSON.parse(savedLogs);
 
             const savedUser = localStorage.getItem('manabi_current_user');
             if (savedUser) currentUser = savedUser;
+            // Ya no cargamos atletas de localStorage, ahora vienen de Discord
         }
 
         function saveAthletes() {
-            localStorage.setItem('manabi_athletes', JSON.stringify(athletes));
+            // Esta función se queda vacía por compatibilidad, 
+            // ya que ahora todo se guarda en Discord y el servidor provee los datos.
         }
 
         function saveLogs() {
@@ -1030,7 +1008,7 @@
             
             // Form title
             document.getElementById('form-title').textContent = editingAthleteId ? 'EDITAR REGISTRO DE ATLETA' : 'NUEVO REGISTRO DE ATLETA';
-            document.getElementById('submit-btn-text').textContent = editingAthleteId ? 'GUARDAR CAMBIOS' : 'COMPLETAR INSCRIPCIÓN OFICIAL';
+            document.getElementById('submit-btn-text').textContent = editingAthleteId ? 'GUARDAR CAMBIOS LOCALES' : 'COMPLETAR INSCRIPCIÓN OFICIAL';
             
             document.getElementById('cancel-edit-btn').classList.toggle('hidden', !editingAthleteId);
             document.getElementById('cancel-edit-btn').classList.toggle('flex', !!editingAthleteId);
@@ -1173,7 +1151,7 @@
             };
 
             if (editingAthleteId) {
-                // Update
+                // Update (Nota: Con Discord como BD, la edición se guarda solo local a menos que crees un socket 'editarDesdeWeb')
                 const index = athletes.findIndex(a => a.id === editingAthleteId);
                 if (index !== -1) {
                     athletes[index] = { ...athletes[index], ...athleteData };
@@ -1181,17 +1159,23 @@
                     showToast(`Atleta #${finalBib} actualizado correctamente`, 'success');
                 }
             } else {
-                // Create new
+                // Create new y enviar a Discord
                 const newAthlete = {
-                    id: Date.now(),
+                    id: Date.now().toString(),
                     ...athleteData
                 };
-                athletes.unshift(newAthlete);
+                
+                // Emite al bot de Railway para que lo guarde en Discord
+                socket.emit('registrarDesdeWeb', newAthlete);
+                
+                // Agregarlo a la pantalla al instante
+                athletes.unshift(newAthlete); 
+                
                 addLog("Registro", `Registró atleta #${finalBib} - ${fullName}`);
                 showToast(`Atleta #${finalBib} registrado exitosamente`, 'success');
             }
 
-            saveAthletes();
+            saveAthletes(); // Función vacía, pero mantenida por estabilidad
             
             // Reset form
             editingAthleteId = null;
@@ -1308,11 +1292,11 @@
                         </div>
                         
                         <div class="flex gap-x-1">
-                            <button onclick="startEditAthlete(${athlete.id}); event.stopImmediatePropagation();" 
+                            <button onclick="startEditAthlete('${athlete.id}'); event.stopImmediatePropagation();" 
                                     class="w-8 h-8 flex items-center justify-center text-[#0F3057] hover:bg-[#0F3057]/5 rounded-xl">
                                 <i class="fa-solid fa-edit fa-sm"></i>
                             </button>
-                            <button onclick="deleteAthlete(${athlete.id}); event.stopImmediatePropagation();" 
+                            <button onclick="deleteAthlete('${athlete.id}'); event.stopImmediatePropagation();" 
                                     class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-xl">
                                 <i class="fa-solid fa-trash fa-sm"></i>
                             </button>
@@ -1352,19 +1336,18 @@
         }
 
         function deleteAthlete(id) {
-            if (!confirm('¿Eliminar permanentemente este registro de atleta?')) return;
+            if (!confirm('¿Ocultar este registro de atleta en esta pantalla? (Se mantendrá en Discord)')) return;
             
             const athlete = athletes.find(a => a.id === id);
             if (!athlete) return;
             
             athletes = athletes.filter(a => a.id !== id);
-            saveAthletes();
             
-            addLog("Eliminación", `Eliminó atleta #${athlete.bibNumber} - ${athlete.fullName}`);
+            addLog("Eliminación Local", `Ocultó atleta #${athlete.bibNumber} - ${athlete.fullName}`);
             
             filterAthletes();
             updateDashboardMetrics();
-            showToast('Atleta eliminado', 'error');
+            showToast('Atleta ocultado de la lista', 'error');
         }
 
         // ==================== DASHBOARD ====================
@@ -1489,7 +1472,7 @@
             csv += "Nro Ficha,Nombre Completo,Cédula,Modalidad,Categoría,Clasificación,Club,Provincia,Peso (kg),Altura (cm),¿Pasó Peso?,Observaciones,Fecha Registro\n";
             
             athletes.sort((a,b) => a.bibNumber - b.bibNumber).forEach(a => {
-                const date = new Date(a.registrationTimestamp).toLocaleDateString('es-EC');
+                const date = new Date(a.registrationTimestamp || Date.now()).toLocaleDateString('es-EC');
                 csv += `${a.bibNumber},"${a.fullName}","${a.idCard}","${a.modality}","${a.category}","${a.classification}","${a.club}","${a.province}",${a.weight || ''},${a.height || ''},"${a.didPassWeight}","${a.observations || ''}","${date}"\n`;
             });
             
@@ -1697,45 +1680,6 @@
             initTailwind();
             loadData();
             
-            // Seed demo data if empty (for first run)
-            if (athletes.length === 0) {
-                athletes = [
-                    {
-                        id: 1001,
-                        bibNumber: 1,
-                        fullName: "María Fernanda López",
-                        idCard: "1309876543",
-                        modality: "Bikini Fitness",
-                        category: "Senior Open",
-                        weight: 58.2,
-                        height: 165,
-                        didPassWeight: "Sí",
-                        registrationTimestamp: Date.now() - 3600000 * 5,
-                        observations: "Pagó inscripción completa",
-                        club: "Manta Fitness Club",
-                        province: "Manabí",
-                        classification: "Clasificado"
-                    },
-                    {
-                        id: 1002,
-                        bibNumber: 2,
-                        fullName: "José Luis Mendoza",
-                        idCard: "1312345678",
-                        modality: "Classic Physique",
-                        category: "Junior Sub-21",
-                        weight: 78.5,
-                        height: 178,
-                        didPassWeight: "Subió de categoría",
-                        registrationTimestamp: Date.now() - 3600000 * 3,
-                        observations: "",
-                        club: "Power Gym Portoviejo",
-                        province: "Manabí",
-                        classification: "Novato"
-                    }
-                ];
-                saveAthletes();
-            }
-            
             // If already logged in
             if (currentUser) {
                 document.getElementById('login-screen').classList.add('hidden');
@@ -1744,7 +1688,6 @@
                 
                 populateModalityFilter();
                 switchSection(0);
-                updateDashboardMetrics();
             }
             
             // Keyboard support
@@ -1759,8 +1702,7 @@
                 }
             });
             
-            // Initial tip
-            console.log('%c[Manabí Power Web] Aplicación lista. Datos persistentes en localStorage.', 'color:#C5A85C');
+            console.log('%c[Manabí Power Web] Conectado vía Socket.io con Railway y Discord.', 'color:#C5A85C');
         }
 
         // Boot
