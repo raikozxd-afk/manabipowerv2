@@ -8,6 +8,10 @@ const cors = require('cors');
 // 1. CONFIGURACIÓN DEL SERVIDOR WEB (Para la página web)
 const app = express();
 app.use(cors());
+
+// 👇 ESTA ES LA LÍNEA NUEVA PARA MOSTRAR TU index.html 👇
+app.use(express.static(__dirname)); 
+
 const server = http.createServer(app);
 const io = new Server(server, { 
     cors: { origin: "*" } // Permite que cualquier web se conecte
