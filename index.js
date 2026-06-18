@@ -74,8 +74,7 @@ io.on('connection', async (socket) => {
             
             messages.forEach(msg => {
                 if (msg.author.id === client.user.id && msg.content.startsWith('```json')) {
-                    const jsonString = msg.content.replace('
-```json\n', '').replace('\n```', '');
+                    const jsonString = msg.content.replace('```json\n', '').replace('\n```', '');
                     try { athletesList.push(JSON.parse(jsonString)); } catch(e){}
                 }
             });
