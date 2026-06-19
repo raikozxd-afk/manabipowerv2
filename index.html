@@ -618,7 +618,7 @@
                     <div>
                         <label class="text-[#C5A85C] text-xs font-extrabold tracking-widest block mb-1.5">USUARIO</label>
                         <div class="relative">
-                            <input id="login-user" type="text" value=""
+                            <input id="login-user" type="text" value="" autocomplete="off" autocapitalize="off" spellcheck="false"
                                    class="w-full bg-[#0A1931] border border-[#C5A85C]/40 text-[#FFEA8D] rounded-2xl px-5 py-3.5 text-sm font-medium focus:outline-none focus:border-[#C5A85C]">
                             <i class="fa-solid fa-user absolute right-5 top-4 text-[#C5A85C]/70"></i>
                         </div>
@@ -628,7 +628,7 @@
                     <div>
                         <label class="text-[#C5A85C] text-xs font-extrabold tracking-widest block mb-1.5">CONTRASEÑA</label>
                         <div class="relative">
-                            <input id="login-pass" type="password" value=""
+                            <input id="login-pass" type="password" value="" autocomplete="new-password"
                                    class="w-full bg-[#0A1931] border border-[#C5A85C]/40 text-[#FFEA8D] rounded-2xl px-5 py-3.5 text-sm font-medium focus:outline-none focus:border-[#C5A85C]">
                             <i class="fa-solid fa-lock absolute right-5 top-4 text-[#C5A85C]/70"></i>
                         </div>
@@ -1248,12 +1248,16 @@
                                 <i class="fa-solid fa-users text-[#C5A85C]"></i>
                                 <span>DATOS DE PRUEBA</span>
                             </div>
+                            <button onclick="clearAllAthletes()" class="text-xs font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/50 rounded-2xl flex items-center gap-x-2 hover:bg-[#C5A85C]/15">
+                                <i class="fa-solid fa-trash-can"></i>
+                                <span>VACIAR REGISTRO (0 ATLETAS)</span>
+                            </button>
                             <button onclick="reloadDemoAthletes()" class="text-xs font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/50 rounded-2xl flex items-center gap-x-2 hover:bg-[#C5A85C]/15">
                                 <i class="fa-solid fa-database"></i>
                                 <span>CARGAR 50 COMPETIDORES DEMO</span>
                             </button>
                         </div>
-                        <p class="text-xs text-[#C5A85C]/70">Genera 25 hombres y 25 mujeres con estaturas, pesos, modalidades y provincias variadas.</p>
+                        <p class="text-xs text-[#C5A85C]/70">El sistema inicia en 0 atletas. Use demo solo para pruebas o vacíe el registro cuando lo necesite.</p>
                     </div>
 
                     <div class="navy-card rounded-3xl p-6">
@@ -1497,12 +1501,8 @@
 
         socket.on('cargarAtletas', (datosDeDiscord) => {
             const remote = filterDeletedAthletes(datosDeDiscord || []).map(normalizeAthlete);
-            if (remote.length > 0) {
-                athletes = remote;
-                saveAthletes();
-            } else {
-                ensureDemoAthletes(50);
-            }
+            athletes = remote;
+            saveAthletes();
             refreshAllViews();
         });
 
@@ -1550,19 +1550,92 @@
             return (list || []).filter(a => !deletedAthleteIds.has(String(a.id)));
         }
 
+        const SESSION_KEY = 'mp_session';
+        const SESSION_MAX_MS = 8 * 60 * 60 * 1000;
+
+        function createSession(user) {
+            const session = {
+                user,
+                token: (crypto.randomUUID && crypto.randomUUID()) || `sess-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                createdAt: Date.now()
+            };
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+            currentUser = user;
+        }
+
+        function getValidSession() {
+            try {
+                const raw = sessionStorage.getItem(SESSION_KEY);
+                if (!raw) return null;
+                const session = JSON.parse(raw);
+                if (!session?.user || !session?.token || !session?.createdAt) return null;
+                if (Date.now() - session.createdAt > SESSION_MAX_MS) {
+                    clearSession();
+                    return null;
+                }
+                return session;
+            } catch (e) {
+                clearSession();
+                return null;
+            }
+        }
+
+        function clearSession() {
+            sessionStorage.removeItem(SESSION_KEY);
+            localStorage.removeItem('manabi_current_user');
+            currentUser = null;
+        }
+
+        function resetLoginForm() {
+            const userEl = document.getElementById('login-user');
+            const passEl = document.getElementById('login-pass');
+            const errorEl = document.getElementById('login-error');
+            if (userEl) userEl.value = '';
+            if (passEl) passEl.value = '';
+            if (errorEl) {
+                errorEl.textContent = '';
+                errorEl.classList.add('hidden');
+            }
+        }
+
+        function showLoginScreen() {
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            resetLoginForm();
+        }
+
+        function migrateAthletesReset() {
+            if (localStorage.getItem('mp_athletes_reset_v2') === '1') return;
+            athletes = [];
+            deletedAthleteIds = new Set();
+            localStorage.setItem('mp_athletes_cache', '[]');
+            localStorage.setItem('mp_deleted_ids', '[]');
+            localStorage.setItem('mp_athletes_reset_v2', '1');
+        }
+
+        function clearAllAthletes() {
+            if (!confirm('¿Eliminar todos los atletas registrados? Esta acción no se puede deshacer.')) return;
+            athletes = [];
+            deletedAthleteIds = new Set();
+            saveDeletedAthletes();
+            saveAthletes();
+            refreshAllViews();
+            updateDashboardMetrics();
+            renderModalitiesOverview();
+            addLog('Limpieza de registro', 'Se eliminaron todos los atletas del sistema');
+            showToast('Registro de atletas vaciado (0 competidores)', 'success');
+        }
+
         function loadData() {
             const savedLogs = localStorage.getItem('manabi_logs');
             if (savedLogs) activityLogs = JSON.parse(savedLogs);
 
-            const savedUser = localStorage.getItem('manabi_current_user');
-            if (savedUser) currentUser = savedUser;
+            localStorage.removeItem('manabi_current_user');
 
             loadDeletedAthletes();
+            migrateAthletesReset();
             loadAthletesFromCache();
             loadJudgesFromCache();
-            if (athletes.length < 50) {
-                seedDemoAthletes(50, true);
-            }
         }
 
         function loadJudgesFromCache() {
@@ -1797,11 +1870,10 @@
             }
 
             // Success
-            currentUser = user;
-            localStorage.setItem('manabi_current_user', user);
+            createSession(user);
             errorEl.classList.add('hidden');
-            
-            ensureDemoAthletes(50);
+            document.getElementById('login-pass').value = '';
+
             showMainApp();
             showToast(`Bienvenido, ${user}. ${athletes.length} atletas en sistema.`, 'success');
             addLog("Inicio de Sesión", `El operador ${user} ingresó al sistema`);
@@ -1813,23 +1885,13 @@
             errorEl.classList.remove('hidden');
         }
 
-        function quickLogin(user) {
-            document.getElementById('login-user').value = user;
-            document.getElementById('login-pass').value = 'missymrbodybeach2026';
-            attemptLogin();
-        }
-
         function logout() {
             if (confirm('¿Cerrar sesión en la mesa de control?')) {
                 addLog("Cierre de Sesión", `El operador ${currentUser} cerró sesión`);
-                currentUser = null;
-                localStorage.removeItem('manabi_current_user');
-                
-                document.getElementById('main-app').classList.add('hidden');
-                document.getElementById('login-screen').classList.remove('hidden');
-                
-                // Reset form states
+                clearSession();
+                showLoginScreen();
                 editingAthleteId = null;
+                editingJudgeId = null;
             }
         }
 
@@ -1841,8 +1903,6 @@
             
             // Initialize filters
             populateModalityFilter();
-            
-            ensureDemoAthletes(50);
 
             // Render initial section
             switchSection(0);
@@ -3453,15 +3513,14 @@
         function initializeApp() {
             initTailwind();
             loadData();
-            
-            // If already logged in
-            if (currentUser) {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                document.getElementById('header-user').innerHTML = currentUser;
-                
-                populateModalityFilter();
-                switchSection(0);
+
+            const session = getValidSession();
+            if (session) {
+                currentUser = session.user;
+                showMainApp();
+            } else {
+                clearSession();
+                showLoginScreen();
             }
             
             // Keyboard support
@@ -3487,7 +3546,6 @@
             updateConnectionStatus(socket.connected);
             updateRegClosedUI();
 
-            ensureDemoAthletes(50);
             if (currentUser) {
                 refreshAllViews();
             }
