@@ -902,11 +902,11 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div><label class="lbl">Apellidos *</label><input id="lastName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Pérez Mendoza" oninput="onFormChange()"></div>
-                            <div><label class="lbl">Nombres *</label><input id="firstName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Carlos Francisco" oninput="onFormChange()"></div>
-                            <div><label class="lbl">Cédula / Pasaporte *</label><input id="idCard" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="1312345678" oninput="onFormChange()"></div>
-                            <div><label class="lbl">Fecha de Nacimiento *</label><input id="birthDate" type="date" class="dark-input w-full rounded-xl px-4 py-3 text-sm" oninput="onFormChange()"></div>
-                            <div><label class="lbl">Sexo *</label><select id="sex" class="dark-input w-full rounded-xl px-4 py-3 text-sm" onchange="onFormChange()"><option value="">Seleccionar</option><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option></select></div>
+                            <div><label class="lbl">Apellidos</label><input id="lastName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Pérez Mendoza" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Nombres</label><input id="firstName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Carlos Francisco" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Cédula / Pasaporte</label><input id="idCard" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="1312345678" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Fecha de Nacimiento</label><input id="birthDate" type="date" class="dark-input w-full rounded-xl px-4 py-3 text-sm" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Sexo</label><select id="sex" class="dark-input w-full rounded-xl px-4 py-3 text-sm" onchange="onFormChange()"><option value="">Seleccionar</option><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option></select></div>
                             <div><label class="lbl">Nacionalidad</label><input id="nationality" class="dark-input w-full rounded-xl px-4 py-3 text-sm" value="Ecuatoriana" oninput="onFormChange()"></div>
                             <div><label class="lbl">Provincia / Ciudad</label><input id="province" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Manabí" oninput="onFormChange()"></div>
                             <div><label class="lbl">Club / Gimnasio</label><input id="club" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Manta Fitness Club" oninput="onFormChange()"></div>
@@ -915,8 +915,8 @@
                             <div><label class="lbl">Correo electrónico</label><input id="email" type="email" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="atleta@email.com" oninput="onFormChange()"></div>
                             <div><label class="lbl">Nº Competidor</label><input id="manualBib" type="number" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Auto-asignar" oninput="onFormChange()"></div>
                             <div class="md:col-span-2 lg:col-span-3"><label class="lbl">Modalidad IFBB *</label><select id="modality-select" class="dark-input w-full rounded-xl px-4 py-3 text-sm" onchange="onModalityChange()"></select></div>
-                            <div id="field-height"><label class="lbl">Estatura (cm) *</label><input id="height" type="number" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="175" oninput="onFormChange()"></div>
-                            <div id="field-weight"><label class="lbl">Peso (kg) *</label><input id="weight" type="number" step="0.1" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="72.5" oninput="onFormChange()"></div>
+                            <div id="field-height"><label class="lbl">Estatura (cm)</label><input id="height" type="number" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="175" oninput="onFormChange()"></div>
+                            <div id="field-weight"><label class="lbl">Peso (kg)</label><input id="weight" type="number" step="0.1" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="72.5" oninput="onFormChange()"></div>
                             <div><label class="lbl">Estado de Pago</label><select id="paymentStatus" class="dark-input w-full rounded-xl px-4 py-3 text-sm"><option value="Pendiente">Pendiente</option><option value="Pagado">Pagado</option><option value="Parcial">Parcial</option></select></div>
                             <input type="hidden" id="category">
                             <div class="md:col-span-2 lg:col-span-3">
@@ -1150,10 +1150,10 @@
 
                     <div class="dark-panel rounded-2xl p-6 md:p-8 mb-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div><label class="lbl">Apellidos *</label><input id="judgeLastName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Vera Pincay"></div>
-                            <div><label class="lbl">Nombres *</label><input id="judgeFirstName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Roberto Andrés"></div>
-                            <div><label class="lbl">Cédula *</label><input id="judgeIdCard" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="1312345678"></div>
-                            <div><label class="lbl">Cargo / Rol *</label>
+                            <div><label class="lbl">Apellidos</label><input id="judgeLastName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Vera Pincay"></div>
+                            <div><label class="lbl">Nombres</label><input id="judgeFirstName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Roberto Andrés"></div>
+                            <div><label class="lbl">Cédula</label><input id="judgeIdCard" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="1312345678"></div>
+                            <div><label class="lbl">Cargo / Rol</label>
                                 <select id="judgeRole" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
                                     <option value="Director de Jueces">Director de Jueces</option>
                                     <option value="Juez Principal">Juez Principal</option>
@@ -1169,7 +1169,7 @@
                                     <option value="Staff Técnico">Staff Técnico</option>
                                 </select>
                             </div>
-                            <div><label class="lbl">Nivel de Juez *</label>
+                            <div><label class="lbl">Nivel de Juez</label>
                                 <select id="judgeLevel" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
                                     <option value="">Seleccionar nivel</option>
                                     <option value="Juez en Formación">Juez en Formación</option>
@@ -1179,7 +1179,7 @@
                                     <option value="Juez Élite Internacional">Juez Élite Internacional</option>
                                 </select>
                             </div>
-                            <div><label class="lbl">Modalidad asignada *</label><select id="judgeModality" class="dark-input w-full rounded-xl px-4 py-3 text-sm"></select></div>
+                            <div><label class="lbl">Modalidad asignada</label><select id="judgeModality" class="dark-input w-full rounded-xl px-4 py-3 text-sm"></select></div>
                             <div><label class="lbl">Categoría asignada</label><input id="judgeCategory" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Todas o ej: Senior • Hasta 175 cm"></div>
                             <div><label class="lbl">Mesa / Panel</label><input id="judgePanel" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Mesa 1"></div>
                             <div><label class="lbl">Licencia IFBB</label><input id="judgeLicense" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="IFBB-EC-0000"></div>
@@ -2177,29 +2177,46 @@
             const weight = needsWeighing ? parseFloat(document.getElementById('weight').value) : null;
             const category = document.getElementById('category').value;
 
-            if (!lastName || !firstName || !idCard || !birthDate || !sex) {
-                showFormWarning('Complete: Apellidos, Nombres, Cédula, Fecha nacimiento y Sexo.');
-                return;
-            }
-            if (needsWeighing && (!height || !weight)) {
-                showFormWarning('Complete Estatura y Peso para esta modalidad.');
-                return;
-            }
+            const resolvedLastName = lastName || 'Sin apellido';
+            const resolvedFirstName = firstName || 'Sin nombre';
+            const resolvedIdCard = idCard || 'Pendiente';
+            const resolvedSex = sex || 'No especificado';
+            const resolvedModality = selectedModality || MODALITIES[0] || 'Sin modalidad';
+            const resolvedBirthDate = birthDate || '';
+            const resolvedHeight = needsWeighing && height ? height : (height || null);
+            const resolvedWeight = needsWeighing && weight ? weight : (weight || null);
+
+            const missingAthleteFields = [];
+            if (!lastName) missingAthleteFields.push('apellidos');
+            if (!firstName) missingAthleteFields.push('nombres');
+            if (!idCard) missingAthleteFields.push('cédula');
+            if (!birthDate) missingAthleteFields.push('fecha de nacimiento');
+            if (!sex) missingAthleteFields.push('sexo');
+            if (needsWeighing && !height) missingAthleteFields.push('estatura');
+            if (needsWeighing && !weight) missingAthleteFields.push('peso');
 
             const manualBib = parseInt(document.getElementById('manualBib').value) || null;
             let finalBib = manualBib > 0 ? manualBib : (editingAthleteId ? athletes.find(a => a.id === editingAthleteId)?.bibNumber : null);
             if (!finalBib) finalBib = (Math.max(0, ...athletes.map(a => a.bibNumber)) || 0) + 1;
 
             const athleteData = normalizeAthlete({
-                lastName, firstName, fullName: `${lastName} ${firstName}`.trim(),
-                idCard, birthDate, age: calcAge(birthDate), sex,
+                lastName: resolvedLastName,
+                firstName: resolvedFirstName,
+                fullName: `${resolvedLastName} ${resolvedFirstName}`.trim(),
+                idCard: resolvedIdCard,
+                birthDate: resolvedBirthDate,
+                age: resolvedBirthDate ? calcAge(resolvedBirthDate) : null,
+                sex: resolvedSex,
                 nationality: document.getElementById('nationality').value.trim() || 'Ecuatoriana',
                 province: document.getElementById('province').value.trim() || 'Manabí',
                 club: document.getElementById('club').value.trim() || 'Independiente',
                 coach: document.getElementById('coach').value.trim(),
                 phone: document.getElementById('phone').value.trim(),
                 email: document.getElementById('email').value.trim(),
-                modality: selectedModality, category, height, weight,
+                modality: resolvedModality,
+                category: category || 'Pendiente',
+                height: resolvedHeight,
+                weight: resolvedWeight,
                 athleteStatus: selectedClassification, classification: selectedClassification,
                 passStatus: selectedPassStatus, didPassWeight: selectedPassStatus,
                 paymentStatus: document.getElementById('paymentStatus').value,
@@ -2216,7 +2233,7 @@
                     markSocketOp('edit', editingAthleteId);
                     emitToDiscord('editarDesdeWeb', updatedAthlete);
                     addLog('Edición', `#${finalBib} ${athleteData.fullName}`);
-                    showToast(`Atleta #${finalBib} actualizado`, 'success');
+                    showToast(missingAthleteFields.length ? `Atleta #${finalBib} actualizado (incompleto: ${missingAthleteFields.join(', ')})` : `Atleta #${finalBib} actualizado`, missingAthleteFields.length ? 'info' : 'success');
                 }
             } else {
                 const newAthlete = { id: Date.now().toString(), ...athleteData };
@@ -2224,7 +2241,7 @@
                 athletes.unshift(newAthlete);
                 emitToDiscord('registrarDesdeWeb', newAthlete);
                 addLog('Registro', `#${finalBib} ${athleteData.fullName}`);
-                showToast(`Atleta #${finalBib} registrado`, 'success');
+                showToast(missingAthleteFields.length ? `Atleta #${finalBib} registrado (incompleto: ${missingAthleteFields.join(', ')})` : `Atleta #${finalBib} registrado`, missingAthleteFields.length ? 'info' : 'success');
                 localStorage.removeItem('mp_form_draft');
             }
             saveAthletes();
@@ -2291,15 +2308,21 @@
             const judgeSelect = document.getElementById('judgeModality');
             if (select) select.innerHTML = '<option value="Todas">Todas las modalidades</option>';
             if (exportSelect) exportSelect.innerHTML = '<option value="Todas">Todas las modalidades</option>';
-            if (judgeSelect) judgeSelect.innerHTML = '<option value="">Seleccionar modalidad</option>';
+            if (judgeSelect) judgeSelect.innerHTML = '<option value="Todas">Todas</option>';
             MODALITIES.forEach(mod => {
-                [select, exportSelect, judgeSelect].forEach(el => {
+                [select, exportSelect].forEach(el => {
                     if (!el) return;
                     const opt = document.createElement('option');
                     opt.value = mod;
                     opt.textContent = mod;
                     el.appendChild(opt);
                 });
+                if (judgeSelect) {
+                    const judgeOpt = document.createElement('option');
+                    judgeOpt.value = mod;
+                    judgeOpt.textContent = mod;
+                    judgeSelect.appendChild(judgeOpt);
+                }
             });
             populateClubFilters();
         }
@@ -2917,7 +2940,7 @@
             });
             document.getElementById('judgeRole').value = 'Director de Jueces';
             document.getElementById('judgeLevel').value = '';
-            document.getElementById('judgeModality').value = MODALITIES[0] || '';
+            document.getElementById('judgeModality').value = 'Todas';
             document.getElementById('judgeStatus').value = 'Activo';
         }
 
@@ -2936,28 +2959,46 @@
             const status = document.getElementById('judgeStatus').value;
             const observations = document.getElementById('judgeObservations').value.trim();
 
-            if (!lastName || !firstName || !idCard || !modality || !judgeLevel) {
-                showToast('Complete apellidos, nombres, cédula, nivel de juez y modalidad', 'error');
-                return;
-            }
+            const resolvedModality = modality || 'Todas';
+            const resolvedLevel = judgeLevel || 'Sin nivel';
+            const resolvedLastName = lastName || 'Sin apellido';
+            const resolvedFirstName = firstName || 'Sin nombre';
+            const resolvedIdCard = idCard || 'Pendiente';
 
             const judgeData = {
-                lastName, firstName,
-                fullName: `${lastName} ${firstName}`.trim(),
-                idCard, role, judgeLevel, modality, category, panel, license, phone, email, status, observations
+                lastName: resolvedLastName,
+                firstName: resolvedFirstName,
+                fullName: `${resolvedLastName} ${resolvedFirstName}`.trim(),
+                idCard: resolvedIdCard,
+                role: role || 'Staff Técnico',
+                judgeLevel: resolvedLevel,
+                modality: resolvedModality,
+                category,
+                panel,
+                license,
+                phone,
+                email,
+                status: status || 'Activo',
+                observations
             };
+
+            const missingJudgeFields = [];
+            if (!lastName) missingJudgeFields.push('apellidos');
+            if (!firstName) missingJudgeFields.push('nombres');
+            if (!idCard) missingJudgeFields.push('cédula');
+            if (!judgeLevel) missingJudgeFields.push('nivel de juez');
 
             if (editingJudgeId) {
                 const idx = judges.findIndex(j => j.id === editingJudgeId);
                 if (idx !== -1) {
                     judges[idx] = { ...judges[idx], ...judgeData };
                     addLog('Edición juez', getJudgeFullName(judgeData));
-                    showToast('Juez actualizado', 'success');
+                    showToast(missingJudgeFields.length ? `Juez actualizado (datos incompletos: ${missingJudgeFields.join(', ')})` : 'Juez actualizado', missingJudgeFields.length ? 'info' : 'success');
                 }
             } else {
                 judges.unshift({ id: `judge-${Date.now()}`, ...judgeData, registeredAt: Date.now() });
                 addLog('Registro juez', getJudgeFullName(judgeData));
-                showToast('Juez registrado', 'success');
+                showToast(missingJudgeFields.length ? `Juez registrado (datos incompletos: ${missingJudgeFields.join(', ')})` : 'Juez registrado', missingJudgeFields.length ? 'info' : 'success');
             }
 
             saveJudges();
@@ -2979,7 +3020,7 @@
             document.getElementById('judgeIdCard').value = j.idCard || '';
             document.getElementById('judgeRole').value = j.role || 'Director de Jueces';
             document.getElementById('judgeLevel').value = j.judgeLevel || '';
-            document.getElementById('judgeModality').value = j.modality || '';
+            document.getElementById('judgeModality').value = j.modality || 'Todas';
             document.getElementById('judgeCategory').value = j.category || '';
             document.getElementById('judgePanel').value = j.panel || '';
             document.getElementById('judgeLicense').value = j.license || '';
@@ -3014,7 +3055,11 @@
         }
 
         function getAthletesForJudge(judge) {
-            let list = athletes.map(normalizeAthlete).filter(a => a.modality === judge.modality);
+            let list = athletes.map(normalizeAthlete);
+            const mod = (judge.modality || 'Todas').trim();
+            if (mod && mod !== 'Todas') {
+                list = list.filter(a => a.modality === mod);
+            }
             const cat = (judge.category || 'Todas').trim();
             if (cat && cat !== 'Todas') {
                 list = list.filter(a => (a.category || '').toLowerCase().includes(cat.toLowerCase()));
