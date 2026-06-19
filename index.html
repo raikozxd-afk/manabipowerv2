@@ -486,7 +486,7 @@
                                     </p>
                                     <div class="mt-5 flex flex-wrap gap-3 text-xs">
                                         <span class="px-3 py-1.5 bg-[#0F3057]/60 border border-[#C5A85C]/25 rounded-full"><i class="fa-solid fa-users mr-1.5 text-[#C5A85C]"></i><span id="hero-total">0</span> atletas</span>
-                                        <span class="px-3 py-1.5 bg-[#0F3057]/60 border border-[#C5A85C]/25 rounded-full"><i class="fa-solid fa-dumbbell mr-1.5 text-[#C5A85C]"></i>11 modalidades</span>
+                                        <span class="px-3 py-1.5 bg-[#0F3057]/60 border border-[#C5A85C]/25 rounded-full"><i class="fa-solid fa-dumbbell mr-1.5 text-[#C5A85C]"></i>16 modalidades</span>
                                         <span class="px-3 py-1.5 bg-[#0F3057]/60 border border-[#C5A85C]/25 rounded-full"><i class="fa-solid fa-cloud mr-1.5 text-[#C5A85C]"></i>Sincronizado Discord</span>
                                     </div>
                                 </div>
@@ -577,7 +577,7 @@
                                 <i class="fa-solid fa-list-check text-[#C5A85C]"></i> 
                                 <span>MODALIDADES IFBB REGISTRADAS</span>
                             </div>
-                            <span id="modalities-count" class="text-xs font-mono bg-[#C5A85C] text-[#0A1931] px-2.5 py-px rounded font-bold">11</span>
+                            <span id="modalities-count" class="text-xs font-mono bg-[#C5A85C] text-[#0A1931] px-2.5 py-px rounded font-bold">16</span>
                         </div>
                         
                         <div id="modalities-grid" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs"></div>
@@ -622,8 +622,8 @@
                             <div><label class="lbl">Correo electrónico</label><input id="email" type="email" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="atleta@email.com" oninput="onFormChange()"></div>
                             <div><label class="lbl">Nº Competidor</label><input id="manualBib" type="number" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Auto-asignar" oninput="onFormChange()"></div>
                             <div class="md:col-span-2 lg:col-span-3"><label class="lbl">Modalidad IFBB *</label><select id="modality-select" class="dark-input w-full rounded-xl px-4 py-3 text-sm" onchange="onModalityChange()"></select></div>
-                            <div><label class="lbl">Estatura (cm) *</label><input id="height" type="number" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="175" oninput="onFormChange()"></div>
-                            <div><label class="lbl">Peso (kg) *</label><input id="weight" type="number" step="0.1" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="72.5" oninput="onFormChange()"></div>
+                            <div id="field-height"><label class="lbl">Estatura (cm) *</label><input id="height" type="number" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="175" oninput="onFormChange()"></div>
+                            <div id="field-weight"><label class="lbl">Peso (kg) *</label><input id="weight" type="number" step="0.1" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="72.5" oninput="onFormChange()"></div>
                             <div><label class="lbl">Estado de Pago</label><select id="paymentStatus" class="dark-input w-full rounded-xl px-4 py-3 text-sm"><option value="Pendiente">Pendiente</option><option value="Pagado">Pagado</option><option value="Parcial">Parcial</option></select></div>
                             <input type="hidden" id="category">
                             <div class="md:col-span-2 lg:col-span-3">
@@ -633,7 +633,7 @@
                                     <div onclick="selectClassification('Clasificado')" id="class-clasificado" class="flex-1 cursor-pointer border border-[#C5A85C]/30 rounded-xl p-3 text-center hover:border-[#C5A85C]/60 text-[#FFEA8D]"><i class="fa-solid fa-trophy text-[#C5A85C]/60"></i><div class="font-bold text-sm mt-1">Clasificado</div></div>
                                 </div>
                             </div>
-                            <div class="md:col-span-2 lg:col-span-3 border border-[#C5A85C]/25 bg-[#0A1931] rounded-xl p-4">
+                            <div id="field-weigh-control" class="md:col-span-2 lg:col-span-3 border border-[#C5A85C]/25 bg-[#0A1931] rounded-xl p-4">
                                 <label class="lbl">Control de Pesaje</label>
                                 <div class="flex gap-2 mt-2">
                                     <div onclick="selectPassStatus('Sí')" id="pass-si" class="flex-1 cursor-pointer text-center py-2.5 rounded-xl border-2 border-[#C5A85C] bg-[#C5A85C]/15 text-[#FFEA8D] text-sm font-bold">Sí</div>
@@ -918,29 +918,39 @@
         let registrationsClosed = localStorage.getItem('mp_reg_closed') === 'true';
 
         const MODALITIES = [
-            "Men's Physique", "Muscular Men's Physique", "Classic Physique",
-            "Bodybuilding", "Classic Bodybuilding", "Fit Model Masculino",
-            "Bikini Fitness", "Wellness Fitness", "Fit Model Femenino",
-            "Women's Physique", "Women's Bodyfitness"
+            "Fitness Coreográfico Infantil", "Fit & Beauty", "Posing Art",
+            "Men's Physique", "Men's Fit", "Muscular Men's Physique", "Games Classic",
+            "Culturismo Clásico", "Classic Physique", "Fisicoculturismo",
+            "Bikini Fitness", "Wellness Fitness", "Body Fitness",
+            "Women's Physique", "Parejas Fitness", "Parejas Culturistas"
         ];
+
+        const MODALITY_ALIASES = {
+            "Bodybuilding": "Fisicoculturismo",
+            "Classic Bodybuilding": "Culturismo Clásico",
+            "Fit Model Masculino": "Men's Fit",
+            "Fit Model Femenino": "Fit & Beauty",
+            "Women's Bodyfitness": "Body Fitness"
+        };
 
         const HEIGHT_RULES = {
             "Men's Physique": [170,173,176,179,182],
+            "Men's Fit": [170,173,176,179,182],
             "Muscular Men's Physique": [170,173,176,179,182],
             "Bikini Fitness": [158,162,166,169],
-            "Fit Model Femenino": [158,162,166,169],
-            "Women's Bodyfitness": [158,162,166,169],
+            "Body Fitness": [158,162,166,169],
             "Wellness Fitness": [158,163,168],
             "Women's Physique": [158,163,168]
         };
 
         const WEIGHT_RULES = {
-            "Bodybuilding": [70,75,80,85,90,95,100],
-            "Classic Bodybuilding": [70,75,80,85,90,95,100],
-            "Fit Model Masculino": [70,75,80,85,90]
+            "Fisicoculturismo": [70,75,80,85,90,95,100]
         };
 
-        const NON_WEIGHING = [];
+        const NON_WEIGHING = [
+            "Fitness Coreográfico Infantil", "Fit & Beauty", "Posing Art",
+            "Parejas Fitness", "Parejas Culturistas"
+        ];
 
         function calcAge(birthDate) {
             if (!birthDate) return null;
@@ -992,6 +1002,9 @@
         }
 
         function normalizeAthlete(a) {
+            if (a.modality && MODALITY_ALIASES[a.modality]) {
+                a.modality = MODALITY_ALIASES[a.modality];
+            }
             if (!a.lastName && !a.firstName && a.fullName) {
                 const parts = a.fullName.trim().split(/\s+/);
                 if (parts.length > 1) { a.lastName = parts.slice(0,-1).join(' '); a.firstName = parts[parts.length-1]; }
@@ -1235,6 +1248,7 @@
             }
             selectClassification(selectedClassification);
             selectPassStatus(selectedPassStatus);
+            toggleBiometricFields();
             document.getElementById('cancel-edit-btn').classList.toggle('hidden', !editingAthleteId);
             document.getElementById('cancel-edit-btn').classList.toggle('flex', !!editingAthleteId);
             onFormChange();
@@ -1242,7 +1256,22 @@
 
         function onModalityChange() {
             selectedModality = document.getElementById('modality-select').value;
+            toggleBiometricFields();
             onFormChange();
+        }
+
+        function toggleBiometricFields() {
+            const needsWeighing = !NON_WEIGHING.includes(selectedModality);
+            ['field-height', 'field-weight', 'field-weigh-control'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = needsWeighing ? '' : 'none';
+            });
+            if (!needsWeighing) {
+                document.getElementById('height').value = '';
+                document.getElementById('weight').value = '';
+                selectedPassStatus = 'Sí';
+                selectPassStatus('Sí');
+            }
         }
 
         function onFormChange() {
@@ -1292,13 +1321,18 @@
             const idCard = document.getElementById('idCard').value.trim();
             const birthDate = document.getElementById('birthDate').value;
             const sex = document.getElementById('sex').value;
-            const height = parseFloat(document.getElementById('height').value);
-            const weight = parseFloat(document.getElementById('weight').value);
             selectedModality = document.getElementById('modality-select').value;
+            const needsWeighing = !NON_WEIGHING.includes(selectedModality);
+            const height = needsWeighing ? parseFloat(document.getElementById('height').value) : null;
+            const weight = needsWeighing ? parseFloat(document.getElementById('weight').value) : null;
             const category = document.getElementById('category').value;
 
-            if (!lastName || !firstName || !idCard || !birthDate || !sex || !height || !weight) {
-                showFormWarning('Complete: Apellidos, Nombres, Cédula, Fecha nacimiento, Sexo, Estatura y Peso.');
+            if (!lastName || !firstName || !idCard || !birthDate || !sex) {
+                showFormWarning('Complete: Apellidos, Nombres, Cédula, Fecha nacimiento y Sexo.');
+                return;
+            }
+            if (needsWeighing && (!height || !weight)) {
+                showFormWarning('Complete Estatura y Peso para esta modalidad.');
                 return;
             }
 
