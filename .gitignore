@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+!.env.example
+npm-debug.log*
+.DS_Store
+desktop.ini
+_tmp_deploy/
+Nueva carpeta/
+index_backup.html
+make-transparent-logo.ps1

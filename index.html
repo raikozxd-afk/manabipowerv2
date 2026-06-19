@@ -1261,6 +1261,21 @@
                     </div>
 
                     <div class="navy-card rounded-3xl p-6">
+                        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+                            <div class="font-extrabold flex items-center gap-x-2 text-[#FFEA8D]">
+                                <i class="fa-solid fa-arrows-rotate text-[#C5A85C]"></i>
+                                <span>SINCRONIZACIÓN DISCORD</span>
+                            </div>
+                            <button onclick="requestDiscordSync()" class="text-xs font-bold px-4 py-2 bg-[#C5A85C] text-[#0A1931] rounded-2xl flex items-center gap-x-2">
+                                <i class="fa-brands fa-discord"></i>
+                                <span>SINCRONIZAR AHORA</span>
+                            </button>
+                        </div>
+                        <p class="text-xs text-[#C5A85C]/70">La lista se actualiza en tiempo real al registrar, editar o eliminar atletas. También responde a cambios hechos en Discord con <code class="text-[#FFEA8D]">!registrar</code> y <code class="text-[#FFEA8D]">!eliminar ID</code>.</p>
+                        <div class="mt-3 text-[11px] text-[#C5A85C]/60">Última sincronización: <span id="last-discord-sync" class="font-mono text-[#FFEA8D]">—</span></div>
+                    </div>
+
+                    <div class="navy-card rounded-3xl p-6">
                         <div class="flex justify-between items-center mb-4">
                             <div class="font-extrabold flex items-center gap-x-2 text-[#FFEA8D]">
                                 <i class="fa-solid fa-cloud-upload-alt text-[#C5A85C]"></i>
@@ -1479,11 +1494,28 @@
             return a;
         }
 
-        // --- CONEXIÓN A RAILWAY ---
-        // ¡IMPORTANTE! Reemplaza este enlace por el que te dio Railway en Settings -> Public Domain
-        const URL_DEL_BOT = "https://manabipower.com/"; 
-        const socket = io(URL_DEL_BOT);
+        // --- CONEXIÓN DISCORD EN TIEMPO REAL ---
+        const URL_DEL_BOT = "https://manabipower.com/";
+        const socket = io(URL_DEL_BOT, { transports: ['websocket', 'polling'], reconnection: true, reconnectionAttempts: Infinity });
         let isSocketConnected = false;
+        let syncState = { syncing: false, lastSync: null };
+        const pendingSocketOps = new Set();
+
+        function athleteOpKey(type, id) {
+            return `${type}:${String(id)}`;
+        }
+
+        function markSocketOp(type, id) {
+            pendingSocketOps.add(athleteOpKey(type, id));
+            setTimeout(() => pendingSocketOps.delete(athleteOpKey(type, id)), 8000);
+        }
+
+        function consumeSocketOp(type, id) {
+            const key = athleteOpKey(type, id);
+            if (!pendingSocketOps.has(key)) return false;
+            pendingSocketOps.delete(key);
+            return true;
+        }
 
         function updateConnectionStatus(connected) {
             isSocketConnected = connected;
@@ -1491,37 +1523,101 @@
             const text = document.getElementById('connection-text');
             if (!dot || !text) return;
             dot.className = `connection-dot ${connected ? 'online' : 'offline'}`;
-            text.textContent = connected ? 'En línea • Discord' : 'Desconectado';
-            text.className = connected ? 'text-[#FFEA8D]' : 'text-[#C5A85C]/50';
+            if (!connected) {
+                text.textContent = 'Desconectado — modo local';
+                text.className = 'text-[#C5A85C]/50';
+                return;
+            }
+            text.className = 'text-[#FFEA8D]';
+            if (syncState.syncing) text.textContent = 'Sincronizando con Discord...';
+            else text.textContent = `En línea • ${athletes.length} atletas`;
         }
 
-        socket.on('connect', () => updateConnectionStatus(true));
+        function requestDiscordSync(silent = false) {
+            if (!socket.connected) return;
+            syncState.syncing = true;
+            updateConnectionStatus(true);
+            socket.emit('solicitarAtletas');
+            if (!silent) addLog('Sincronización', 'Solicitó lista actualizada desde Discord');
+        }
+
+        function applyRemoteAthletesList(list) {
+            athletes = (list || []).map(normalizeAthlete);
+            deletedAthleteIds = new Set();
+            saveDeletedAthletes();
+            saveAthletes();
+            syncState.syncing = false;
+            syncState.lastSync = Date.now();
+            updateConnectionStatus(true);
+            updateLastSync();
+            refreshAllViews();
+        }
+
+        function upsertAthleteFromRemote(raw, notify = true) {
+            const athlete = normalizeAthlete(raw);
+            const idx = athletes.findIndex(a => String(a.id) === String(athlete.id));
+            if (idx !== -1) athletes[idx] = { ...athletes[idx], ...athlete };
+            else athletes.unshift(athlete);
+            deletedAthleteIds.delete(String(athlete.id));
+            saveDeletedAthletes();
+            saveAthletes();
+            updateConnectionStatus(true);
+            refreshAllViews();
+            if (notify) showToast(`Actualización remota: ${getFullName(athlete)}`, 'info');
+        }
+
+        function removeAthleteFromRemote(id, notify = true) {
+            const strId = String(id);
+            const existing = athletes.find(a => String(a.id) === strId);
+            athletes = athletes.filter(a => String(a.id) !== strId);
+            deletedAthleteIds.delete(strId);
+            saveDeletedAthletes();
+            saveAthletes();
+            updateConnectionStatus(true);
+            refreshAllViews();
+            if (notify && existing) showToast(`Eliminado en Discord: ${getFullName(existing)}`, 'info');
+        }
+
+        function emitToDiscord(event, payload) {
+            if (!socket.connected) {
+                showToast('Sin conexión con Discord. Cambio guardado solo en este navegador.', 'error');
+                return false;
+            }
+            socket.emit(event, payload);
+            return true;
+        }
+
+        socket.on('connect', () => {
+            updateConnectionStatus(true);
+            requestDiscordSync(true);
+        });
         socket.on('disconnect', () => updateConnectionStatus(false));
         socket.on('connect_error', () => updateConnectionStatus(false));
+        socket.on('reconnect', () => requestDiscordSync(true));
 
         socket.on('cargarAtletas', (datosDeDiscord) => {
-            const remote = filterDeletedAthletes(datosDeDiscord || []).map(normalizeAthlete);
-            athletes = remote;
-            saveAthletes();
-            refreshAllViews();
+            const count = (datosDeDiscord || []).length;
+            applyRemoteAthletesList(datosDeDiscord);
+            if (currentUser) showToast(`Lista sincronizada: ${count} atletas`, 'success');
         });
 
         socket.on('nuevoAtleta', (nuevoAtleta) => {
-            if (deletedAthleteIds.has(String(nuevoAtleta.id))) return;
-            if (!athletes.find(a => a.id === nuevoAtleta.id)) {
-                athletes.unshift(normalizeAthlete(nuevoAtleta));
-                refreshAllViews();
-                showToast(`Registro remoto: ${getFullName(nuevoAtleta)}`, 'success');
-            }
+            if (!nuevoAtleta?.id) return;
+            const silent = consumeSocketOp('add', nuevoAtleta.id);
+            upsertAthleteFromRemote(nuevoAtleta, !silent);
+        });
+
+        socket.on('atletaActualizado', (atletaData) => {
+            if (!atletaData?.id) return;
+            const silent = consumeSocketOp('edit', atletaData.id);
+            upsertAthleteFromRemote(atletaData, !silent);
         });
 
         socket.on('atletaEliminado', (payload) => {
-            const id = String(payload?.id || payload);
+            const id = String(payload?.id || payload || '');
             if (!id) return;
-            deletedAthleteIds.add(id);
-            saveDeletedAthletes();
-            athletes = athletes.filter(a => String(a.id) !== id);
-            refreshAllViews();
+            const silent = consumeSocketOp('delete', id);
+            removeAthleteFromRemote(id, !silent);
         });
 
         function refreshAllViews() {
@@ -1614,11 +1710,12 @@
         }
 
         function clearAllAthletes() {
-            if (!confirm('¿Eliminar todos los atletas registrados? Esta acción no se puede deshacer.')) return;
+            if (!confirm('¿Eliminar todos los atletas registrados? Se borrarán también en Discord.')) return;
             athletes = [];
             deletedAthleteIds = new Set();
             saveDeletedAthletes();
             saveAthletes();
+            emitToDiscord('vaciarDesdeWeb');
             refreshAllViews();
             updateDashboardMetrics();
             renderModalitiesOverview();
@@ -2113,11 +2210,19 @@
 
             if (editingAthleteId) {
                 const idx = athletes.findIndex(a => a.id === editingAthleteId);
-                if (idx !== -1) { athletes[idx] = { ...athletes[idx], ...athleteData }; addLog('Edición', `#${finalBib} ${athleteData.fullName}`); showToast(`Atleta #${finalBib} actualizado`, 'success'); }
+                if (idx !== -1) {
+                    const updatedAthlete = { ...athletes[idx], ...athleteData, id: editingAthleteId };
+                    athletes[idx] = updatedAthlete;
+                    markSocketOp('edit', editingAthleteId);
+                    emitToDiscord('editarDesdeWeb', updatedAthlete);
+                    addLog('Edición', `#${finalBib} ${athleteData.fullName}`);
+                    showToast(`Atleta #${finalBib} actualizado`, 'success');
+                }
             } else {
                 const newAthlete = { id: Date.now().toString(), ...athleteData };
-                socket.emit('registrarDesdeWeb', newAthlete);
+                markSocketOp('add', newAthlete.id);
                 athletes.unshift(newAthlete);
+                emitToDiscord('registrarDesdeWeb', newAthlete);
                 addLog('Registro', `#${finalBib} ${athleteData.fullName}`);
                 showToast(`Atleta #${finalBib} registrado`, 'success');
                 localStorage.removeItem('mp_form_draft');
@@ -2718,18 +2823,14 @@
             const name = getFullName(athlete);
             if (!confirm(`¿Eliminar a ${name} (#${athlete.bibNumber})? Esta acción se guardará y no volverá al recargar.`)) return;
 
-            deletedAthleteIds.add(String(id));
-            saveDeletedAthletes();
+            markSocketOp('delete', id);
             athletes = athletes.filter(a => a.id !== id);
             saveAthletes();
-
-            if (isSocketConnected) {
-                socket.emit('eliminarDesdeWeb', {
-                    id: athlete.id,
-                    bibNumber: athlete.bibNumber,
-                    fullName: name
-                });
-            }
+            emitToDiscord('eliminarDesdeWeb', {
+                id: athlete.id,
+                bibNumber: athlete.bibNumber,
+                fullName: name
+            });
 
             addLog('Eliminación', `Eliminó atleta #${athlete.bibNumber} - ${name}`);
             filterAthletes();
@@ -3478,8 +3579,11 @@
         }
 
         function updateLastSync() {
+            const stamp = new Date().toLocaleTimeString('es-EC');
             const el = document.getElementById('last-sync');
-            el.textContent = new Date().toLocaleTimeString('es-EC');
+            const discordEl = document.getElementById('last-discord-sync');
+            if (el) el.textContent = stamp;
+            if (discordEl) discordEl.textContent = stamp;
         }
 
         // ==================== UTILITIES ====================
