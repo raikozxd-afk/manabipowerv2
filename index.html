@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preload" as="image" href="logo-manabi-power-sm.png" type="image/png">
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     
@@ -238,11 +239,46 @@
             box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 4px 24px -4px rgba(0,0,0,0.18);
         }
 
+        .app-logo {
+            display: block;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            image-rendering: auto;
+        }
+
         .header-logo {
             height: 38px;
-            width: auto;
+            min-height: 32px;
+            min-width: 80px;
             filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
         }
+
+        .login-logo {
+            height: clamp(96px, 24vw, 135px);
+            min-height: 80px;
+            min-width: 160px;
+        }
+
+        .hero-logo {
+            height: clamp(52px, 14vw, 64px);
+            min-height: 48px;
+            min-width: 120px;
+        }
+
+        .logo-fallback {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            color: #C5A85C;
+            letter-spacing: 0.08em;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .logo-fallback.is-visible { display: flex; }
 
         .header-divider {
             width: 1px;
@@ -328,9 +364,15 @@
         
         <div class="w-full max-w-md relative z-10">
             <div class="flex justify-center mb-6">
-                <img src="https://media.discordapp.net/attachments/1516969981525495960/1516982084802052257/Diseno_sin_titulo_1.png?ex=6a349f29&is=6a334da9&hm=755c3dbfb11670a3aab6172550f2ddf7f686b1acdcb88c42d5186090ab6dee09&=&format=webp&quality=lossless&width=900" 
-                     alt="Manabí Power Logo" 
-                     class="h-[135px] w-auto drop-shadow-[0_8px_25px_rgba(0,0,0,0.6)]">
+                <div class="relative">
+                    <img src="logo-manabi-power-sm.png"
+                         alt="Manabí Power Logo"
+                         class="app-logo login-logo drop-shadow-[0_8px_25px_rgba(0,0,0,0.6)]"
+                         width="400" height="120"
+                         loading="eager" decoding="async" fetchpriority="high"
+                         onerror="handleLogoError(this)">
+                    <div class="logo-fallback login-logo drop-shadow-[0_8px_25px_rgba(0,0,0,0.6)]">MANABÍ<br>POWER</div>
+                </div>
             </div>
 
             <div class="text-center mb-6">
@@ -397,8 +439,11 @@
                 <div class="px-5 md:px-6 py-3 flex items-center justify-between gap-4">
                     <!-- Identidad -->
                     <div class="flex items-center gap-x-3 md:gap-x-4 min-w-0">
-                        <img src="https://media.discordapp.net/attachments/1516969981525495960/1516982084802052257/Diseno_sin_titulo_1.png?ex=6a349f29&is=6a334da9&hm=755c3dbfb11670a3aab6172550f2ddf7f686b1acdcb88c42d5186090ab6dee09&=&format=webp&quality=lossless&width=200"
-                             alt="Logo" class="header-logo flex-shrink-0">
+                        <img src="logo-manabi-power-sm.png"
+                             alt="Manabí Power" class="app-logo header-logo flex-shrink-0"
+                             width="160" height="38"
+                             loading="eager" decoding="async" fetchpriority="high"
+                             onerror="handleLogoError(this)">
                         <div class="header-divider hidden sm:block flex-shrink-0"></div>
                         <div class="min-w-0">
                             <div class="brand-font text-[#FFEA8D] text-sm md:text-[15px] tracking-wide leading-tight truncate">
@@ -467,8 +512,11 @@
                             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-y-8">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-x-3 mb-4">
-                                        <img src="https://media.discordapp.net/attachments/1516969981525495960/1516982084802052257/Diseno_sin_titulo_1.png?ex=6a349f29&is=6a334da9&hm=755c3dbfb11670a3aab6172550f2ddf7f686b1acdcb88c42d5186090ab6dee09&=&format=webp&quality=lossless&width=200"
-                                             alt="Logo" class="h-16 w-auto drop-shadow-lg hidden sm:block">
+                                        <img src="logo-manabi-power-sm.png"
+                                             alt="Manabí Power" class="app-logo hero-logo drop-shadow-lg flex-shrink-0"
+                                             width="200" height="64"
+                                             loading="eager" decoding="async"
+                                             onerror="handleLogoError(this)">
                                         <div class="flex items-center gap-x-2">
                                             <div class="ifbb-badge">IFBB OFICIAL</div>
                                             <div class="text-xs px-3 py-1 bg-[#0F3057]/80 border border-[#C5A85C]/30 rounded-full text-[#FFEA8D] backdrop-blur">EDICIÓN 2026</div>
@@ -905,12 +953,52 @@
 
     <script>
         // ==================== TAILWIND CONFIG ====================
+        const LOGO_SMALL = 'logo-manabi-power-sm.png';
+        const LOGO_FULL = 'logo-manabi-power.png';
+
+        function getLogoUrl(hd = false) {
+            const path = hd ? LOGO_FULL : LOGO_SMALL;
+            try {
+                return new URL(path, window.location.href).href;
+            } catch (e) {
+                return path;
+            }
+        }
+
+        function handleLogoError(img) {
+            if (!img || img.dataset.logoFailed === '1') return;
+            const step = img.dataset.logoStep || '0';
+            if (step === '0' && !img.src.includes(encodeURIComponent(LOGO_FULL)) && !img.src.endsWith(LOGO_FULL)) {
+                img.dataset.logoStep = '1';
+                img.src = getLogoUrl(true);
+                return;
+            }
+            img.dataset.logoFailed = '1';
+            img.style.display = 'none';
+            let fallback = img.parentElement?.querySelector('.logo-fallback');
+            if (!fallback && img.parentElement) {
+                fallback = document.createElement('div');
+                fallback.className = 'logo-fallback ' + (img.classList.contains('header-logo') ? 'header-logo' : img.classList.contains('hero-logo') ? 'hero-logo' : 'login-logo');
+                fallback.innerHTML = 'MANABÍ<br>POWER';
+                img.parentElement.appendChild(fallback);
+            }
+            if (fallback) fallback.classList.add('is-visible');
+        }
+
         function initTailwind() {
             document.documentElement.style.setProperty('--accent-gold', '#C5A85C');
         }
 
         // ==================== DATA & STATE & SOCKET ====================
         let athletes = [];
+        let deletedAthleteIds = (() => {
+            try {
+                const saved = localStorage.getItem('mp_deleted_ids');
+                return new Set(saved ? JSON.parse(saved).map(String) : []);
+            } catch (e) {
+                return new Set();
+            }
+        })();
         let currentUser = null;
         let editingAthleteId = null;
         let currentSection = 0;
@@ -1040,16 +1128,26 @@
         socket.on('connect_error', () => updateConnectionStatus(false));
 
         socket.on('cargarAtletas', (datosDeDiscord) => {
-            athletes = (datosDeDiscord || []).map(normalizeAthlete);
+            athletes = filterDeletedAthletes(datosDeDiscord || []).map(normalizeAthlete);
             refreshAllViews();
         });
 
         socket.on('nuevoAtleta', (nuevoAtleta) => {
+            if (deletedAthleteIds.has(String(nuevoAtleta.id))) return;
             if (!athletes.find(a => a.id === nuevoAtleta.id)) {
                 athletes.unshift(normalizeAthlete(nuevoAtleta));
                 refreshAllViews();
                 showToast(`Registro remoto: ${getFullName(nuevoAtleta)}`, 'success');
             }
+        });
+
+        socket.on('atletaEliminado', (payload) => {
+            const id = String(payload?.id || payload);
+            if (!id) return;
+            deletedAthleteIds.add(id);
+            saveDeletedAthletes();
+            athletes = athletes.filter(a => String(a.id) !== id);
+            refreshAllViews();
         });
 
         function refreshAllViews() {
@@ -1059,18 +1157,35 @@
         }
 
         // ==================== PERSISTENCE (LOCAL PARA LOGIN) ====================
+        function loadDeletedAthletes() {
+            try {
+                const saved = localStorage.getItem('mp_deleted_ids');
+                deletedAthleteIds = new Set(saved ? JSON.parse(saved).map(String) : []);
+            } catch (e) {
+                deletedAthleteIds = new Set();
+            }
+        }
+
+        function saveDeletedAthletes() {
+            localStorage.setItem('mp_deleted_ids', JSON.stringify([...deletedAthleteIds]));
+        }
+
+        function filterDeletedAthletes(list) {
+            return (list || []).filter(a => !deletedAthleteIds.has(String(a.id)));
+        }
+
         function loadData() {
             const savedLogs = localStorage.getItem('manabi_logs');
             if (savedLogs) activityLogs = JSON.parse(savedLogs);
 
             const savedUser = localStorage.getItem('manabi_current_user');
             if (savedUser) currentUser = savedUser;
-            // Ya no cargamos atletas de localStorage, ahora vienen de Discord
+
+            loadDeletedAthletes();
         }
 
         function saveAthletes() {
-            // Esta función se queda vacía por compatibilidad, 
-            // ya que ahora todo se guarda en Discord y el servidor provee los datos.
+            localStorage.setItem('mp_athletes_cache', JSON.stringify(athletes));
         }
 
         function saveLogs() {
@@ -1369,6 +1484,7 @@
                 showToast(`Atleta #${finalBib} registrado`, 'success');
                 localStorage.removeItem('mp_form_draft');
             }
+            saveAthletes();
             editingAthleteId = null; cancelEdit();
             setTimeout(() => { switchSection(2); filterAthletes(); }, 500);
         }
@@ -1405,7 +1521,7 @@
             const a = normalizeAthlete({...athletes.find(x => x.id === id)});
             if (!a) return;
             document.getElementById('credential-content').innerHTML = `
-                <img src="https://media.discordapp.net/attachments/1516969981525495960/1516982084802052257/Diseno_sin_titulo_1.png" class="h-16 mx-auto mb-3" alt="Logo">
+                <img src="logo-manabi-power-sm.png" class="app-logo h-16 mx-auto mb-3" alt="Manabí Power" width="200" height="64" loading="eager" onerror="handleLogoError(this)">
                 <div class="text-4xl font-black text-[#C5A85C] mb-2">#${a.bibNumber}</div>
                 <div class="text-lg font-bold">${getFullName(a)}</div>
                 <div class="text-sm text-[#C5A85C] mt-2">${a.modality}</div>
@@ -1640,18 +1756,30 @@
         }
 
         function deleteAthlete(id) {
-            if (!confirm('¿Ocultar este registro de atleta en esta pantalla? (Se mantendrá en Discord)')) return;
-            
             const athlete = athletes.find(a => a.id === id);
             if (!athlete) return;
-            
+            const name = getFullName(athlete);
+            if (!confirm(`¿Eliminar a ${name} (#${athlete.bibNumber})? Esta acción se guardará y no volverá al recargar.`)) return;
+
+            deletedAthleteIds.add(String(id));
+            saveDeletedAthletes();
             athletes = athletes.filter(a => a.id !== id);
-            
-            addLog("Eliminación Local", `Ocultó atleta #${athlete.bibNumber} - ${athlete.fullName}`);
-            
+            saveAthletes();
+
+            if (isSocketConnected) {
+                socket.emit('eliminarDesdeWeb', {
+                    id: athlete.id,
+                    bibNumber: athlete.bibNumber,
+                    fullName: name
+                });
+            }
+
+            addLog('Eliminación', `Eliminó atleta #${athlete.bibNumber} - ${name}`);
             filterAthletes();
             updateDashboardMetrics();
-            showToast('Atleta ocultado de la lista', 'error');
+            renderModalitiesOverview();
+            updateExportPreview();
+            showToast(`Atleta #${athlete.bibNumber} eliminado`, 'success');
         }
 
         // ==================== DASHBOARD ====================
@@ -1996,7 +2124,7 @@
 
             const grouped = groupAthletesByModality(data);
             const fecha = new Date().toLocaleString('es-EC');
-            const logoUrl = 'https://media.discordapp.net/attachments/1516969981525495960/1516982084802052257/Diseno_sin_titulo_1.png?ex=6a349f29&is=6a334da9&hm=755c3dbfb11670a3aab6172550f2ddf7f686b1acdcb88c42d5186090ab6dee09&=&format=webp&quality=lossless&width=300';
+            const logoUrl = getLogoUrl(true);
             const passed = data.filter(a => a.didPassWeight === 'Sí').length;
             const failed = data.filter(a => a.didPassWeight === 'No').length;
 
@@ -2203,6 +2331,8 @@
                     
                     if (confirm(`¿Restaurar ${backup.athletes ? backup.athletes.length : 0} atletas del respaldo del ${new Date(backup.timestamp).toLocaleDateString()}? Esto reemplazará los datos actuales.`)) {
                         athletes = backup.athletes || [];
+                        deletedAthleteIds = new Set();
+                        saveDeletedAthletes();
                         saveAthletes();
                         
                         addLog("Restauración", `Restauró base de datos desde respaldo (${backup.athletes ? backup.athletes.length : 0} atletas)`);
