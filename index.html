@@ -202,8 +202,37 @@
         }
 
         .app-header {
-            background: #0A1931;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            background: linear-gradient(180deg, #0A1931 0%, #0D1F38 100%);
+            border-bottom: 1px solid rgba(197, 168, 92, 0.18);
+            box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 4px 24px -4px rgba(0,0,0,0.18);
+        }
+
+        .header-logo {
+            height: 38px;
+            width: auto;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+        }
+
+        .header-divider {
+            width: 1px;
+            height: 32px;
+            background: linear-gradient(180deg, transparent, rgba(197,168,92,0.35), transparent);
+        }
+
+        .header-user-pill {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(8px);
+        }
+
+        .header-logout-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .header-logout-btn:hover {
+            background: rgba(239,68,68,0.15);
+            border-color: rgba(239,68,68,0.3);
+            color: #fca5a5;
         }
 
         .nav-item {
@@ -334,76 +363,45 @@
     <div id="main-app" class="hidden min-h-screen bg-[#F1F4F9]">
         <div class="app-header sticky top-0 z-50">
             <div class="max-w-screen-2xl mx-auto">
-                <div class="px-6 py-4 flex items-center justify-between">
-                    <div class="flex items-center gap-x-4">
-                        <div class="flex items-center gap-x-2">
-                            <svg width="28" height="20" viewBox="0 0 46 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <defs>
-                                    <linearGradient id="goldMini" x1="0%" y1="20%" x2="0%" y2="100%">
-                                        <stop offset="0%" stop-color="#FFEA8D"/>
-                                        <stop offset="30%" stop-color="#E8C56B"/>
-                                        <stop offset="55%" stop-color="#C5A85C"/>
-                                        <stop offset="100%" stop-color="#8A641B"/>
-                                    </linearGradient>
-                                </defs>
-                                <rect x="3" y="12" width="40" height="7" rx="1.5" fill="url(#goldMini)"/>
-                                <rect x="5" y="7" width="4" height="17" rx="1" fill="url(#goldMini)"/>
-                                <rect x="11" y="3" width="4" height="25" rx="1" fill="url(#goldMini)"/>
-                                <rect x="17" y="1" width="4" height="29" rx="1.5" fill="url(#goldMini)"/>
-                                <rect x="25" y="1" width="4" height="29" rx="1.5" fill="url(#goldMini)"/>
-                                <rect x="31" y="3" width="4" height="25" rx="1" fill="url(#goldMini)"/>
-                                <rect x="37" y="7" width="4" height="17" rx="1" fill="url(#goldMini)"/>
-                            </svg>
-
-                            <div class="leading-none">
-                                <span class="text-white font-black text-[21px] tracking-[1.5px]">MANABÍ</span>
-                                <span class="text-[#C5A85C] font-black text-[21px] tracking-[2px] -ml-0.5">POWER</span>
+                <div class="px-5 md:px-6 py-3 flex items-center justify-between gap-4">
+                    <!-- Identidad -->
+                    <div class="flex items-center gap-x-3 md:gap-x-4 min-w-0">
+                        <img src="https://media.discordapp.net/attachments/1516969981525495960/1516982084802052257/Diseno_sin_titulo_1.png?ex=6a349f29&is=6a334da9&hm=755c3dbfb11670a3aab6172550f2ddf7f686b1acdcb88c42d5186090ab6dee09&=&format=webp&quality=lossless&width=200"
+                             alt="Logo" class="header-logo flex-shrink-0">
+                        <div class="header-divider hidden sm:block flex-shrink-0"></div>
+                        <div class="min-w-0">
+                            <div class="brand-font text-white text-sm md:text-[15px] tracking-wide leading-tight truncate">
+                                MESA DE CONTROL
                             </div>
-
-                            <svg width="28" height="20" viewBox="0 0 46 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <defs>
-                                    <linearGradient id="goldMini2" x1="0%" y1="20%" x2="0%" y2="100%">
-                                        <stop offset="0%" stop-color="#FFEA8D"/>
-                                        <stop offset="30%" stop-color="#E8C56B"/>
-                                        <stop offset="55%" stop-color="#C5A85C"/>
-                                        <stop offset="100%" stop-color="#8A641B"/>
-                                    </linearGradient>
-                                </defs>
-                                <rect x="3" y="12" width="40" height="7" rx="1.5" fill="url(#goldMini2)"/>
-                                <rect x="5" y="7" width="4" height="17" rx="1" fill="url(#goldMini2)"/>
-                                <rect x="11" y="3" width="4" height="25" rx="1" fill="url(#goldMini2)"/>
-                                <rect x="17" y="1" width="4" height="29" rx="1.5" fill="url(#goldMini2)"/>
-                                <rect x="25" y="1" width="4" height="29" rx="1.5" fill="url(#goldMini2)"/>
-                                <rect x="31" y="3" width="4" height="25" rx="1" fill="url(#goldMini2)"/>
-                                <rect x="37" y="7" width="4" height="17" rx="1" fill="url(#goldMini2)"/>
-                            </svg>
-                        </div>
-                        <div class="px-3 py-1 bg-white/10 rounded-2xl text-xs text-white/70 font-bold flex items-center gap-x-1.5">
-                            <i class="fa-solid fa-globe fa-sm"></i>
-                            <span>MANTA 2026</span>
+                            <div class="flex items-center gap-x-2 mt-0.5">
+                                <span class="text-[10px] text-[#C5A85C]/90 font-semibold tracking-widest">IFBB OFICIAL</span>
+                                <span class="text-white/20 text-[10px]">|</span>
+                                <span class="text-[10px] text-white/50 font-medium">Manta 2026</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-x-4">
-                        <div id="connection-status" class="hidden md:flex items-center gap-x-2 px-3 py-1.5 bg-white/5 rounded-2xl text-xs font-bold text-white/80">
+                    <!-- Acciones -->
+                    <div class="flex items-center gap-x-2 md:gap-x-3 flex-shrink-0">
+                        <div id="connection-status" class="hidden lg:flex items-center gap-x-2 px-3 py-2 header-user-pill rounded-xl text-[11px] font-semibold text-white/70">
                             <div id="connection-dot" class="connection-dot offline"></div>
                             <span id="connection-text">Conectando...</span>
                         </div>
 
-                        <div class="flex items-center gap-x-2 text-sm">
-                            <div class="text-right">
-                                <div id="header-user" class="font-bold text-white text-sm"></div>
-                                <div class="text-[#C5A85C] text-[10px] -mt-0.5">OPERADOR MESA DE CONTROL</div>
+                        <div class="header-user-pill flex items-center gap-x-2.5 pl-3 pr-1.5 py-1.5 rounded-xl">
+                            <div class="text-right hidden sm:block">
+                                <div id="header-user" class="font-semibold text-white text-[13px] leading-tight"></div>
+                                <div class="text-white/40 text-[10px] leading-tight">Operador activo</div>
                             </div>
-                            <div class="w-9 h-9 bg-[#C5A85C] rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-inner">
-                                <i class="fa-solid fa-user-shield"></i>
+                            <div class="w-8 h-8 bg-gradient-to-br from-[#C5A85C] to-[#8A641B] rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                <i class="fa-solid fa-user"></i>
                             </div>
                         </div>
-                        
-                        <button onclick="logout()" 
-                                class="flex items-center gap-x-2 text-xs font-bold px-4 py-2 bg-white/10 hover:bg-white/20 transition rounded-2xl text-white/90">
-                            <i class="fa-solid fa-sign-out-alt"></i>
-                            <span class="hidden md:inline">CERRAR SESIÓN</span>
+
+                        <button onclick="logout()"
+                                class="header-logout-btn flex items-center gap-x-1.5 text-[11px] font-semibold px-3 py-2 transition rounded-xl text-white/70">
+                            <i class="fa-solid fa-right-from-bracket text-[10px]"></i>
+                            <span class="hidden md:inline">Salir</span>
                         </button>
                     </div>
                 </div>
