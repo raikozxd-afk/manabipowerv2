@@ -9,9 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="preload" as="image" href="logo-manabi-power-sm.png?v=2" type="image/png">
+    <link rel="preload" as="image" href="logo-manabi-power.png?v=3" type="image/png">
+    <link rel="preload" as="image" href="hero-bg.jpg" type="image/jpeg">
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
     
     <script>
         (function() {
@@ -40,8 +41,12 @@
         
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: var(--navy-dark);
+            background:
+                radial-gradient(ellipse 80% 50% at 50% -10%, rgba(197,168,92,0.12), transparent 55%),
+                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(15,48,87,0.5), transparent 50%),
+                var(--navy-dark);
             color: var(--text-gold);
+            min-height: 100vh;
         }
 
         .dark-panel { background: var(--navy-card); border: 1px solid rgba(197,168,92,0.2); }
@@ -135,7 +140,8 @@
         }
         .export-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 20px 40px -12px rgba(15,48,87,0.25);
+            box-shadow: 0 20px 40px -12px rgba(197,168,92,0.2);
+            border-color: rgba(197,168,92,0.45) !important;
         }
         .export-card:hover::before { opacity: 1; }
 
@@ -351,41 +357,260 @@
             border-radius: 3px;
             font-weight: 700;
         }
+
+        /* ── Fondos con imagen local + fallback ── */
+        .event-bg {
+            position: relative;
+            background: linear-gradient(145deg, #030D1B 0%, #0A1931 45%, #0F3057 100%);
+        }
+        .event-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url('hero-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.28;
+            pointer-events: none;
+        }
+        .event-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(3,13,27,0.55) 0%, rgba(10,25,49,0.75) 50%, rgba(3,13,27,0.85) 100%);
+            pointer-events: none;
+        }
+        .event-bg > * { position: relative; z-index: 1; }
+
+        .login-screen-bg.event-bg::before {
+            opacity: 0.48;
+            background-position: center 35%;
+            filter: saturate(1.1) contrast(1.05);
+        }
+        .login-screen-bg.event-bg::after {
+            background:
+                radial-gradient(ellipse 70% 55% at 50% 20%, rgba(197,168,92,0.12), transparent 60%),
+                linear-gradient(180deg, rgba(3,13,27,0.45) 0%, rgba(10,25,49,0.62) 45%, rgba(3,13,27,0.9) 100%);
+        }
+
+        .login-fitness-decor {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .login-fitness-decor i {
+            position: absolute;
+            color: rgba(197,168,92,0.08);
+            filter: drop-shadow(0 0 20px rgba(197,168,92,0.15));
+        }
+        .login-fitness-decor .decor-1 { top: 8%; left: 6%; font-size: clamp(48px, 8vw, 88px); transform: rotate(-25deg); }
+        .login-fitness-decor .decor-2 { top: 14%; right: 8%; font-size: clamp(36px, 6vw, 64px); transform: rotate(18deg); opacity: 0.7; }
+        .login-fitness-decor .decor-3 { bottom: 12%; left: 10%; font-size: clamp(40px, 7vw, 72px); transform: rotate(12deg); opacity: 0.65; }
+        .login-fitness-decor .decor-4 { bottom: 18%; right: 6%; font-size: clamp(52px, 9vw, 96px); transform: rotate(-15deg); }
+        .login-fitness-decor .decor-5 { top: 42%; left: 3%; font-size: clamp(28px, 5vw, 48px); transform: rotate(-8deg); opacity: 0.5; }
+        .login-fitness-decor .decor-6 { top: 38%; right: 4%; font-size: clamp(32px, 5vw, 56px); transform: rotate(22deg); opacity: 0.55; }
+        .login-fitness-decor .decor-7 { bottom: 6%; left: 42%; font-size: clamp(24px, 4vw, 40px); transform: rotate(5deg); opacity: 0.45; }
+
+        /* ── Logo con marco dorado ── */
+        .logo-frame {
+            position: relative;
+            display: inline-flex;
+            padding: 14px 22px;
+            border-radius: 24px;
+            background: linear-gradient(145deg, rgba(197,168,92,0.12), rgba(15,48,87,0.35));
+            border: 1px solid rgba(197,168,92,0.35);
+            box-shadow:
+                0 20px 50px -15px rgba(0,0,0,0.65),
+                0 0 40px -10px rgba(197,168,92,0.25),
+                inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+        .logo-frame::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 25px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(255,234,141,0.5), rgba(197,168,92,0.15), rgba(138,100,27,0.4));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* ── Botón Instagram premium ── */
+        .instagram-cta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+            padding: 14px 20px;
+            border-radius: 18px;
+            text-decoration: none;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f58529 0%, #dd2a7b 38%, #8134af 68%, #515bd4 100%);
+            border: 1px solid rgba(255,234,141,0.35);
+            box-shadow:
+                0 12px 32px -8px rgba(221,42,123,0.55),
+                0 0 0 1px rgba(255,255,255,0.08) inset,
+                0 1px 0 rgba(255,255,255,0.15) inset;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+        }
+        .instagram-cta::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
+            transform: translateX(-120%);
+            transition: transform 0.6s ease;
+        }
+        .instagram-cta:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow:
+                0 18px 40px -10px rgba(221,42,123,0.65),
+                0 0 24px -4px rgba(197,168,92,0.35);
+            filter: brightness(1.06);
+        }
+        .instagram-cta:hover::before { transform: translateX(120%); }
+        .instagram-cta:active { transform: translateY(-1px) scale(1.01); }
+
+        .instagram-cta__icon {
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.18);
+            font-size: 22px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+        }
+        .instagram-cta__text { text-align: left; line-height: 1.2; }
+        .instagram-cta__label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            opacity: 0.92;
+        }
+        .instagram-cta__handle {
+            display: block;
+            font-family: 'Outfit', sans-serif;
+            font-size: 17px;
+            font-weight: 800;
+            color: #FFEA8D;
+            letter-spacing: 0.02em;
+        }
+
+        .instagram-cta--compact {
+            max-width: none;
+            width: auto;
+            padding: 8px 14px;
+            gap: 8px;
+            border-radius: 12px;
+        }
+        .instagram-cta--compact .instagram-cta__icon {
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            border-radius: 9px;
+        }
+        .instagram-cta--compact .instagram-cta__label { font-size: 9px; }
+        .instagram-cta--compact .instagram-cta__handle { font-size: 12px; }
+
+        .instagram-badge-img {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+            border-radius: 18px;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            box-shadow: 0 12px 32px -8px rgba(221,42,123,0.45);
+        }
+        .instagram-badge-img:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 18px 40px -10px rgba(221,42,123,0.55);
+        }
+
+        .login-card {
+            background: rgba(17, 24, 39, 0.82);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(197,168,92,0.35);
+            border-radius: 24px;
+            box-shadow:
+                0 25px 60px -15px rgba(0,0,0,0.7),
+                0 0 0 1px rgba(197,168,92,0.15),
+                0 0 60px -15px rgba(197,168,92,0.2);
+        }
+
+        .hero-banner {
+            border: 1px solid rgba(197,168,92,0.2);
+            box-shadow: 0 24px 48px -20px rgba(0,0,0,0.5);
+        }
+
+        .stat-dark {
+            box-shadow: 0 8px 24px -12px rgba(0,0,0,0.35);
+        }
+        .stat-dark:hover {
+            border-color: rgba(197,168,92,0.45);
+            box-shadow: 0 12px 32px -12px rgba(197,168,92,0.15);
+        }
+
+        .sidebar-instagram {
+            margin-top: auto;
+            padding: 12px 16px 0;
+        }
+
+        .mobile-nav button.nav-active-mobile {
+            color: var(--gold-light) !important;
+        }
+        .mobile-nav button.nav-active-mobile i {
+            color: var(--gold);
+        }
+
+        .gold-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(197,168,92,0.45), transparent);
+        }
     </style>
 </head>
 <body class="bg-[#0A1931] text-[#FFEA8D]">
-    <div id="login-screen" class="min-h-screen flex items-center justify-center p-6 relative overflow-hidden"
-         style="background-image: url('https://media.discordapp.net/attachments/1517020555742547989/1517032583161057320/image_10.jpg?ex=6a34ce30&is=6a337cb0&hm=4d6d10c9c2d39f79e27a0d5a2c91be0d185e24c063454a08efd38d539b4471f0&=&format=webp');
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;">
-        
-        <!-- Dark overlay -->
-        <div class="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/70"></div>
-        
-        <div class="w-full max-w-md relative z-10">
-            <div class="flex justify-center mb-6">
-                <div class="relative">
-                    <img src="logo-manabi-power-sm.png?v=2"
+    <div id="login-screen" class="login-screen-bg event-bg min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+        <div class="login-fitness-decor" aria-hidden="true">
+            <i class="fa-solid fa-dumbbell decor-1"></i>
+            <i class="fa-solid fa-dumbbell decor-2"></i>
+            <i class="fa-solid fa-dumbbell decor-3"></i>
+            <i class="fa-solid fa-dumbbell decor-4"></i>
+            <i class="fa-solid fa-medal decor-5"></i>
+            <i class="fa-solid fa-trophy decor-6"></i>
+            <i class="fa-solid fa-fire-flame-curved decor-7"></i>
+        </div>
+        <div class="w-full max-w-md relative z-10 animate-in">
+            <div class="flex justify-center mb-8">
+                <div class="logo-frame">
+                    <img src="logo-manabi-power.png?v=3"
                          alt="Manabí Power Logo"
-                         class="app-logo login-logo drop-shadow-[0_8px_25px_rgba(0,0,0,0.6)]"
+                         class="app-logo login-logo"
                          width="400" height="120"
                          loading="eager" decoding="async" fetchpriority="high"
                          onerror="handleLogoError(this)">
-                    <div class="logo-fallback login-logo drop-shadow-[0_8px_25px_rgba(0,0,0,0.6)]">MANABÍ<br>POWER</div>
+                    <div class="logo-fallback login-logo">MANABÍ<br>POWER</div>
                 </div>
             </div>
 
-            <div class="text-center mb-6">
-                <div class="text-[#C5A85C] text-xs font-bold tracking-[2px]">MESA DE CONTROL OFICIAL • Campeonato Manabí Power</div>
-            </div>
-
-            <div class="bg-[#111827]/95 backdrop-blur-2xl border-2 border-[#C5A85C] rounded-3xl p-8 shadow-2xl"
-                 style="box-shadow: 0 25px 60px -15px rgb(0 0 0 / 0.7), 0 0 0 1px rgba(197,168,92,0.4), 0 0 50px -10px rgba(197,168,92,0.25);">
+            <div class="login-card p-8">
                 
                 <div class="mb-6">
                     <div class="text-[#FFEA8D] text-xl font-bold">Acceso Administrador</div>
-                    <div class="text-[#C5A85C]/80 text-sm">Sistema de pesaje, tallaje y clasificación</div>
                 </div>
 
                 <div class="space-y-4">
@@ -417,14 +642,15 @@
                         INGRESAR AL PANEL DE CONTROL
                     </button>
 
-                    <!-- Instagram Button -->
-                    <div class="pt-4 flex justify-center">
-                        <a href="https://www.instagram.com/manabi_power/" target="_blank">
-                            <img src="https://media.discordapp.net/attachments/1516969981525495960/1517041448300843118/ewrwrw.png?ex=6a34d672&is=6a3384f2&hm=7cb58691c167b179a986b1871df3267640c167e0f7ab1099e62c1df94175b55b&=&format=webp&quality=lossless&width=600" 
-                                 alt="Síguenos en Instagram @manabipower" 
-                                 class="h-[78px] w-auto hover:scale-[1.02] transition cursor-pointer drop-shadow-md">
-                        </a>
-                    </div>
+                    <div class="gold-divider my-5"></div>
+
+                    <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer" class="instagram-cta" aria-label="Síguenos en Instagram @manabi_power">
+                        <span class="instagram-cta__icon"><i class="fa-brands fa-instagram"></i></span>
+                        <span class="instagram-cta__text">
+                            <span class="instagram-cta__label">Síguenos en Instagram</span>
+                            <span class="instagram-cta__handle">@manabi_power</span>
+                        </span>
+                    </a>
                 </div>
             </div>
 
@@ -475,6 +701,15 @@
                             </div>
                         </div>
 
+                        <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer"
+                           class="instagram-cta instagram-cta--compact hidden sm:flex" title="Instagram @manabi_power">
+                            <span class="instagram-cta__icon"><i class="fa-brands fa-instagram"></i></span>
+                            <span class="instagram-cta__text">
+                                <span class="instagram-cta__label">Instagram</span>
+                                <span class="instagram-cta__handle">@manabi_power</span>
+                            </span>
+                        </a>
+
                         <button onclick="logout()"
                                 class="header-logout-btn flex items-center gap-x-1.5 text-[11px] font-semibold px-3 py-2 transition rounded-xl text-[#C5A85C]/80">
                             <i class="fa-solid fa-right-from-bracket text-[10px]"></i>
@@ -492,10 +727,18 @@
                     <button onclick="switchSection(1)" id="nav-1" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-user-plus w-4"></i>Registro</button>
                     <button onclick="switchSection(2)" id="nav-2" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-users w-4"></i>Atletas</button>
                     <button onclick="switchSection(3)" id="nav-3" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-file-export w-4"></i>Exportaciones</button>
+                    <button onclick="switchSection(5)" id="nav-5" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-gavel w-4"></i>Jueces</button>
                     <button onclick="switchSection(4)" id="nav-4" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-shield-halved w-4"></i>Administración</button>
                 </nav>
-                <div class="px-4 pt-4 border-t border-gray-800">
+                <div class="px-4 pt-4 border-t border-[#C5A85C]/15 space-y-3">
                     <div id="sidebar-closed-badge" class="hidden text-[10px] font-bold text-[#FFEA8D] bg-[#0F3057] border border-[#C5A85C]/40 px-3 py-2 rounded-lg text-center"><i class="fa-solid fa-lock mr-1"></i>Inscripciones cerradas</div>
+                    <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer" class="instagram-cta instagram-cta--compact w-full">
+                        <span class="instagram-cta__icon"><i class="fa-brands fa-instagram"></i></span>
+                        <span class="instagram-cta__text">
+                            <span class="instagram-cta__label">Síguenos</span>
+                            <span class="instagram-cta__handle">@manabi_power</span>
+                        </span>
+                    </a>
                 </div>
             </aside>
 
@@ -503,17 +746,14 @@
 
             <div id="section-0" class="section active">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div class="lg:col-span-12 relative overflow-hidden rounded-3xl text-white hero-pattern"
-                         style="background: linear-gradient(135deg, #030D1B 0%, #0A1931 50%, #0F3057 100%);">
-                        <div class="absolute inset-0 opacity-20"
-                             style="background-image: url('https://media.discordapp.net/attachments/1517020555742547989/1517032583161057320/image_10.jpg?ex=6a34ce30&is=6a337cb0&hm=4d6d10c9c2d39f79e27a0d5a2c91be0d185e24c063454a08efd38d539b4471f0&=&format=webp');
-                                    background-size: cover; background-position: center;"></div>
-                        <div class="absolute top-0 right-0 w-96 h-96 bg-[#C5A85C]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-                        <div class="relative p-8 md:p-10">
+                    <div class="lg:col-span-12 relative overflow-hidden rounded-3xl text-white hero-pattern hero-banner event-bg">
+                        <div class="absolute top-0 right-0 w-96 h-96 bg-[#C5A85C]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 z-[1]"></div>
+                        <div class="absolute bottom-0 left-0 w-72 h-72 bg-[#515bd4]/10 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4 z-[1]"></div>
+                        <div class="relative p-8 md:p-10 z-[2]">
                             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-y-8">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-x-3 mb-4">
-                                        <img src="logo-manabi-power-sm.png?v=2"
+                                        <img src="logo-manabi-power.png?v=3"
                                              alt="Manabí Power" class="app-logo hero-logo drop-shadow-lg flex-shrink-0"
                                              width="200" height="64"
                                              loading="eager" decoding="async"
@@ -617,6 +857,10 @@
                                 <div class="flex items-center gap-x-3"><i class="fa-solid fa-file-export text-[#C5A85C]"></i> <span>Exportar planillas</span></div>
                                 <i class="fa-solid fa-chevron-right text-xs text-[#C5A85C]"></i>
                             </button>
+                            <button onclick="switchSection(5)" class="w-full flex items-center justify-between px-5 py-3.5 bg-[#0A1931] hover:bg-[#0F3057] border border-[#C5A85C]/20 hover:border-[#C5A85C]/50 text-[#FFEA8D] transition rounded-2xl text-sm font-bold group">
+                                <div class="flex items-center gap-x-3"><i class="fa-solid fa-gavel text-[#C5A85C]"></i> <span>Registrar jueces</span></div>
+                                <i class="fa-solid fa-chevron-right text-xs text-[#C5A85C]"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -704,14 +948,22 @@
                         <h2 class="brand-font text-2xl md:text-3xl text-[#FFEA8D]">Gestión de Atletas</h2>
                         <p class="text-[#C5A85C]/80 text-sm mt-1">Búsqueda instantánea con filtros avanzados</p>
                     </div>
-                    <div class="dark-panel rounded-2xl p-4 mb-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div class="dark-panel rounded-2xl p-4 mb-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
                         <div class="relative lg:col-span-2">
                             <input id="search-input" type="text" placeholder="Nombre, cédula, ficha, club..." onkeyup="filterAthletes()" class="dark-input w-full rounded-xl pl-10 py-3 text-sm">
                             <i class="fa-solid fa-search absolute left-3.5 top-3.5 text-[#C5A85C]"></i>
                         </div>
                         <select id="filter-modality" onchange="filterAthletes()" class="dark-input rounded-xl px-3 py-3 text-sm"><option value="Todas">Todas modalidades</option></select>
+                        <select id="filter-club" onchange="filterAthletes()" class="dark-input rounded-xl px-3 py-3 text-sm"><option value="Todos">Todos los clubs</option></select>
                         <select id="filter-status" onchange="filterAthletes()" class="dark-input rounded-xl px-3 py-3 text-sm"><option value="Todos">Novato y Clasificado</option><option value="Novato">Novatos</option><option value="Clasificado">Clasificados</option></select>
-                        <input id="filter-province" type="text" placeholder="Provincia..." onkeyup="filterAthletes()" class="dark-input rounded-xl px-3 py-3 text-sm">
+                        <select id="athletes-sort-by" onchange="filterAthletes()" class="dark-input rounded-xl px-3 py-3 text-sm">
+                            <option value="bib">Orden: Ficha</option>
+                            <option value="name">Orden: Nombre</option>
+                            <option value="modality">Orden: Modalidad</option>
+                            <option value="category">Orden: Categoría</option>
+                            <option value="club">Orden: Club</option>
+                            <option value="weight">Orden: Peso</option>
+                        </select>
                     </div>
                     <div id="athletes-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                     <div id="no-results" class="hidden text-center py-16">
@@ -740,16 +992,16 @@
                             <i class="fa-solid fa-filter text-[#C5A85C]"></i>
                             <span>FILTROS DE EXPORTACIÓN</span>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                             <div>
                                 <label class="lbl">MODALIDAD</label>
-                                <select id="export-filter-modality" onchange="updateExportPreview()" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
+                                <select id="export-filter-modality" onchange="onExportSettingsChange()" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
                                     <option value="Todas">Todas las modalidades</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="lbl">ESTADO DE PESAJE</label>
-                                <select id="export-filter-status" onchange="updateExportPreview()" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
+                                <select id="export-filter-status" onchange="onExportSettingsChange()" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
                                     <option value="Todos">Todos los estados</option>
                                     <option value="Sí">Aprobaron peso</option>
                                     <option value="No">Excedieron peso</option>
@@ -758,18 +1010,36 @@
                             </div>
                             <div>
                                 <label class="lbl">CLASIFICACIÓN</label>
-                                <select id="export-filter-class" onchange="updateExportPreview()" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
+                                <select id="export-filter-class" onchange="onExportSettingsChange()" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
                                     <option value="Todas">Novatos y Clasificados</option>
                                     <option value="Novato">Solo Novatos</option>
                                     <option value="Clasificado">Solo Clasificados</option>
                                 </select>
                             </div>
                             <div>
+                                <label class="lbl">AGRUPAR POR</label>
+                                <select id="export-group-by" onchange="onExportSettingsChange()" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
+                                    <option value="modality">Modalidad</option>
+                                    <option value="category">Categoría</option>
+                                    <option value="club">Club / Gimnasio</option>
+                                    <option value="weight">Peso (kg)</option>
+                                </select>
+                            </div>
+                            <div>
                                 <label class="lbl">ORDENAR POR</label>
-                                <select id="export-sort-by" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
+                                <select id="export-sort-by" onchange="onExportSettingsChange()" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
                                     <option value="bib">Número de ficha</option>
                                     <option value="name">Nombre alfabético</option>
                                     <option value="modality">Modalidad</option>
+                                    <option value="category">Categoría</option>
+                                    <option value="club">Club / Gimnasio</option>
+                                    <option value="weight">Peso (menor a mayor)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="lbl">CLUB / GYM</label>
+                                <select id="export-filter-club" onchange="onExportSettingsChange()" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
+                                    <option value="Todos">Todos los clubs</option>
                                 </select>
                             </div>
                         </div>
@@ -781,6 +1051,8 @@
                         <button onclick="exportList('acreditacion')" class="export-card dark-panel rounded-xl p-4 text-left hover:border-[#C5A85C]/50"><i class="fa-solid fa-id-card text-[#C5A85C] text-lg"></i><div class="text-xs font-bold text-[#FFEA8D] mt-2">Acreditación</div></button>
                         <button onclick="exportList('modalidad')" class="export-card dark-panel rounded-xl p-4 text-left hover:border-[#C5A85C]/50"><i class="fa-solid fa-layer-group text-[#C5A85C] text-lg"></i><div class="text-xs font-bold text-[#FFEA8D] mt-2">Por Modalidad</div></button>
                         <button onclick="exportList('categoria')" class="export-card dark-panel rounded-xl p-4 text-left hover:border-[#C5A85C]/50"><i class="fa-solid fa-tags text-[#C5A85C] text-lg"></i><div class="text-xs font-bold text-[#FFEA8D] mt-2">Por Categoría</div></button>
+                        <button onclick="exportList('club')" class="export-card dark-panel rounded-xl p-4 text-left hover:border-[#C5A85C]/50"><i class="fa-solid fa-dumbbell text-[#C5A85C] text-lg"></i><div class="text-xs font-bold text-[#FFEA8D] mt-2">Por Club</div></button>
+                        <button onclick="exportList('peso')" class="export-card dark-panel rounded-xl p-4 text-left hover:border-[#C5A85C]/50"><i class="fa-solid fa-weight-scale text-[#C5A85C] text-lg"></i><div class="text-xs font-bold text-[#FFEA8D] mt-2">Por Peso</div></button>
                         <button onclick="exportList('novatos')" class="export-card dark-panel rounded-xl p-4 text-left hover:border-[#C5A85C]/50"><i class="fa-solid fa-star text-[#FFEA8D] text-lg"></i><div class="text-xs font-bold text-[#FFEA8D] mt-2">Novatos</div></button>
                         <button onclick="exportList('clasificados')" class="export-card dark-panel rounded-xl p-4 text-left hover:border-[#C5A85C]/50"><i class="fa-solid fa-trophy text-[#FFEA8D] text-lg"></i><div class="text-xs font-bold text-[#FFEA8D] mt-2">Clasificados</div></button>
                         <button onclick="exportList('jueces')" class="export-card dark-panel rounded-xl p-4 text-left hover:border-[#C5A85C]/50"><i class="fa-solid fa-gavel text-[#C5A85C] text-lg"></i><div class="text-xs font-bold text-[#FFEA8D] mt-2">Hoja Jueces</div></button>
@@ -866,6 +1138,80 @@
                 </div>
             </div>
 
+            <div id="section-5" class="section">
+                <div class="max-w-5xl mx-auto">
+                    <div class="flex items-center justify-between mb-5">
+                        <div>
+                            <h2 id="judge-form-title" class="brand-font text-2xl md:text-3xl text-[#FFEA8D]">Jueces del Evento</h2>
+                            <p class="text-sm text-[#C5A85C]/80 mt-1">Registro de la mesa técnica IFBB — apartado independiente de los competidores</p>
+                        </div>
+                        <button onclick="cancelJudgeEdit()" id="cancel-judge-edit-btn" class="hidden items-center gap-2 text-sm font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-times"></i>Cancelar</button>
+                    </div>
+
+                    <div class="dark-panel rounded-2xl p-6 md:p-8 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div><label class="lbl">Apellidos *</label><input id="judgeLastName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Vera Pincay"></div>
+                            <div><label class="lbl">Nombres *</label><input id="judgeFirstName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Roberto Andrés"></div>
+                            <div><label class="lbl">Cédula *</label><input id="judgeIdCard" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="1312345678"></div>
+                            <div><label class="lbl">Cargo / Rol *</label>
+                                <select id="judgeRole" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
+                                    <option value="Director de Jueces">Director de Jueces</option>
+                                    <option value="Juez Principal">Juez Principal</option>
+                                    <option value="Juez Central">Juez Central</option>
+                                    <option value="Juez Lateral Izquierdo">Juez Lateral Izquierdo</option>
+                                    <option value="Juez Lateral Derecho">Juez Lateral Derecho</option>
+                                    <option value="Juez de Reserva">Juez de Reserva</option>
+                                    <option value="Escrutador Principal">Escrutador Principal</option>
+                                    <option value="Escrutador Auxiliar">Escrutador Auxiliar</option>
+                                    <option value="Mesa de Control">Mesa de Control</option>
+                                    <option value="Locutor Oficial">Locutor Oficial</option>
+                                    <option value="Coordinador de Tarima">Coordinador de Tarima</option>
+                                    <option value="Staff Técnico">Staff Técnico</option>
+                                </select>
+                            </div>
+                            <div><label class="lbl">Nivel de Juez *</label>
+                                <select id="judgeLevel" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
+                                    <option value="">Seleccionar nivel</option>
+                                    <option value="Juez en Formación">Juez en Formación</option>
+                                    <option value="Juez Provincial">Juez Provincial</option>
+                                    <option value="Juez Nacional">Juez Nacional</option>
+                                    <option value="Juez Internacional">Juez Internacional</option>
+                                    <option value="Juez Élite Internacional">Juez Élite Internacional</option>
+                                </select>
+                            </div>
+                            <div><label class="lbl">Modalidad asignada *</label><select id="judgeModality" class="dark-input w-full rounded-xl px-4 py-3 text-sm"></select></div>
+                            <div><label class="lbl">Categoría asignada</label><input id="judgeCategory" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Todas o ej: Senior • Hasta 175 cm"></div>
+                            <div><label class="lbl">Mesa / Panel</label><input id="judgePanel" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Mesa 1"></div>
+                            <div><label class="lbl">Licencia IFBB</label><input id="judgeLicense" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="IFBB-EC-0000"></div>
+                            <div><label class="lbl">Teléfono</label><input id="judgePhone" type="tel" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="0999999999"></div>
+                            <div><label class="lbl">Correo</label><input id="judgeEmail" type="email" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="juez@email.com"></div>
+                            <div><label class="lbl">Estado</label>
+                                <select id="judgeStatus" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
+                                    <option value="Activo">Activo</option>
+                                    <option value="Suplente">Suplente</option>
+                                    <option value="Inactivo">Inactivo</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2 lg:col-span-3"><label class="lbl">Observaciones</label><textarea id="judgeObservations" rows="2" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Notas de asignación, horarios, etc."></textarea></div>
+                        </div>
+                        <button onclick="registerJudge()" id="judge-submit-btn" class="w-full mt-6 bg-gradient-to-r from-[#FFEA8D] via-[#C5A85C] to-[#8A641B] hover:brightness-110 text-[#0A0F1E] font-extrabold py-4 rounded-xl text-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-gavel"></i><span id="judge-submit-text">Registrar Juez</span>
+                        </button>
+                    </div>
+
+                    <div class="navy-card rounded-3xl p-6">
+                        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+                            <div class="font-extrabold text-[#FFEA8D]">JUECES REGISTRADOS</div>
+                            <div class="flex gap-2">
+                                <span id="judges-count-badge" class="text-xs px-3 py-1 bg-[#C5A85C] text-[#0A1931] rounded-full font-mono font-bold">0 JUECES</span>
+                                <button onclick="exportJudgesRoster()" class="text-xs font-bold px-4 py-2 bg-[#C5A85C] text-[#0A1931] rounded-2xl"><i class="fa-solid fa-file-export mr-1"></i>Exportar nómina de jueces</button>
+                            </div>
+                        </div>
+                        <div id="judges-list" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+
             <div id="section-4" class="section">
                 <div class="max-w-4xl mx-auto space-y-5">
                     <div class="dark-panel rounded-2xl p-6 flex flex-wrap justify-between items-center gap-4">
@@ -894,6 +1240,20 @@
                         </div>
                         
                         <div class="space-y-2" id="admin-users-list"></div>
+                    </div>
+
+                    <div class="navy-card rounded-3xl p-6">
+                        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+                            <div class="font-extrabold flex items-center gap-x-2 text-[#FFEA8D]">
+                                <i class="fa-solid fa-users text-[#C5A85C]"></i>
+                                <span>DATOS DE PRUEBA</span>
+                            </div>
+                            <button onclick="reloadDemoAthletes()" class="text-xs font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/50 rounded-2xl flex items-center gap-x-2 hover:bg-[#C5A85C]/15">
+                                <i class="fa-solid fa-database"></i>
+                                <span>CARGAR 50 COMPETIDORES DEMO</span>
+                            </button>
+                        </div>
+                        <p class="text-xs text-[#C5A85C]/70">Genera 25 hombres y 25 mujeres con estaturas, pesos, modalidades y provincias variadas.</p>
                     </div>
 
                     <div class="navy-card rounded-3xl p-6">
@@ -931,12 +1291,16 @@
         </div>
         </div>
 
-        <nav class="mobile-nav md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-around py-2 px-1">
-            <button onclick="switchSection(0)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-chart-pie text-base mb-0.5"></i>Inicio</button>
+        <nav class="mobile-nav md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-around py-2 px-1 backdrop-blur-md bg-[#0A1931]/95 border-t border-[#C5A85C]/20">
+            <button onclick="switchSection(0)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1 transition"><i class="fa-solid fa-chart-pie text-base mb-0.5"></i>Inicio</button>
             <button onclick="switchSection(1)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-user-plus text-base mb-0.5"></i>Registro</button>
             <button onclick="switchSection(2)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-users text-base mb-0.5"></i>Atletas</button>
             <button onclick="switchSection(3)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-file-export text-base mb-0.5"></i>Exportar</button>
-            <button onclick="switchSection(4)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-shield text-base mb-0.5"></i>Admin</button>
+            <button onclick="switchSection(5)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-gavel text-base mb-0.5"></i>Jueces</button>
+            <button onclick="switchSection(4)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1 transition"><i class="fa-solid fa-shield text-base mb-0.5"></i>Admin</button>
+            <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center text-[10px] text-[#C5A85C] px-2 py-1 transition" title="Instagram">
+                <i class="fa-brands fa-instagram text-base mb-0.5"></i>IG
+            </a>
         </nav>
     </div>
 
@@ -954,8 +1318,9 @@
 
     <script>
         // ==================== TAILWIND CONFIG ====================
-        const LOGO_SMALL = 'logo-manabi-power-sm.png?v=2';
-        const LOGO_FULL = 'logo-manabi-power.png?v=2';
+        const LOGO_SMALL = 'logo-manabi-power-sm.png?v=3';
+        const LOGO_FULL = 'logo-manabi-power.png?v=3';
+        const INSTAGRAM_URL = 'https://www.instagram.com/manabi_power/';
 
         function getLogoUrl(hd = false) {
             const path = hd ? LOGO_FULL : LOGO_SMALL;
@@ -992,6 +1357,8 @@
 
         // ==================== DATA & STATE & SOCKET ====================
         let athletes = [];
+        let judges = [];
+        let editingJudgeId = null;
         let deletedAthleteIds = (() => {
             try {
                 const saved = localStorage.getItem('mp_deleted_ids');
@@ -1129,7 +1496,13 @@
         socket.on('connect_error', () => updateConnectionStatus(false));
 
         socket.on('cargarAtletas', (datosDeDiscord) => {
-            athletes = filterDeletedAthletes(datosDeDiscord || []).map(normalizeAthlete);
+            const remote = filterDeletedAthletes(datosDeDiscord || []).map(normalizeAthlete);
+            if (remote.length > 0) {
+                athletes = remote;
+                saveAthletes();
+            } else {
+                ensureDemoAthletes(50);
+            }
             refreshAllViews();
         });
 
@@ -1152,9 +1525,11 @@
         });
 
         function refreshAllViews() {
+            populateClubFilters();
             if (currentSection === 0) { updateDashboardMetrics(); renderModalitiesOverview(); }
             if (currentSection === 2) filterAthletes();
             if (currentSection === 3) { renderPlanillasList(); updateExportPreview(); }
+            if (currentSection === 5) renderJudgesList();
         }
 
         // ==================== PERSISTENCE (LOCAL PARA LOGIN) ====================
@@ -1183,10 +1558,197 @@
             if (savedUser) currentUser = savedUser;
 
             loadDeletedAthletes();
+            loadAthletesFromCache();
+            loadJudgesFromCache();
+            if (athletes.length < 50) {
+                seedDemoAthletes(50, true);
+            }
+        }
+
+        function loadJudgesFromCache() {
+            try {
+                const cached = localStorage.getItem('mp_judges_cache');
+                if (cached) {
+                    const list = JSON.parse(cached);
+                    if (Array.isArray(list)) judges = list;
+                }
+            } catch (e) {
+                console.warn('Cache de jueces no válido');
+            }
+        }
+
+        function saveJudges() {
+            localStorage.setItem('mp_judges_cache', JSON.stringify(judges));
+        }
+
+        function loadAthletesFromCache() {
+            try {
+                const cached = localStorage.getItem('mp_athletes_cache');
+                if (cached) {
+                    const list = JSON.parse(cached);
+                    if (Array.isArray(list) && list.length > 0) {
+                        athletes = filterDeletedAthletes(list).map(normalizeAthlete);
+                    }
+                }
+            } catch (e) {
+                console.warn('Cache de atletas no válido');
+            }
         }
 
         function saveAthletes() {
             localStorage.setItem('mp_athletes_cache', JSON.stringify(athletes));
+        }
+
+        const DEMO_MEN_NAMES = [
+            ['Mendoza','Carlos'],['Quiroz','Andrés'],['Alcívar','Luis'],['Barreto','Diego'],['Vera','Fernando'],
+            ['Suárez','Roberto'],['Pincay','Javier'],['Cedeño','Mauricio'],['Mera','Patricio'],['Hidalgo','Ricardo'],
+            ['Delgado','Esteban'],['Romero','Gabriel'],['Vélez','Héctor'],['Palma','Iván'],['Cevallos','Jorge'],
+            ['Reyes','Kevin'],['Morales','Leonardo'],['Castillo','Marco'],['Aguirre','Nicolás'],['Paredes','Óscar'],
+            ['Ruiz','Pablo'],['Salazar','Raúl'],['Torres','Santiago'],['Vargas','Tomás'],['Zambrano','Víctor'],
+            ['Benítez','William'],['Cordero','Xavier'],['Espinoza','Adrián'],['Figueroa','Bryan'],['García','Cristian']
+        ];
+
+        const DEMO_WOMEN_NAMES = [
+            ['Mendoza','María'],['Quiroz','Andrea'],['Alcívar','Daniela'],['Barreto','Paola'],['Vera','Karla'],
+            ['Suárez','Verónica'],['Pincay','Gabriela'],['Cedeño','Valentina'],['Mera','Camila'],['Hidalgo','Sofía'],
+            ['Delgado','Natalia'],['Romero','Diana'],['Vélez','Estefanía'],['Palma','Fernanda'],['Cevallos','Jessica'],
+            ['Reyes','Laura'],['Morales','Lucía'],['Castillo','Melissa'],['Aguirre','Patricia'],['Paredes','Rosa'],
+            ['Ruiz','Sandra'],['Salazar','Teresa'],['Torres','Vanessa'],['Vargas','Ximena'],['Zambrano','Yolanda'],
+            ['Benítez','Ana'],['Cordero','Beatriz'],['Espinoza','Carmen'],['Figueroa','Elena'],['García','Isabel']
+        ];
+
+        const DEMO_MEN_MODALITIES = [
+            "Men's Physique", "Men's Fit", "Muscular Men's Physique", "Games Classic",
+            "Culturismo Clásico", "Classic Physique", "Fisicoculturismo"
+        ];
+
+        const DEMO_WOMEN_MODALITIES = [
+            "Fit & Beauty", "Bikini Fitness", "Wellness Fitness", "Body Fitness",
+            "Women's Physique", "Posing Art"
+        ];
+
+        const DEMO_SHARED_MODALITIES = ["Parejas Fitness", "Parejas Culturistas", "Fitness Coreográfico Infantil"];
+
+        const DEMO_PROVINCES = ['Manabí', 'Guayas', 'Pichincha', 'Los Ríos', 'Esmeraldas', 'Santo Domingo', 'Azuay'];
+        const DEMO_CLUBS = ['Iron House Manta', 'Power Gym Portoviejo', 'Fitness Elite Manta', 'Culturismo Manabí', 'Gold Gym Chone', 'Independiente', 'Athletic Center Manta'];
+        const DEMO_COACHES = ['Coach Ramírez', 'Prof. Alcívar', 'Lic. Mendoza', 'Coach Pincay', 'Prof. Vera', ''];
+
+        function demoPick(arr, index) {
+            return arr[index % arr.length];
+        }
+
+        function demoDeterministicInt(index, salt, min, max) {
+            const range = max - min + 1;
+            return ((index * 7919 + salt * 104729) % range) + min;
+        }
+
+        function demoCedula(index, provinceCode = '13') {
+            const serial = String(1000000 + index * 17391).slice(-7);
+            return `${provinceCode}${serial}${demoDeterministicInt(index, 3, 0, 9)}`;
+        }
+
+        function generateDemoAthletes(count = 50) {
+            const list = [];
+            const menCount = Math.ceil(count / 2);
+            const passOptions = ['Sí', 'Sí', 'Sí', 'No', 'Subió de categoría'];
+            const classOptions = ['Novato', 'Novato', 'Clasificado', 'Clasificado'];
+            const payOptions = ['Pagado', 'Pagado', 'Pendiente'];
+
+            for (let i = 1; i <= count; i++) {
+                const isMale = i <= menCount;
+                const [lastName, firstName] = isMale
+                    ? DEMO_MEN_NAMES[(i - 1) % DEMO_MEN_NAMES.length]
+                    : DEMO_WOMEN_NAMES[(i - menCount - 1) % DEMO_WOMEN_NAMES.length];
+
+                let modality;
+                if (i <= 3) modality = demoPick(DEMO_SHARED_MODALITIES, i - 1);
+                else if (isMale) modality = demoPick(DEMO_MEN_MODALITIES, i - 1);
+                else modality = demoPick(DEMO_WOMEN_MODALITIES, i - menCount - 1);
+
+                const needsWeigh = !NON_WEIGHING.includes(modality);
+                let height = null;
+                let weight = null;
+
+                if (needsWeigh) {
+                    if (isMale) {
+                        height = demoDeterministicInt(i, 11, 168, 188);
+                        if (modality === 'Fisicoculturismo') weight = demoDeterministicInt(i, 17, 72, 108);
+                        else if (modality === 'Muscular Men\'s Physique') weight = demoDeterministicInt(i, 19, 78, 98);
+                        else weight = demoDeterministicInt(i, 13, 68, 92);
+                    } else {
+                        height = demoDeterministicInt(i, 23, 155, 172);
+                        if (modality === 'Women\'s Physique') weight = demoDeterministicInt(i, 29, 58, 74);
+                        else if (modality === 'Wellness Fitness') weight = demoDeterministicInt(i, 31, 58, 78);
+                        else weight = demoDeterministicInt(i, 27, 48, 68);
+                    }
+                } else if (modality === 'Fitness Coreográfico Infantil') {
+                    height = demoDeterministicInt(i, 37, 140, 155);
+                    weight = demoDeterministicInt(i, 41, 35, 52);
+                }
+
+                const birthYear = modality === 'Fitness Coreográfico Infantil'
+                    ? demoDeterministicInt(i, 43, 2012, 2017)
+                    : demoDeterministicInt(i, 47, 1986, 2004);
+                const birthMonth = String(demoDeterministicInt(i, 53, 1, 12)).padStart(2, '0');
+                const birthDay = String(demoDeterministicInt(i, 59, 1, 28)).padStart(2, '0');
+                const birthDate = `${birthYear}-${birthMonth}-${birthDay}`;
+                const province = demoPick(DEMO_PROVINCES, i);
+                const provCode = { 'Manabí': '13', 'Guayas': '09', 'Pichincha': '17', 'Los Ríos': '12', 'Esmeraldas': '08', 'Santo Domingo': '23', 'Azuay': '01' }[province] || '13';
+
+                const athlete = normalizeAthlete({
+                    id: `demo-athlete-${i}`,
+                    bibNumber: i,
+                    lastName,
+                    firstName,
+                    fullName: `${lastName} ${firstName}`,
+                    idCard: demoCedula(i, provCode),
+                    birthDate,
+                    age: calcAge(birthDate),
+                    sex: isMale ? 'Masculino' : 'Femenino',
+                    nationality: 'Ecuatoriana',
+                    province,
+                    club: demoPick(DEMO_CLUBS, i + 2),
+                    coach: demoPick(DEMO_COACHES, i),
+                    phone: `09${demoDeterministicInt(i, 61, 0, 9)}${demoDeterministicInt(i, 67, 1000000, 9999999)}`,
+                    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@email.com`,
+                    modality,
+                    height,
+                    weight,
+                    athleteStatus: demoPick(classOptions, i),
+                    classification: demoPick(classOptions, i),
+                    passStatus: needsWeigh ? demoPick(passOptions, i) : 'Sí',
+                    didPassWeight: needsWeigh ? demoPick(passOptions, i) : 'Sí',
+                    paymentStatus: demoPick(payOptions, i),
+                    observations: i % 7 === 0 ? 'Primera competencia nacional' : '',
+                    registrationTimestamp: Date.now() - (count - i) * 3600000
+                });
+
+                list.push(athlete);
+            }
+            return list;
+        }
+
+        function seedDemoAthletes(count = 50, silent = false) {
+            athletes = generateDemoAthletes(count);
+            deletedAthleteIds = new Set();
+            saveDeletedAthletes();
+            saveAthletes();
+            if (!silent) addLog('Datos demo', `Cargó ${count} competidores de prueba`);
+            refreshAllViews();
+            updateDashboardMetrics();
+            renderModalitiesOverview();
+            return athletes.length;
+        }
+
+        function ensureDemoAthletes(count = 50) {
+            if (athletes.length >= count) return athletes.length;
+            return seedDemoAthletes(count, true);
+        }
+
+        function reloadDemoAthletes() {
+            if (!confirm('¿Reemplazar todos los atletas actuales con 50 competidores de prueba?')) return;
+            const total = seedDemoAthletes(50);
+            showToast(`${total} competidores demo cargados`, 'success');
         }
 
         function saveLogs() {
@@ -1239,8 +1801,9 @@
             localStorage.setItem('manabi_current_user', user);
             errorEl.classList.add('hidden');
             
+            ensureDemoAthletes(50);
             showMainApp();
-            showToast(`Bienvenido, ${user}. Mesa de control activa.`, 'success');
+            showToast(`Bienvenido, ${user}. ${athletes.length} atletas en sistema.`, 'success');
             addLog("Inicio de Sesión", `El operador ${user} ingresó al sistema`);
         }
 
@@ -1279,11 +1842,14 @@
             // Initialize filters
             populateModalityFilter();
             
+            ensureDemoAthletes(50);
+
             // Render initial section
             switchSection(0);
             
             // Update metrics
             updateDashboardMetrics();
+            renderModalitiesOverview();
         }
 
         // ==================== NAVIGATION ====================
@@ -1299,6 +1865,12 @@
             const nav = document.getElementById(`nav-${section}`);
             if (nav) nav.classList.add('active');
 
+            document.querySelectorAll('.mobile-nav button').forEach(btn => {
+                const match = btn.getAttribute('onclick')?.match(/switchSection\((\d+)\)/);
+                const sec = match ? parseInt(match[1], 10) : -1;
+                btn.classList.toggle('nav-active-mobile', sec === section);
+            });
+
             currentSection = section;
 
             // Section specific renders
@@ -1310,8 +1882,13 @@
                 filterAthletes();
             }
             if (section === 3) {
+                populateClubFilters();
                 renderPlanillasList();
                 updateExportPreview();
+            }
+            if (section === 5) {
+                initJudgeForm();
+                renderJudgesList();
             }
             if (section === 4) {
                 renderAdminUsers();
@@ -1486,6 +2063,7 @@
                 localStorage.removeItem('mp_form_draft');
             }
             saveAthletes();
+            populateClubFilters();
             editingAthleteId = null; cancelEdit();
             setTimeout(() => { switchSection(2); filterAthletes(); }, 500);
         }
@@ -1545,38 +2123,107 @@
         function populateModalityFilter() {
             const select = document.getElementById('filter-modality');
             const exportSelect = document.getElementById('export-filter-modality');
-            select.innerHTML = '<option value="Todas">Todas las modalidades</option>';
+            const judgeSelect = document.getElementById('judgeModality');
+            if (select) select.innerHTML = '<option value="Todas">Todas las modalidades</option>';
             if (exportSelect) exportSelect.innerHTML = '<option value="Todas">Todas las modalidades</option>';
-            
+            if (judgeSelect) judgeSelect.innerHTML = '<option value="">Seleccionar modalidad</option>';
             MODALITIES.forEach(mod => {
-                const opt = document.createElement('option');
-                opt.value = mod;
-                opt.textContent = mod;
-                select.appendChild(opt);
-                if (exportSelect) {
-                    const opt2 = opt.cloneNode(true);
-                    exportSelect.appendChild(opt2);
-                }
+                [select, exportSelect, judgeSelect].forEach(el => {
+                    if (!el) return;
+                    const opt = document.createElement('option');
+                    opt.value = mod;
+                    opt.textContent = mod;
+                    el.appendChild(opt);
+                });
             });
+            populateClubFilters();
+        }
+
+        function populateClubFilters() {
+            const clubs = [...new Set(athletes.map(a => (a.club || 'Independiente').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+            ['filter-club', 'export-filter-club'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const current = el.value;
+                el.innerHTML = '<option value="Todos">Todos los clubs</option>';
+                clubs.forEach(club => {
+                    const opt = document.createElement('option');
+                    opt.value = club;
+                    opt.textContent = club;
+                    el.appendChild(opt);
+                });
+                if ([...el.options].some(o => o.value === current)) el.value = current;
+            });
+        }
+
+        function getExportSortBy() {
+            return document.getElementById('export-sort-by')?.value || 'bib';
+        }
+
+        function getExportGroupBy() {
+            return document.getElementById('export-group-by')?.value || 'modality';
+        }
+
+        function sortAthletesList(list, sortBy) {
+            const sorted = list.map(a => normalizeAthlete({ ...a }));
+            const cmpStr = (a, b) => (a || '').localeCompare(b || '', 'es');
+            const tieBib = (a, b) => (a.bibNumber || 0) - (b.bibNumber || 0);
+            sorted.sort((a, b) => {
+                let r = 0;
+                if (sortBy === 'name') r = cmpStr(getFullName(a), getFullName(b));
+                else if (sortBy === 'modality') r = cmpStr(a.modality, b.modality);
+                else if (sortBy === 'category') r = cmpStr(a.category, b.category);
+                else if (sortBy === 'club') r = cmpStr(a.club || 'Independiente', b.club || 'Independiente');
+                else if (sortBy === 'weight') r = (parseFloat(a.weight) || 9999) - (parseFloat(b.weight) || 9999);
+                else r = tieBib(a, b);
+                return r || tieBib(a, b);
+            });
+            return sorted;
+        }
+
+        function getAthleteGroupKey(a, groupBy) {
+            a = normalizeAthlete({ ...a });
+            if (groupBy === 'category') return a.category || 'Sin categoría';
+            if (groupBy === 'club') return a.club || 'Independiente';
+            if (groupBy === 'weight') return a.weight != null && a.weight !== '' ? `${a.weight} kg` : 'Sin peso registrado';
+            return a.modality || 'Sin modalidad';
+        }
+
+        function groupAthletesBy(list, groupBy, sortBy) {
+            groupBy = groupBy || getExportGroupBy();
+            sortBy = sortBy || getExportSortBy();
+            const grouped = {};
+            list.forEach(a => {
+                const key = getAthleteGroupKey(a, groupBy);
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(a);
+            });
+            Object.keys(grouped).forEach(k => {
+                grouped[k] = sortAthletesList(grouped[k], sortBy);
+            });
+            return grouped;
+        }
+
+        function groupAthletesByModality(list) {
+            return groupAthletesBy(list, 'modality', getExportSortBy());
         }
 
         function getFilteredAthletesForExport() {
             const modFilter = document.getElementById('export-filter-modality')?.value || 'Todas';
             const statusFilter = document.getElementById('export-filter-status')?.value || 'Todos';
             const classFilter = document.getElementById('export-filter-class')?.value || 'Todas';
-            const sortBy = document.getElementById('export-sort-by')?.value || 'bib';
-
-            let filtered = [...athletes];
-
+            const clubFilter = document.getElementById('export-filter-club')?.value || 'Todos';
+            let filtered = athletes.map(a => normalizeAthlete({ ...a }));
             if (modFilter !== 'Todas') filtered = filtered.filter(a => a.modality === modFilter);
             if (statusFilter !== 'Todos') filtered = filtered.filter(a => (a.passStatus || a.didPassWeight) === statusFilter);
             if (classFilter !== 'Todas') filtered = filtered.filter(a => (a.athleteStatus || a.classification || 'Novato') === classFilter);
+            if (clubFilter !== 'Todos') filtered = filtered.filter(a => (a.club || 'Independiente') === clubFilter);
+            return sortAthletesList(filtered, getExportSortBy());
+        }
 
-            if (sortBy === 'name') filtered.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
-            else if (sortBy === 'modality') filtered.sort((a, b) => (a.modality || '').localeCompare(b.modality || '') || a.bibNumber - b.bibNumber);
-            else filtered.sort((a, b) => a.bibNumber - b.bibNumber);
-
-            return filtered;
+        function onExportSettingsChange() {
+            updateExportPreview();
+            if (currentSection === 3) renderPlanillasList();
         }
 
         function updateExportPreview() {
@@ -1585,35 +2232,233 @@
             if (el) el.textContent = `${count} atleta${count !== 1 ? 's' : ''} listo${count !== 1 ? 's' : ''}`;
         }
 
-        function groupAthletesByModality(list) {
-            const grouped = {};
-            list.forEach(a => {
-                if (!grouped[a.modality]) grouped[a.modality] = [];
-                grouped[a.modality].push(a);
-            });
-            Object.keys(grouped).forEach(k => grouped[k].sort((a, b) => a.bibNumber - b.bibNumber));
-            return grouped;
-        }
-
         function escapeCSV(val) {
             if (val == null) return '';
             const str = String(val).replace(/"/g, '""');
             return `"${str}"`;
         }
 
-        const EXPORT_HEADERS = ['Apellidos y Nombres', 'Cédula', 'Modalidad', 'Categoría', 'Estatura', 'Peso', 'Estado'];
+        const EXPORT_HEADERS = [
+            'N.º Competidor',
+            'Nombre Completo',
+            'Cédula',
+            'Provincia / Club',
+            'Modalidad',
+            'Categoría',
+            'Estatura / Peso',
+            'Novato/Clasificado'
+        ];
+        const EXPORT_COL_WIDTHS = [12, 30, 14, 26, 24, 22, 16, 18];
+        const EXPORT_COL = {
+            BIB: 0, NAME: 1, ID: 2, PROV_CLUB: 3,
+            MODALITY: 4, CATEGORY: 5, HEIGHT_WEIGHT: 6, CLASSIFICATION: 7
+        };
+
+        function getExportProvinceClub(a) {
+            const prov = a.province || '-';
+            const club = a.club || '-';
+            return `${prov} / ${club}`;
+        }
+
+        function getExportHeightWeight(a) {
+            const h = a.height != null && a.height !== '' ? `${a.height} cm` : '-';
+            const w = a.weight != null && a.weight !== '' ? `${a.weight} kg` : '-';
+            return `${h} / ${w}`;
+        }
 
         function getExportRow(a) {
             a = normalizeAthlete({...a});
             return [
+                a.bibNumber || '',
                 getFullName(a),
                 a.idCard || '',
+                getExportProvinceClub(a),
                 a.modality || '',
                 a.category || '',
-                a.height != null && a.height !== '' ? a.height : '-',
-                a.weight != null && a.weight !== '' ? a.weight : '-',
-                a.passStatus || a.didPassWeight || a.athleteStatus || '-'
+                getExportHeightWeight(a),
+                a.athleteStatus || a.classification || 'Novato'
             ];
+        }
+
+        function formatExportDisplay(value, colIndex) {
+            if (colIndex === EXPORT_COL.BIB && value !== '') return `#${value}`;
+            return value;
+        }
+
+        function exportClassBadge(status) {
+            const cls = status === 'Clasificado' ? 'badge-ok' : 'badge-warn';
+            return `<span class="badge ${cls}">${status}</span>`;
+        }
+
+        function getProfessionalReportCss() {
+            return `
+                @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');
+                * { box-sizing: border-box; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f1f4f9; color: #1f2937; }
+                .page { max-width: 1100px; margin: 0 auto; padding: 32px; }
+                .header { text-align: center; margin-bottom: 32px; background: linear-gradient(135deg, #030D1B, #0A1931, #0F3057); color: white; padding: 32px; border-radius: 16px; }
+                .header img { height: 80px; margin-bottom: 12px; }
+                .header h1 { font-family: 'Outfit', sans-serif; margin: 0; font-size: 28px; letter-spacing: 1px; }
+                .header .gold { color: #C5A85C; }
+                .header p { color: rgba(255,255,255,0.7); margin: 6px 0 0; font-size: 13px; }
+                .stats { display: flex; gap: 16px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+                .stat { background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 10px; font-size: 13px; }
+                .stat strong { color: #FFEA8D; font-size: 20px; display: block; }
+                .modality-section { margin-bottom: 28px; background: white; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow: hidden; page-break-inside: avoid; }
+                .modality-header { background: linear-gradient(90deg, #0F2238, #0F3057); color: white; padding: 14px 24px; font-size: 16px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+                .modality-header .count { background: #C5A85C; color: #0F2238; padding: 2px 10px; border-radius: 20px; font-size: 12px; }
+                table { width: 100%; border-collapse: collapse; }
+                th { background: #f8fafc; text-align: left; padding: 10px 14px; font-size: 11px; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; }
+                td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+                tr:nth-child(even) { background: #fafbfc; }
+                td.num { text-align: center; font-family: Consolas, monospace; font-size: 12px; }
+                .badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; }
+                .badge-ok { background: #d1fae5; color: #065f46; }
+                .badge-fail { background: #fee2e2; color: #991b1b; }
+                .badge-warn { background: #fef3c7; color: #92400e; }
+                .footer { text-align: center; margin-top: 32px; padding: 20px; color: #9ca3af; font-size: 12px; border-top: 2px solid #C5A85C; }
+                .print-btn { position: fixed; top: 20px; right: 20px; background: #C5A85C; color: #0F2238; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 10; }
+                .print-btn:hover { background: #FFEA8D; }
+                @media print { .print-btn { display: none; } body { background: white; } .page { padding: 0; } }
+            `;
+        }
+
+        function buildReportTableRows(list, options = {}) {
+            const { withAccreditation = false } = options;
+            let html = '';
+            list.forEach(a => {
+                const row = getExportRow(a);
+                html += '<tr>';
+                row.forEach((cell, i) => {
+                    const display = formatExportDisplay(cell, i);
+                    if (i === EXPORT_COL.BIB) html += `<td class="num"><strong>${display}</strong></td>`;
+                    else if (i === EXPORT_COL.NAME) html += `<td><strong>${display}</strong></td>`;
+                    else if (i === EXPORT_COL.ID) html += `<td class="num">${display}</td>`;
+                    else if (i === EXPORT_COL.HEIGHT_WEIGHT) html += `<td class="num">${display}</td>`;
+                    else if (i === EXPORT_COL.CLASSIFICATION) html += `<td>${exportClassBadge(display)}</td>`;
+                    else html += `<td>${display}</td>`;
+                });
+                if (withAccreditation) {
+                    const payCls = a.paymentStatus === 'Pagado' ? 'badge-ok' : 'badge-warn';
+                    html += `<td><span class="badge ${payCls}">${a.paymentStatus || 'Pendiente'}</span></td>`;
+                }
+                html += '</tr>';
+            });
+            return html;
+        }
+
+        function buildReportTableHeaders(withAccreditation) {
+            let html = EXPORT_HEADERS.map(h => `<th>${h}</th>`).join('');
+            if (withAccreditation) html += '<th>Pago</th>';
+            return html;
+        }
+
+        const XLSX_CELL_BORDER = {
+            top: { style: 'thin', color: { rgb: 'E2E8F0' } },
+            bottom: { style: 'thin', color: { rgb: 'E2E8F0' } },
+            left: { style: 'thin', color: { rgb: 'E2E8F0' } },
+            right: { style: 'thin', color: { rgb: 'E2E8F0' } }
+        };
+
+        function xlsxColLetter(index) {
+            return XLSX.utils.encode_col(index);
+        }
+
+        function setXlsxCellStyle(ws, row, col, style) {
+            const addr = xlsxColLetter(col) + (row + 1);
+            if (ws[addr]) ws[addr].s = style;
+        }
+
+        function applyXlsxProfessionalStyle(ws, { titleRow, subtitleRow, headerRow, colCount, dataStartRow, dataEndRow }) {
+            ws['!merges'] = ws['!merges'] || [];
+            if (titleRow != null) {
+                ws['!merges'].push({ s: { r: titleRow, c: 0 }, e: { r: titleRow, c: colCount - 1 } });
+                setXlsxCellStyle(ws, titleRow, 0, {
+                    font: { bold: true, sz: 16, color: { rgb: 'FFEA8D' } },
+                    fill: { fgColor: { rgb: '0A1931' } },
+                    alignment: { horizontal: 'center', vertical: 'center' }
+                });
+            }
+            if (subtitleRow != null) {
+                ws['!merges'].push({ s: { r: subtitleRow, c: 0 }, e: { r: subtitleRow, c: colCount - 1 } });
+                setXlsxCellStyle(ws, subtitleRow, 0, {
+                    font: { sz: 11, color: { rgb: '64748B' }, italic: true },
+                    alignment: { horizontal: 'center', vertical: 'center' }
+                });
+            }
+            const headerStyle = {
+                font: { bold: true, sz: 11, color: { rgb: 'FFEA8D' } },
+                fill: { fgColor: { rgb: '0F3057' } },
+                alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+                border: {
+                    top: { style: 'medium', color: { rgb: 'C5A85C' } },
+                    bottom: { style: 'medium', color: { rgb: 'C5A85C' } },
+                    left: { style: 'thin', color: { rgb: 'C5A85C' } },
+                    right: { style: 'thin', color: { rgb: 'C5A85C' } }
+                }
+            };
+            for (let c = 0; c < colCount; c++) setXlsxCellStyle(ws, headerRow, c, headerStyle);
+
+            for (let r = dataStartRow; r <= dataEndRow; r++) {
+                const zebra = (r - dataStartRow) % 2 === 1;
+                for (let c = 0; c < colCount; c++) {
+                    const addr = xlsxColLetter(c) + (r + 1);
+                    if (!ws[addr]) continue;
+                    const isCenter = c === EXPORT_COL.BIB || c === EXPORT_COL.ID || c === EXPORT_COL.HEIGHT_WEIGHT || c === EXPORT_COL.CLASSIFICATION;
+                    setXlsxCellStyle(ws, r, c, {
+                        font: {
+                            bold: c === EXPORT_COL.BIB || c === EXPORT_COL.NAME,
+                            sz: 10,
+                            color: { rgb: c === EXPORT_COL.NAME ? '0F3057' : '334155' }
+                        },
+                        fill: { fgColor: { rgb: zebra ? 'F8FAFC' : 'FFFFFF' } },
+                        alignment: {
+                            horizontal: isCenter ? 'center' : 'left',
+                            vertical: 'center',
+                            wrapText: c === EXPORT_COL.NAME || c === EXPORT_COL.PROV_CLUB || c === EXPORT_COL.MODALITY || c === EXPORT_COL.CATEGORY
+                        },
+                        border: XLSX_CELL_BORDER
+                    });
+                }
+            }
+
+            ws['!cols'] = EXPORT_COL_WIDTHS.map(wch => ({ wch }));
+            ws['!rows'] = [
+                { hpt: 32 },
+                { hpt: 20 },
+                { hpt: 10 },
+                { hpt: 24 }
+            ];
+            ws['!views'] = [{ state: 'frozen', ySplit: headerRow + 1, activeCell: 'A' + (headerRow + 2) }];
+        }
+
+        function createStyledXlsxSheet(title, subtitle, rows) {
+            const sheetData = [[title], [subtitle], [], EXPORT_HEADERS, ...rows];
+            const ws = XLSX.utils.aoa_to_sheet(sheetData);
+            const dataEndRow = sheetData.length - 1;
+            applyXlsxProfessionalStyle(ws, {
+                titleRow: 0,
+                subtitleRow: 1,
+                headerRow: 3,
+                colCount: EXPORT_HEADERS.length,
+                dataStartRow: 4,
+                dataEndRow
+            });
+            return ws;
+        }
+
+        function groupAthletesForJudgesSheet(list) {
+            const grouped = {};
+            const sortBy = getExportSortBy();
+            list.forEach(a => {
+                const k = `${a.modality}|||${a.category || 'Sin categoría'}`;
+                if (!grouped[k]) grouped[k] = [];
+                grouped[k].push(a);
+            });
+            Object.keys(grouped).forEach(k => {
+                grouped[k] = sortAthletesList(grouped[k], sortBy);
+            });
+            return grouped;
         }
 
         function exportList(type) {
@@ -1624,56 +2469,106 @@
             if (data.length === 0) { showToast('Sin datos para exportar', 'error'); return; }
             if (type === 'xlsx') return exportToXLSX();
             if (type === 'pdf') return generateVisualReport();
-            const titles = { oficial:'Lista Oficial de Competidores', pesaje:'Lista de Pesaje', acreditacion:'Lista de Acreditación', modalidad:'Lista por Modalidad', categoria:'Lista por Categoría', novatos:'Lista de Novatos', clasificados:'Lista de Clasificados', jueces:'Hoja de Jueces' };
-            let grouped;
+            const titles = {
+                oficial: 'Lista Oficial de Competidores',
+                pesaje: 'Lista de Pesaje',
+                acreditacion: 'Lista de Acreditación',
+                modalidad: 'Lista por Modalidad',
+                categoria: 'Lista por Categoría',
+                club: 'Lista por Club / Gimnasio',
+                peso: 'Lista por Peso',
+                novatos: 'Lista de Novatos',
+                clasificados: 'Lista de Clasificados',
+                jueces: 'Hoja de Jueces'
+            };
             if (type === 'jueces') {
-                grouped = {}; data.forEach(a => { const k = `${a.modality}|||${a.category}`; (grouped[k] ||= []).push(a); });
-                return generateExportReport(titles[type], data, false, true, grouped);
+                const grouped = groupAthletesForJudgesSheet(data);
+                return generateExportReport(titles.jueces, data, false, true, grouped);
             }
-            if (type === 'categoria') {
-                grouped = {}; data.forEach(a => { const k = a.category || 'Sin categoría'; (grouped[k] ||= []).push(a); });
-                return generateExportReport(titles[type], data, false, true, grouped);
-            }
-            grouped = groupAthletesByModality(data);
+            const groupMap = {
+                modalidad: 'modality',
+                categoria: 'category',
+                club: 'club',
+                peso: 'weight'
+            };
+            const groupBy = groupMap[type] || getExportGroupBy();
+            const grouped = groupAthletesBy(data, groupBy, getExportSortBy());
             generateExportReport(titles[type] || 'Exportación', data, type === 'acreditacion', false, grouped);
         }
 
         function generateExportReport(title, data, withAccreditation, judgesSheet, grouped) {
-            grouped = grouped || groupAthletesByModality(data);
-            let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
-                <style>body{font-family:Segoe UI,Arial,sans-serif;margin:30px;color:#111}h1{color:#0A0F1E;border-bottom:3px solid #C5A85C;padding-bottom:8px}
-                h2{background:#0A0F1E;color:#fff;padding:10px 16px;margin-top:24px;font-size:14px}table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}
-                th{background:#f1f5f9;padding:8px;text-align:left;border-bottom:2px solid #ddd}td{padding:8px;border-bottom:1px solid #eee}
-                .print{position:fixed;top:16px;right:16px;background:#C5A85C;border:none;padding:10px 20px;font-weight:bold;border-radius:8px;cursor:pointer}
-                @media print{.print{display:none}}</style></head><body>
-                <button class="print" onclick="window.print()">Imprimir / PDF</button>
-                <h1>${title} — Manabí Power 2026</h1><p style="color:#666">${new Date().toLocaleString('es-EC')} • ${data.length} atletas</p>`;
-            Object.keys(grouped).sort().forEach(key => {
-                const list = grouped[key];
-                const label = judgesSheet ? key.replace('|||', ' — ') : key;
-                html += `<h2>${label} (${list.length})</h2><table><tr>`;
-                if (withAccreditation) html += `<th>#</th>`;
-                EXPORT_HEADERS.forEach(h => html += `<th>${h}</th>`);
-                if (withAccreditation) html += `<th>Club</th><th>Pago</th>`;
-                html += `</tr>`;
-                list.forEach(a => {
-                    const row = getExportRow(a);
-                    html += '<tr>';
-                    if (withAccreditation) html += `<td><b>#${a.bibNumber}</b></td>`;
-                    row.forEach(c => html += `<td>${c}</td>`);
-                    if (withAccreditation) html += `<td>${a.club || ''}</td><td>${a.paymentStatus || ''}</td>`;
-                    html += '</tr>';
-                });
-                html += '</table>';
-            });
-            html += '</body></html>';
-            const w = window.open('', '_blank'); w.document.write(html); w.document.close();
+            openProfessionalReport({ title, data, grouped, withAccreditation, judgesSheet, showStats: false });
             showToast(`${title} generada`, 'success');
         }
 
+        function openProfessionalReport({ title, data, grouped, withAccreditation = false, judgesSheet = false, showStats = true }) {
+            grouped = grouped || groupAthletesBy(data, getExportGroupBy(), getExportSortBy());
+            const fecha = new Date().toLocaleString('es-EC');
+            const logoUrl = getLogoUrl(true);
+            const passed = data.filter(a => (a.passStatus || a.didPassWeight) === 'Sí').length;
+            const failed = data.filter(a => (a.passStatus || a.didPassWeight) === 'No').length;
+
+            let html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${title}</title>
+                <style>${getProfessionalReportCss()}</style></head><body>
+                <button class="print-btn" onclick="window.print()">Imprimir / Guardar PDF</button>
+                <div class="page">
+                    <div class="header">
+                        <img src="${logoUrl}" alt="Manabí Power" onerror="this.style.display='none'">
+                        <h1>MANABÍ <span class="gold">POWER</span> 2026</h1>
+                        <p>${title.toUpperCase()}</p>
+                        <p>Manta, Ecuador &nbsp;|&nbsp; ${fecha} &nbsp;|&nbsp; Operador: ${currentUser || 'Sistema'}</p>`;
+
+            if (showStats) {
+                html += `<div class="stats">
+                    <div class="stat"><strong>${data.length}</strong>Total Atletas</div>
+                    <div class="stat"><strong>${passed}</strong>Aprobaron Peso</div>
+                    <div class="stat"><strong>${failed}</strong>Excedieron</div>
+                    <div class="stat"><strong>${Object.keys(grouped).length}</strong>Secciones</div>
+                </div>`;
+            }
+            html += `</div>`;
+
+            const groupBy = getExportGroupBy();
+            const sortedKeys = Object.keys(grouped).sort((a, b) => {
+                if (judgesSheet) {
+                    const [modA, catA] = a.split('|||');
+                    const [modB, catB] = b.split('|||');
+                    return (modA || '').localeCompare(modB || '', 'es') || (catA || '').localeCompare(catB || '', 'es');
+                }
+                if (groupBy === 'weight') return parseFloat(a) - parseFloat(b);
+                return a.localeCompare(b, 'es');
+            });
+            sortedKeys.forEach(key => {
+                const list = grouped[key];
+                const label = judgesSheet ? key.replace('|||', ' — ') : key;
+                html += `<div class="modality-section">
+                    <div class="modality-header"><span>${label}</span><span class="count">${list.length} atletas</span></div>
+                    <table><thead><tr>${buildReportTableHeaders(withAccreditation)}</tr></thead>
+                    <tbody>${buildReportTableRows(list, { withAccreditation })}</tbody></table></div>`;
+            });
+
+            html += `<div class="footer">
+                <p><strong>TOTAL EXPORTADO: ${data.length} ATLETAS</strong></p>
+                <p>© 2026 Manabí Power Oficial — IFBB Ecuador</p>
+            </div></div></body></html>`;
+
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+        }
+
         function getExportRecord(a) {
-            const [apellidosNombres, cedula, modalidad, categoria, estatura, peso, estado] = getExportRow(a);
-            return { 'Apellidos y Nombres': apellidosNombres, 'Cédula': cedula, 'Modalidad': modalidad, 'Categoría': categoria, 'Estatura': estatura, 'Peso': peso, 'Estado': estado };
+            const [numero, nombre, cedula, provClub, modalidad, categoria, estaturaPeso, clasificacion] = getExportRow(a);
+            return {
+                'N.º Competidor': numero,
+                'Nombre Completo': nombre,
+                'Cédula': cedula,
+                'Provincia / Club': provClub,
+                'Modalidad': modalidad,
+                'Categoría': categoria,
+                'Estatura / Peso': estaturaPeso,
+                'Novato/Clasificado': clasificacion
+            };
         }
 
         function getAthleteInitials(name) {
@@ -1699,17 +2594,18 @@
         function filterAthletes() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const mod = document.getElementById('filter-modality').value;
+            const club = document.getElementById('filter-club')?.value || 'Todos';
             const status = document.getElementById('filter-status')?.value || 'Todos';
-            const prov = document.getElementById('filter-province')?.value.toLowerCase().trim() || '';
+            const sortBy = document.getElementById('athletes-sort-by')?.value || 'bib';
             let filtered = athletes.map(normalizeAthlete);
             if (query) filtered = filtered.filter(a =>
                 getFullName(a).toLowerCase().includes(query) || (a.idCard||'').includes(query) ||
                 String(a.bibNumber||'').includes(query) || (a.club||'').toLowerCase().includes(query) ||
                 (a.province||'').toLowerCase().includes(query) || (a.coach||'').toLowerCase().includes(query));
             if (mod !== 'Todas') filtered = filtered.filter(a => a.modality === mod);
+            if (club !== 'Todos') filtered = filtered.filter(a => (a.club || 'Independiente') === club);
             if (status !== 'Todos') filtered = filtered.filter(a => (a.athleteStatus||a.classification) === status);
-            if (prov) filtered = filtered.filter(a => (a.province||'').toLowerCase().includes(prov));
-            renderAthletesList(filtered);
+            renderAthletesList(sortAthletesList(filtered, sortBy));
         }
 
         function renderAthletesList(list) {
@@ -1841,68 +2737,261 @@
             });
         }
 
+        // ==================== JUECES ====================
+        const JUDGE_HEADERS = ['Nombre Completo', 'Cédula', 'Cargo', 'Nivel de Juez', 'Modalidad', 'Categoría', 'Mesa', 'Licencia', 'Teléfono', 'Estado'];
+
+        function getJudgeFullName(j) {
+            if (j.lastName || j.firstName) return `${j.lastName || ''} ${j.firstName || ''}`.trim();
+            return j.fullName || '';
+        }
+
+        function initJudgeForm() {
+            populateModalityFilter();
+        }
+
+        function clearJudgeForm() {
+            ['judgeLastName', 'judgeFirstName', 'judgeIdCard', 'judgeCategory', 'judgePanel', 'judgeLicense', 'judgePhone', 'judgeEmail', 'judgeObservations'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            document.getElementById('judgeRole').value = 'Director de Jueces';
+            document.getElementById('judgeLevel').value = '';
+            document.getElementById('judgeModality').value = MODALITIES[0] || '';
+            document.getElementById('judgeStatus').value = 'Activo';
+        }
+
+        function registerJudge() {
+            const lastName = document.getElementById('judgeLastName').value.trim();
+            const firstName = document.getElementById('judgeFirstName').value.trim();
+            const idCard = document.getElementById('judgeIdCard').value.trim();
+            const role = document.getElementById('judgeRole').value;
+            const judgeLevel = document.getElementById('judgeLevel').value;
+            const modality = document.getElementById('judgeModality').value;
+            const category = document.getElementById('judgeCategory').value.trim() || 'Todas';
+            const panel = document.getElementById('judgePanel').value.trim();
+            const license = document.getElementById('judgeLicense').value.trim();
+            const phone = document.getElementById('judgePhone').value.trim();
+            const email = document.getElementById('judgeEmail').value.trim();
+            const status = document.getElementById('judgeStatus').value;
+            const observations = document.getElementById('judgeObservations').value.trim();
+
+            if (!lastName || !firstName || !idCard || !modality || !judgeLevel) {
+                showToast('Complete apellidos, nombres, cédula, nivel de juez y modalidad', 'error');
+                return;
+            }
+
+            const judgeData = {
+                lastName, firstName,
+                fullName: `${lastName} ${firstName}`.trim(),
+                idCard, role, judgeLevel, modality, category, panel, license, phone, email, status, observations
+            };
+
+            if (editingJudgeId) {
+                const idx = judges.findIndex(j => j.id === editingJudgeId);
+                if (idx !== -1) {
+                    judges[idx] = { ...judges[idx], ...judgeData };
+                    addLog('Edición juez', getJudgeFullName(judgeData));
+                    showToast('Juez actualizado', 'success');
+                }
+            } else {
+                judges.unshift({ id: `judge-${Date.now()}`, ...judgeData, registeredAt: Date.now() });
+                addLog('Registro juez', getJudgeFullName(judgeData));
+                showToast('Juez registrado', 'success');
+            }
+
+            saveJudges();
+            editingJudgeId = null;
+            document.getElementById('judge-form-title').textContent = 'Jueces del Evento';
+            document.getElementById('judge-submit-text').textContent = 'Registrar Juez';
+            document.getElementById('cancel-judge-edit-btn').classList.add('hidden');
+            document.getElementById('cancel-judge-edit-btn').classList.remove('flex');
+            clearJudgeForm();
+            renderJudgesList();
+        }
+
+        function startEditJudge(id) {
+            const j = judges.find(x => x.id === id);
+            if (!j) return;
+            editingJudgeId = id;
+            document.getElementById('judgeLastName').value = j.lastName || '';
+            document.getElementById('judgeFirstName').value = j.firstName || '';
+            document.getElementById('judgeIdCard').value = j.idCard || '';
+            document.getElementById('judgeRole').value = j.role || 'Director de Jueces';
+            document.getElementById('judgeLevel').value = j.judgeLevel || '';
+            document.getElementById('judgeModality').value = j.modality || '';
+            document.getElementById('judgeCategory').value = j.category || '';
+            document.getElementById('judgePanel').value = j.panel || '';
+            document.getElementById('judgeLicense').value = j.license || '';
+            document.getElementById('judgePhone').value = j.phone || '';
+            document.getElementById('judgeEmail').value = j.email || '';
+            document.getElementById('judgeStatus').value = j.status || 'Activo';
+            document.getElementById('judgeObservations').value = j.observations || '';
+            document.getElementById('judge-form-title').textContent = 'Editar Juez';
+            document.getElementById('judge-submit-text').textContent = 'Guardar Cambios';
+            document.getElementById('cancel-judge-edit-btn').classList.remove('hidden');
+            document.getElementById('cancel-judge-edit-btn').classList.add('flex');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelJudgeEdit() {
+            editingJudgeId = null;
+            clearJudgeForm();
+            document.getElementById('judge-form-title').textContent = 'Jueces del Evento';
+            document.getElementById('judge-submit-text').textContent = 'Registrar Juez';
+            document.getElementById('cancel-judge-edit-btn').classList.add('hidden');
+            document.getElementById('cancel-judge-edit-btn').classList.remove('flex');
+        }
+
+        function deleteJudge(id) {
+            const j = judges.find(x => x.id === id);
+            if (!j || !confirm(`¿Eliminar a ${getJudgeFullName(j)}?`)) return;
+            judges = judges.filter(x => x.id !== id);
+            saveJudges();
+            addLog('Eliminación juez', getJudgeFullName(j));
+            renderJudgesList();
+            showToast('Juez eliminado', 'success');
+        }
+
+        function getAthletesForJudge(judge) {
+            let list = athletes.map(normalizeAthlete).filter(a => a.modality === judge.modality);
+            const cat = (judge.category || 'Todas').trim();
+            if (cat && cat !== 'Todas') {
+                list = list.filter(a => (a.category || '').toLowerCase().includes(cat.toLowerCase()));
+            }
+            return sortAthletesList(list, getExportSortBy());
+        }
+
+        function renderJudgesList() {
+            const container = document.getElementById('judges-list');
+            const badge = document.getElementById('judges-count-badge');
+            if (!container) return;
+            container.innerHTML = '';
+            if (badge) badge.textContent = `${judges.length} JUECES`;
+
+            if (judges.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-sm text-[#C5A85C]/60">No hay jueces registrados. Use el formulario superior.</div>`;
+                return;
+            }
+
+            judges.forEach(j => {
+                const athletesCount = getAthletesForJudge(j).length;
+                const div = document.createElement('div');
+                div.className = 'dark-panel rounded-2xl p-4';
+                div.innerHTML = `
+                    <div class="flex justify-between items-start gap-3">
+                        <div class="min-w-0 flex-1">
+                            <div class="font-bold text-[#FFEA8D]">${getJudgeFullName(j)}</div>
+                            <div class="text-xs text-[#C5A85C]/70 mt-1">${j.role} • ${j.judgeLevel || 'Sin nivel'} • ${j.modality}</div>
+                            <div class="text-xs text-[#C5A85C]/60 mt-1">${j.category || 'Todas las categorías'} ${j.panel ? '• ' + j.panel : ''}</div>
+                            <div class="text-[10px] text-[#C5A85C]/50 mt-2">${j.idCard} ${j.license ? '• Lic. ' + j.license : ''} • ${athletesCount} competidores asignados</div>
+                        </div>
+                        <div class="flex gap-1 flex-shrink-0">
+                            <button onclick="startEditJudge('${j.id}')" class="w-8 h-8 flex items-center justify-center text-[#C5A85C]/70 hover:bg-[#C5A85C]/10 rounded-lg"><i class="fa-solid fa-edit text-xs"></i></button>
+                            <button onclick="deleteJudge('${j.id}')" class="w-8 h-8 flex items-center justify-center text-[#C5A85C] hover:bg-[#0F3057] rounded-lg"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex gap-2 flex-wrap">
+                        ${j.judgeLevel ? `<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/30">${j.judgeLevel}</span>` : ''}
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${j.status === 'Activo' ? 'bg-[#C5A85C]/25 text-[#FFEA8D]' : 'bg-[#0F3057] text-[#C5A85C]/70 border border-[#C5A85C]/20'}">${j.status || 'Activo'}</span>
+                        ${j.phone ? `<span class="text-[10px] text-[#C5A85C]/60"><i class="fa-solid fa-phone mr-1"></i>${j.phone}</span>` : ''}
+                    </div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function exportJudgesRoster() {
+            if (judges.length === 0) { showToast('Registre jueces primero', 'error'); return; }
+            const fecha = new Date().toLocaleString('es-EC');
+            const logoUrl = getLogoUrl(true);
+            let html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Nómina de Jueces</title>
+                <style>${getProfessionalReportCss()}</style></head><body>
+                <button class="print-btn" onclick="window.print()">Imprimir / PDF</button>
+                <div class="page">
+                    <div class="header">
+                        <img src="${logoUrl}" alt="Manabí Power" onerror="this.style.display='none'">
+                        <h1>MANABÍ <span class="gold">POWER</span> 2026</h1>
+                        <p>NÓMINA OFICIAL DE JUECES — IFBB</p>
+                        <p>${fecha} • Operador: ${currentUser || 'Sistema'}</p>
+                    </div>
+                    <div class="modality-section">
+                        <div class="modality-header"><span>Jueces registrados</span><span class="count">${judges.length}</span></div>
+                        <table><thead><tr>${JUDGE_HEADERS.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
+            judges.forEach(j => {
+                html += `<tr>
+                    <td><strong>${getJudgeFullName(j)}</strong></td>
+                    <td>${j.idCard || ''}</td><td>${j.role || ''}</td><td>${j.judgeLevel || '-'}</td><td>${j.modality || ''}</td>
+                    <td>${j.category || 'Todas'}</td><td>${j.panel || '-'}</td><td>${j.license || '-'}</td>
+                    <td>${j.phone || '-'}</td><td>${j.status || 'Activo'}</td>
+                </tr>`;
+            });
+            html += `</tbody></table></div></div></body></html>`;
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            showToast('Nómina de jueces generada', 'success');
+        }
+
         // ==================== PLANILLAS ====================
         function renderPlanillasList() {
             const container = document.getElementById('planillas-list');
             container.innerHTML = '';
-            document.getElementById('total-athletes-report').textContent = `${athletes.length} ATLETAS`;
+            const data = getFilteredAthletesForExport();
+            const groupBy = getExportGroupBy();
+            const groupLabels = { modality: 'Modalidad', category: 'Categoría', club: 'Club', weight: 'Peso' };
+            document.getElementById('total-athletes-report').textContent = `${data.length} ATLETAS`;
             
-            if (athletes.length === 0) {
+            if (data.length === 0) {
                 container.innerHTML = `<div class="text-center py-8 text-sm text-[#C5A85C]/60">Aún no hay atletas registrados.</div>`;
                 return;
             }
             
-            // Group by modality
-            const grouped = {};
-            athletes.forEach(a => {
-                if (!grouped[a.modality]) grouped[a.modality] = [];
-                grouped[a.modality].push(a);
-            });
+            const grouped = groupAthletesBy(data, groupBy, getExportSortBy());
             
-            Object.keys(grouped).sort().forEach(modality => {
-                const list = grouped[modality].sort((a,b) => a.bibNumber - b.bibNumber);
+            Object.keys(grouped).sort((a, b) => {
+                if (groupBy === 'weight') return parseFloat(a) - parseFloat(b);
+                return a.localeCompare(b, 'es');
+            }).forEach(groupLabel => {
+                const list = grouped[groupLabel];
                 
                 const section = document.createElement('div');
                 section.className = 'mb-5';
                 
                 let html = `
                     <div class="flex items-center gap-x-3 mb-2 px-1">
-                        <div class="font-extrabold text-sm">${modality}</div>
+                        <div class="text-[10px] text-[#C5A85C]/60 uppercase tracking-wider">${groupLabels[groupBy] || 'Grupo'}</div>
+                        <div class="font-extrabold text-sm">${groupLabel}</div>
                         <div class="text-xs px-2.5 py-px bg-[#C5A85C] text-[#0A1931] font-bold rounded">${list.length}</div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs">
                             <thead>
                                 <tr class="bg-[#0F3057] text-[#FFEA8D]">
-                                    <th class="px-3 py-2 text-left font-bold rounded-l-2xl">Apellidos y Nombres</th>
-                                    <th class="px-3 py-2 text-left font-bold">Cédula</th>
-                                    <th class="px-3 py-2 text-left font-bold">Modalidad</th>
-                                    <th class="px-3 py-2 text-left font-bold">Categoría</th>
-                                    <th class="px-3 py-2 text-center font-bold">Estatura</th>
-                                    <th class="px-3 py-2 text-center font-bold">Peso</th>
-                                    <th class="px-3 py-2 text-center font-bold rounded-r-2xl">Estado</th>
+                                    ${EXPORT_HEADERS.map((h, i) => {
+                                        const align = [EXPORT_COL.BIB, EXPORT_COL.ID, EXPORT_COL.HEIGHT_WEIGHT, EXPORT_COL.CLASSIFICATION].includes(i) ? 'text-center' : 'text-left';
+                                        const round = i === 0 ? 'rounded-l-2xl' : i === EXPORT_HEADERS.length - 1 ? 'rounded-r-2xl' : '';
+                                        return `<th class="px-3 py-2 ${align} font-bold ${round}">${h}</th>`;
+                                    }).join('')}
                                 </tr>
                             </thead>
                             <tbody>
                 `;
                 
-                list.forEach(a => {
-                    const [nombre, cedula, mod, cat, estatura, peso, estado] = getExportRow(a);
-                    html += `
-                        <tr class="border-b border-[#C5A85C]/10 last:border-none hover:bg-[#0F3057]/30">
-                            <td class="px-3 py-2.5 font-bold text-[#FFEA8D]">${nombre}</td>
-                            <td class="px-3 py-2.5 text-[#C5A85C]/80">${cedula}</td>
-                            <td class="px-3 py-2.5 text-xs text-[#FFEA8D]/90">${mod}</td>
-                            <td class="px-3 py-2.5 text-xs text-[#C5A85C]/80">${cat || '-'}</td>
-                            <td class="px-3 py-2.5 text-center font-mono text-xs text-[#FFEA8D]">${estatura !== '-' ? estatura + ' cm' : '-'}</td>
-                            <td class="px-3 py-2.5 text-center font-mono text-xs text-[#FFEA8D]">${peso !== '-' ? peso + ' kg' : '-'}</td>
-                            <td class="px-3 py-2.5 text-center">
-                                <span class="status-badge text-[9px] bg-[#C5A85C]/15 text-[#FFEA8D] border border-[#C5A85C]/30">
-                                    ${estado}
-                                </span>
-                            </td>
-                        </tr>
-                    `;
+                list.forEach((a, idx) => {
+                    const row = getExportRow(a);
+                    const rowBg = idx % 2 === 0 ? '' : 'bg-[#0F3057]/20';
+                    html += `<tr class="border-b border-[#C5A85C]/10 last:border-none hover:bg-[#0F3057]/30 ${rowBg}">`;
+                    row.forEach((cell, i) => {
+                        const display = formatExportDisplay(cell, i);
+                        if (i === EXPORT_COL.BIB) html += `<td class="px-3 py-2.5 text-center font-mono text-xs font-bold text-[#C5A85C]">${display}</td>`;
+                        else if (i === EXPORT_COL.NAME) html += `<td class="px-3 py-2.5 font-bold text-[#FFEA8D]">${display}</td>`;
+                        else if (i === EXPORT_COL.ID || i === EXPORT_COL.HEIGHT_WEIGHT) html += `<td class="px-3 py-2.5 text-center font-mono text-xs text-[#FFEA8D]">${display}</td>`;
+                        else if (i === EXPORT_COL.CLASSIFICATION) {
+                            const cls = display === 'Clasificado' ? 'bg-[#C5A85C]/25 text-[#FFEA8D]' : 'bg-[#0F3057] text-[#C5A85C]/80 border border-[#C5A85C]/20';
+                            html += `<td class="px-3 py-2.5 text-center"><span class="status-badge text-[9px] ${cls}">${display}</span></td>`;
+                        } else if (i === EXPORT_COL.PROV_CLUB) html += `<td class="px-3 py-2.5 text-xs text-[#C5A85C]/80">${display}</td>`;
+                        else html += `<td class="px-3 py-2.5 text-xs text-[#FFEA8D]/90">${display}</td>`;
+                    });
+                    html += `</tr>`;
                 });
                 
                 html += `</tbody></table></div>`;
@@ -1938,10 +3027,10 @@
                 csv += `${modality.toUpperCase()} - PLANILLA MESA DE CONTROL\n`;
                 csv += `═══════════════════════════════════════════════════════════════════════════════\n`;
                 
-                csv += EXPORT_HEADERS.join(',') + '\n';
+                csv += EXPORT_HEADERS.map(escapeCSV).join(',') + '\n';
                 
                 list.forEach(a => {
-                    csv += getExportRow(a).map(escapeCSV).join(',') + '\n';
+                    csv += getExportRow(a).map((val, i) => escapeCSV(formatExportDisplay(val, i))).join(',') + '\n';
                 });
                 
                 csv += `\nTotal en ${modality}: ${list.length}\n\n`;
@@ -1974,6 +3063,7 @@
             const summaryData = [
                 ['MANABÍ POWER 2026 — MESA DE CONTROL IFBB'],
                 ['Campeonato Manabí Power • Manta, Ecuador'],
+                [],
                 ['Generado:', fecha],
                 ['Operador:', currentUser || 'Sistema'],
                 ['Total atletas exportados:', data.length],
@@ -1993,23 +3083,54 @@
             });
 
             const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-            wsSummary['!cols'] = [{wch:35},{wch:12},{wch:12},{wch:12},{wch:14}];
+            wsSummary['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }];
+            setXlsxCellStyle(wsSummary, 0, 0, {
+                font: { bold: true, sz: 16, color: { rgb: 'FFEA8D' } },
+                fill: { fgColor: { rgb: '0A1931' } },
+                alignment: { horizontal: 'center', vertical: 'center' }
+            });
+            setXlsxCellStyle(wsSummary, 1, 0, {
+                font: { sz: 11, color: { rgb: '64748B' }, italic: true },
+                alignment: { horizontal: 'center', vertical: 'center' }
+            });
+            const summaryHeaderRow = summaryData.findIndex(row => row[0] === 'RESUMEN POR MODALIDAD') + 1;
+            for (let c = 0; c < 5; c++) {
+                setXlsxCellStyle(wsSummary, summaryHeaderRow, c, {
+                    font: { bold: true, sz: 11, color: { rgb: 'FFEA8D' } },
+                    fill: { fgColor: { rgb: '0F3057' } },
+                    alignment: { horizontal: 'center', vertical: 'center' },
+                    border: {
+                        top: { style: 'medium', color: { rgb: 'C5A85C' } },
+                        bottom: { style: 'medium', color: { rgb: 'C5A85C' } },
+                        left: { style: 'thin', color: { rgb: 'C5A85C' } },
+                        right: { style: 'thin', color: { rgb: 'C5A85C' } }
+                    }
+                });
+            }
+            for (let r = summaryHeaderRow + 1; r < summaryData.length; r++) {
+                const zebra = (r - summaryHeaderRow - 1) % 2 === 1;
+                for (let c = 0; c < 5; c++) {
+                    if (!wsSummary[xlsxColLetter(c) + (r + 1)]) continue;
+                    setXlsxCellStyle(wsSummary, r, c, {
+                        font: { sz: 10, color: { rgb: '334155' }, bold: c === 0 },
+                        fill: { fgColor: { rgb: zebra ? 'F8FAFC' : 'FFFFFF' } },
+                        alignment: { horizontal: c === 0 ? 'left' : 'center', vertical: 'center' },
+                        border: XLSX_CELL_BORDER
+                    });
+                }
+            }
+            wsSummary['!cols'] = [{ wch: 35 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 14 }];
             XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
 
             Object.keys(grouped).sort().forEach(modality => {
                 const list = grouped[modality];
-                const sheetData = [
-                    [`${modality} — Manabí Power 2026`],
-                    [`Total: ${list.length} atletas`],
-                    [],
-                    EXPORT_HEADERS
-                ];
-
-                list.forEach(a => sheetData.push(getExportRow(a)));
-
+                const rows = list.map(a => getExportRow(a));
+                const ws = createStyledXlsxSheet(
+                    `${modality} — Manabí Power 2026`,
+                    `Total: ${list.length} atletas • Generado: ${fecha}`,
+                    rows
+                );
                 const safeName = modality.substring(0, 28).replace(/[\\/*?:\[\]]/g, '');
-                const ws = XLSX.utils.aoa_to_sheet(sheetData);
-                ws['!cols'] = [{wch:30},{wch:14},{wch:24},{wch:18},{wch:10},{wch:8},{wch:16}];
                 XLSX.utils.book_append_sheet(wb, ws, safeName);
             });
 
@@ -2078,34 +3199,34 @@
             let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
             <head><meta charset='utf-8'>
             <style>
-                body { font-family: Calibri, Arial, sans-serif; margin: 40px; color: #1f2937; }
-                h1 { color: #0F2238; border-bottom: 3px solid #C5A85C; padding-bottom: 10px; }
-                h2 { color: #0F3057; background: #f1f5f9; padding: 8px 12px; margin-top: 24px; }
-                table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11pt; }
-                th { background: #0F3057; color: white; padding: 8px; text-align: left; }
-                td { border-bottom: 1px solid #e5e7eb; padding: 6px 8px; }
-                .meta { color: #6b7280; font-size: 10pt; }
-                .total { font-weight: bold; margin-top: 20px; color: #0F2238; }
+                body { font-family: Calibri, Arial, sans-serif; margin: 36px; color: #1f2937; }
+                .doc-header { text-align: center; background: #0A1931; color: #FFEA8D; padding: 24px; margin-bottom: 24px; }
+                .doc-header h1 { margin: 0; font-size: 22pt; letter-spacing: 1px; }
+                .doc-header .gold { color: #C5A85C; }
+                .doc-header p { margin: 8px 0 0; font-size: 10pt; color: #C5A85C; }
+                h2 { color: #FFEA8D; background: #0F3057; padding: 10px 14px; margin: 24px 0 0; font-size: 12pt; }
+                table { width: 100%; border-collapse: collapse; margin: 0 0 20px; font-size: 10pt; }
+                th { background: #f8fafc; color: #475569; padding: 8px 10px; text-align: left; border: 1px solid #cbd5e1; text-transform: uppercase; font-size: 9pt; }
+                td { border: 1px solid #e2e8f0; padding: 7px 10px; }
+                tr:nth-child(even) td { background: #f8fafc; }
+                .num { text-align: center; font-family: Consolas, monospace; }
+                .badge { padding: 2px 6px; border-radius: 8px; font-size: 9pt; font-weight: 600; }
+                .badge-ok { background: #d1fae5; color: #065f46; }
+                .badge-fail { background: #fee2e2; color: #991b1b; }
+                .badge-warn { background: #fef3c7; color: #92400e; }
+                .total { font-weight: bold; margin-top: 24px; color: #0F2238; text-align: center; border-top: 3px solid #C5A85C; padding-top: 16px; }
             </style></head><body>
-            <h1>MANABÍ POWER 2026 — PLANILLA OFICIAL</h1>
-            <p class="meta">Mesa de Control IFBB • Manta, Ecuador<br>
-            Generado: ${fecha} • Operador: ${currentUser || 'Sistema'}<br>
-            Total exportado: <strong>${data.length} atletas</strong></p>`;
+            <div class="doc-header">
+                <h1>MANABÍ <span class="gold">POWER</span> 2026</h1>
+                <p>PLANILLA OFICIAL — MESA DE CONTROL IFBB</p>
+                <p>Manta, Ecuador • ${fecha} • Operador: ${currentUser || 'Sistema'}</p>
+            </div>`;
 
             Object.keys(grouped).sort().forEach(modality => {
                 const list = grouped[modality];
-                html += `<h2>${modality} (${list.length} atletas)</h2><table><tr>`;
-                EXPORT_HEADERS.forEach(h => { html += `<th>${h}</th>`; });
-                html += `</tr>`;
-                list.forEach(a => {
-                    const [nombre, cedula, mod, cat, estatura, peso, estado] = getExportRow(a);
-                    html += `<tr>
-                        <td>${nombre}</td><td>${cedula}</td><td>${mod}</td><td>${cat || '-'}</td>
-                        <td>${estatura !== '-' ? estatura + ' cm' : '-'}</td>
-                        <td>${peso !== '-' ? peso + ' kg' : '-'}</td><td>${estado}</td>
-                    </tr>`;
-                });
-                html += `</table>`;
+                html += `<h2>${modality} (${list.length} atletas)</h2>
+                    <table><thead><tr>${buildReportTableHeaders(false)}</tr></thead>
+                    <tbody>${buildReportTableRows(list)}</tbody></table>`;
             });
 
             html += `<p class="total">TOTAL GENERAL: ${data.length} ATLETAS — Manabí Power 2026</p></body></html>`;
@@ -2122,91 +3243,11 @@
                 showToast('No hay datos con los filtros seleccionados', 'error');
                 return;
             }
-
-            const grouped = groupAthletesByModality(data);
-            const fecha = new Date().toLocaleString('es-EC');
-            const logoUrl = getLogoUrl(true);
-            const passed = data.filter(a => a.didPassWeight === 'Sí').length;
-            const failed = data.filter(a => a.didPassWeight === 'No').length;
-
-            let html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-                <title>Manabí Power 2026 - Planilla Oficial</title>
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');
-                    * { box-sizing: border-box; }
-                    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f1f4f9; color: #1f2937; }
-                    .page { max-width: 1100px; margin: 0 auto; padding: 32px; }
-                    .header { text-align: center; margin-bottom: 32px; background: linear-gradient(135deg, #030D1B, #0A1931, #0F3057); color: white; padding: 32px; border-radius: 16px; }
-                    .header img { height: 80px; margin-bottom: 12px; }
-                    .header h1 { font-family: 'Outfit', sans-serif; margin: 0; font-size: 32px; letter-spacing: 1px; }
-                    .header .gold { color: #C5A85C; }
-                    .header p { color: rgba(255,255,255,0.7); margin: 6px 0 0; font-size: 13px; }
-                    .stats { display: flex; gap: 16px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
-                    .stat { background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 10px; font-size: 13px; }
-                    .stat strong { color: #FFEA8D; font-size: 20px; display: block; }
-                    .modality-section { margin-bottom: 28px; background: white; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow: hidden; page-break-inside: avoid; }
-                    .modality-header { background: linear-gradient(90deg, #0F2238, #0F3057); color: white; padding: 14px 24px; font-size: 16px; font-weight: 700; display: flex; justify-content: space-between; }
-                    .modality-header .count { background: #C5A85C; color: #0F2238; padding: 2px 10px; border-radius: 20px; font-size: 12px; }
-                    table { width: 100%; border-collapse: collapse; }
-                    th { background: #f8fafc; text-align: left; padding: 10px 14px; font-size: 11px; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; }
-                    td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-                    tr:nth-child(even) { background: #fafbfc; }
-                    .badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-                    .badge-ok { background: #d1fae5; color: #065f46; }
-                    .badge-fail { background: #fee2e2; color: #991b1b; }
-                    .badge-warn { background: #fef3c7; color: #92400e; }
-                    .footer { text-align: center; margin-top: 32px; padding: 20px; color: #9ca3af; font-size: 12px; border-top: 2px solid #C5A85C; }
-                    .print-btn { position: fixed; top: 20px; right: 20px; background: #C5A85C; color: #0F2238; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-                    .print-btn:hover { background: #FFEA8D; }
-                    @media print { .print-btn { display: none; } body { background: white; } .page { padding: 0; } }
-                </style></head><body>
-                <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
-                <div class="page">
-                    <div class="header">
-                        <img src="${logoUrl}" alt="Manabí Power">
-                        <h1>MANABÍ <span class="gold">POWER</span> 2026</h1>
-                        <p>PLANILLA OFICIAL — MESA DE CONTROL IFBB</p>
-                        <p>Manta, Ecuador &nbsp;|&nbsp; ${fecha} &nbsp;|&nbsp; Operador: ${currentUser || 'Sistema'}</p>
-                        <div class="stats">
-                            <div class="stat"><strong>${data.length}</strong>Total Atletas</div>
-                            <div class="stat"><strong>${passed}</strong>Aprobaron Peso</div>
-                            <div class="stat"><strong>${failed}</strong>Excedieron</div>
-                            <div class="stat"><strong>${Object.keys(grouped).length}</strong>Modalidades</div>
-                        </div>
-                    </div>`;
-
-            Object.keys(grouped).sort().forEach(modality => {
-                const list = grouped[modality];
-
-                html += `<div class="modality-section">
-                    <div class="modality-header"><span>${modality}</span><span class="count">${list.length} atletas</span></div>
-                    <table><thead><tr>`;
-                EXPORT_HEADERS.forEach(h => { html += `<th>${h}</th>`; });
-                html += `</tr></thead><tbody>`;
-
-                list.forEach(a => {
-                    const [nombre, cedula, mod, cat, estatura, peso, estado] = getExportRow(a);
-                    const badgeClass = estado === 'Sí' ? 'badge-ok' : estado === 'No' ? 'badge-fail' : 'badge-warn';
-                    html += `<tr>
-                        <td><strong>${nombre}</strong></td>
-                        <td>${cedula}</td><td>${mod}</td><td>${cat || '-'}</td>
-                        <td>${estatura !== '-' ? estatura + ' cm' : '-'}</td>
-                        <td>${peso !== '-' ? peso + ' kg' : '-'}</td>
-                        <td><span class="badge ${badgeClass}">${estado}</span></td>
-                    </tr>`;
-                });
-
-                html += `</tbody></table></div>`;
+            openProfessionalReport({
+                title: 'Planilla Oficial — Mesa de Control IFBB',
+                data,
+                showStats: true
             });
-
-            html += `<div class="footer">
-                <p><strong>TOTAL EXPORTADO: ${data.length} ATLETAS</strong></p>
-                <p>© 2026 Manabí Power Oficial — IFBB Ecuador</p>
-            </div></div></body></html>`;
-
-            const win = window.open('', '_blank');
-            win.document.write(html);
-            win.document.close();
             showToast('Reporte visual listo — usa Imprimir para PDF', 'success');
             addLog("Reporte Visual", `Generó reporte HTML de ${data.length} atletas`);
         }
@@ -2232,19 +3273,19 @@
             
             Object.keys(grouped).sort().forEach(mod => {
                 const list = grouped[mod];
-                report += `┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐\n`;
-                report += `│  ${mod.toUpperCase().padEnd(104)}│\n`;
-                report += `│  ${list.length} ATLETAS                                                                                      │\n`;
-                report += `├────────────────────────────┬────────────┬──────────────────────┬────────────────┬─────────┬───────┬──────────────────┤\n`;
-                report += `│ Apellidos y Nombres        │ Cédula     │ Modalidad            │ Categoría      │ Estatura│ Peso  │ Estado           │\n`;
-                report += `├────────────────────────────┼────────────┼──────────────────────┼────────────────┼─────────┼───────┼──────────────────┤\n`;
+                report += `┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐\n`;
+                report += `│  ${mod.toUpperCase().padEnd(120)}│\n`;
+                report += `│  ${list.length} ATLETAS                                                                                                                            │\n`;
+                report += `├────┬──────────────────────┬────────────┬────────────────────┬────────────────────┬────────────────┬───────────────┬──────────────┤\n`;
+                report += `│ Nº │ Nombre Completo      │ Cédula     │ Provincia / Club   │ Modalidad          │ Categoría      │ Estatura/Peso │ Nov/Clas     │\n`;
+                report += `├────┼──────────────────────┼────────────┼────────────────────┼────────────────────┼────────────────┼───────────────┼──────────────┤\n`;
                 
                 list.forEach(a => {
-                    const [nombre, cedula, modalidad, categoria, estatura, peso, estado] = getExportRow(a);
-                    report += `│ ${nombre.substring(0, 26).padEnd(26)} │ ${cedula.padEnd(10)} │ ${modalidad.substring(0, 20).padEnd(20)} │ ${(categoria || '-').substring(0, 14).padEnd(14)} │ ${String(estatura).padEnd(7)} │ ${String(peso).padEnd(5)} │ ${estado.padEnd(16)} │\n`;
+                    const [numero, nombre, cedula, provClub, modalidad, categoria, estaturaPeso, clasificacion] = getExportRow(a);
+                    report += `│ ${String(numero).padEnd(2)} │ ${nombre.substring(0, 20).padEnd(20)} │ ${cedula.padEnd(10)} │ ${provClub.substring(0, 18).padEnd(18)} │ ${modalidad.substring(0, 18).padEnd(18)} │ ${(categoria || '-').substring(0, 14).padEnd(14)} │ ${estaturaPeso.substring(0, 13).padEnd(13)} │ ${clasificacion.padEnd(12)} │\n`;
                 });
                 
-                report += `└────────────────────────────┴────────────┴──────────────────────┴────────────────┴─────────┴───────┴──────────────────┘\n\n`;
+                report += `└────┴──────────────────────┴────────────┴────────────────────┴────────────────────┴────────────────┴───────────────┴──────────────┘\n\n`;
             });
             
             report += `════════════════════════════════════════════════════════════════════════════\n`;
@@ -2308,6 +3349,7 @@
                 timestamp: Date.now(),
                 user: currentUser,
                 athletes: athletes,
+                judges: judges,
                 version: "Manabí Power Web V2"
             };
             
@@ -2330,20 +3372,18 @@
                 try {
                     const backup = JSON.parse(e.target.result);
                     
-                    if (confirm(`¿Restaurar ${backup.athletes ? backup.athletes.length : 0} atletas del respaldo del ${new Date(backup.timestamp).toLocaleDateString()}? Esto reemplazará los datos actuales.`)) {
+                    if (confirm(`¿Restaurar ${backup.athletes ? backup.athletes.length : 0} atletas y ${backup.judges ? backup.judges.length : 0} jueces del respaldo del ${new Date(backup.timestamp).toLocaleDateString()}? Esto reemplazará los datos actuales.`)) {
                         athletes = backup.athletes || [];
+                        judges = backup.judges || [];
                         deletedAthleteIds = new Set();
                         saveDeletedAthletes();
                         saveAthletes();
+                        saveJudges();
                         
-                        addLog("Restauración", `Restauró base de datos desde respaldo (${backup.athletes ? backup.athletes.length : 0} atletas)`);
+                        addLog("Restauración", `Restauró respaldo (${backup.athletes?.length || 0} atletas, ${backup.judges?.length || 0} jueces)`);
                         
                         showToast('Datos restaurados exitosamente', 'success');
-                        
-                        // Refresh current views
-                        updateDashboardMetrics();
-                        if (document.getElementById('section-2').classList.contains('active')) filterAthletes();
-                        if (document.getElementById('section-3').classList.contains('active')) renderPlanillasList();
+                        refreshAllViews();
                     }
                 } catch (err) {
                     alert('Archivo de respaldo inválido o corrupto.');
@@ -2446,7 +3486,14 @@
             initRegistrationForm();
             updateConnectionStatus(socket.connected);
             updateRegClosedUI();
+
+            ensureDemoAthletes(50);
+            if (currentUser) {
+                refreshAllViews();
+            }
+
             console.log('%c[Manabí Power Pro] Gestión IFBB — Categorías automáticas activas', 'color:#C5A85C;font-weight:bold');
+            console.log(`%c[Manabí Power Pro] ${athletes.length} atletas cargados`, 'color:#FFEA8D;font-weight:bold');
         }
 
         // Boot
