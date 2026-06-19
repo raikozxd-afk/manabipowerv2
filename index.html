@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manabí Power V3 Pro • Mesa de Control Web</title>
+    <title>Manabí Power Pro • Gestión de Atletas IFBB</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,12 +28,34 @@
         :root {
             --gold: #C5A85C;
             --gold-light: #FFEA8D;
+            --dark: #0A0F1E;
+            --dark-card: #111827;
+            --dark-border: #1F2937;
             --dark-navy: #0A1931;
             --navy: #0F3057;
         }
         
         body {
             font-family: 'Inter', system-ui, sans-serif;
+            background: var(--dark);
+        }
+
+        .dark-panel { background: var(--dark-card); border: 1px solid var(--dark-border); }
+        .dark-input { background: #0A0F1E; border: 1px solid #374151; color: #F9FAFB; }
+        .dark-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(197,168,92,0.12); outline: none; }
+        .dark-input::placeholder { color: #6B7280; }
+        .lbl { font-size: 10px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px; }
+
+        .sidebar { background: linear-gradient(180deg, #0A0F1E 0%, #111827 100%); border-right: 1px solid #1F2937; }
+        .sidebar-link { transition: all 0.15s; color: #9CA3AF; }
+        .sidebar-link:hover { background: rgba(197,168,92,0.08); color: #F9FAFB; }
+        .sidebar-link.active { background: rgba(197,168,92,0.15); color: var(--gold); border-left: 3px solid var(--gold); }
+
+        .stat-dark { background: linear-gradient(135deg, #111827, #1a2332); border: 1px solid #1F2937; }
+        .category-preview { background: linear-gradient(135deg, rgba(197,168,92,0.12), rgba(197,168,92,0.04)); border: 1px solid rgba(197,168,92,0.25); }
+
+        @media (max-width: 768px) {
+            .mobile-nav { background: #111827; border-top: 1px solid #1F2937; }
         }
         
         .brand-font {
@@ -360,7 +382,7 @@
         </div>
     </div>
 
-    <div id="main-app" class="hidden min-h-screen bg-[#F1F4F9]">
+    <div id="main-app" class="hidden min-h-screen bg-[#0A0F1E] text-gray-100">
         <div class="app-header sticky top-0 z-50">
             <div class="max-w-screen-2xl mx-auto">
                 <div class="px-5 md:px-6 py-3 flex items-center justify-between gap-4">
@@ -408,34 +430,21 @@
             </div>
         </div>
 
-        <div class="max-w-screen-2xl mx-auto px-6 pt-6 pb-20">
-            <div class="flex flex-wrap gap-2 mb-6 border-b border-[#0F3057]/10 pb-1">
-                <button onclick="switchSection(0)" id="nav-0"
-                        class="nav-item active flex items-center gap-x-2 px-5 py-2.5 text-sm font-bold text-[#0F3057]">
-                    <i class="fa-solid fa-tachometer-alt w-4"></i>
-                    <span>INICIO</span>
-                </button>
-                <button onclick="switchSection(1)" id="nav-1"
-                        class="nav-item flex items-center gap-x-2 px-5 py-2.5 text-sm font-bold text-[#0F3057]">
-                    <i class="fa-solid fa-user-plus w-4"></i>
-                    <span>REGISTRO</span>
-                </button>
-                <button onclick="switchSection(2)" id="nav-2"
-                        class="nav-item flex items-center gap-x-2 px-5 py-2.5 text-sm font-bold text-[#0F3057]">
-                    <i class="fa-solid fa-search w-4"></i>
-                    <span>BÚSQUEDA / PESAJE</span>
-                </button>
-                <button onclick="switchSection(3)" id="nav-3"
-                        class="nav-item flex items-center gap-x-2 px-5 py-2.5 text-sm font-bold text-[#0F3057]">
-                    <i class="fa-solid fa-file-excel w-4"></i>
-                    <span>PLANILLAS OFICIALES</span>
-                </button>
-                <button onclick="switchSection(4)" id="nav-4"
-                        class="nav-item flex items-center gap-x-2 px-5 py-2.5 text-sm font-bold text-[#0F3057]">
-                    <i class="fa-solid fa-cogs w-4"></i>
-                    <span>ADMIN V2</span>
-                </button>
-            </div>
+        <div class="flex min-h-[calc(100vh-56px)]">
+            <aside class="sidebar hidden md:flex flex-col w-56 lg:w-64 flex-shrink-0 py-4">
+                <nav class="flex-1 space-y-1 px-2">
+                    <button onclick="switchSection(0)" id="nav-0" class="sidebar-link active w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-chart-pie w-4"></i>Dashboard</button>
+                    <button onclick="switchSection(1)" id="nav-1" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-user-plus w-4"></i>Registro</button>
+                    <button onclick="switchSection(2)" id="nav-2" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-users w-4"></i>Atletas</button>
+                    <button onclick="switchSection(3)" id="nav-3" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-file-export w-4"></i>Exportaciones</button>
+                    <button onclick="switchSection(4)" id="nav-4" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-shield-halved w-4"></i>Administración</button>
+                </nav>
+                <div class="px-4 pt-4 border-t border-gray-800">
+                    <div id="sidebar-closed-badge" class="hidden text-[10px] font-bold text-red-400 bg-red-500/10 px-3 py-2 rounded-lg text-center"><i class="fa-solid fa-lock mr-1"></i>Inscripciones cerradas</div>
+                </div>
+            </aside>
+
+        <div class="flex-1 max-w-screen-2xl mx-auto px-4 md:px-6 pt-4 md:pt-6 pb-24 md:pb-8 w-full">
 
             <div id="section-0" class="section active">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -468,7 +477,7 @@
                                     </p>
                                     <div class="mt-5 flex flex-wrap gap-3 text-xs">
                                         <span class="px-3 py-1.5 bg-white/10 rounded-full backdrop-blur"><i class="fa-solid fa-users mr-1.5 text-[#C5A85C]"></i><span id="hero-total">0</span> atletas</span>
-                                        <span class="px-3 py-1.5 bg-white/10 rounded-full backdrop-blur"><i class="fa-solid fa-dumbbell mr-1.5 text-[#C5A85C]"></i>16 modalidades</span>
+                                        <span class="px-3 py-1.5 bg-white/10 rounded-full backdrop-blur"><i class="fa-solid fa-dumbbell mr-1.5 text-[#C5A85C]"></i>11 modalidades</span>
                                         <span class="px-3 py-1.5 bg-white/10 rounded-full backdrop-blur"><i class="fa-solid fa-cloud mr-1.5 text-[#C5A85C]"></i>Sincronizado Discord</span>
                                     </div>
                                 </div>
@@ -505,32 +514,28 @@
                             <div class="metric-card bg-[#0F2238] border border-[#10B981]/30 rounded-3xl p-5 text-white">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <div class="text-xs font-bold text-white/70">APROBARON PESO</div>
-                                        <div id="metric-passed" class="text-5xl font-black text-[#10B981] mt-1">0</div>
+                                        <div class="text-xs font-bold text-white/70">NOVATOS</div>
+                                        <div id="metric-passed" class="text-5xl font-black text-amber-400 mt-1">0</div>
                                     </div>
-                                    <i class="fa-solid fa-check-circle text-4xl text-[#10B981]/40"></i>
+                                    <i class="fa-solid fa-star text-4xl text-amber-400/30"></i>
                                 </div>
                             </div>
-                            
-                            <!-- Excedieron Peso -->
-                            <div class="metric-card bg-[#0F2238] border border-[#EF4444]/30 rounded-3xl p-5 text-white">
+                            <div class="metric-card stat-dark rounded-3xl p-5 text-white">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <div class="text-xs font-bold text-white/70">EXCEDIERON PESO</div>
-                                        <div id="metric-failed" class="text-5xl font-black text-[#EF4444] mt-1">0</div>
+                                        <div class="text-xs font-bold text-white/70">CLASIFICADOS</div>
+                                        <div id="metric-failed" class="text-5xl font-black text-blue-400 mt-1">0</div>
                                     </div>
-                                    <i class="fa-solid fa-times-circle text-4xl text-[#EF4444]/40"></i>
+                                    <i class="fa-solid fa-trophy text-4xl text-blue-400/30"></i>
                                 </div>
                             </div>
-                            
-                            <!-- Subieron Categoría -->
-                            <div class="metric-card bg-[#0F2238] border border-[#F59E0B]/30 rounded-3xl p-5 text-white">
+                            <div class="metric-card stat-dark rounded-3xl p-5 text-white">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <div class="text-xs font-bold text-white/70">SUBIERON CATEGORÍA</div>
-                                        <div id="metric-shifted" class="text-5xl font-black text-[#F59E0B] mt-1">0</div>
+                                        <div class="text-xs font-bold text-white/70">PAGADOS</div>
+                                        <div id="metric-shifted" class="text-5xl font-black text-emerald-400 mt-1">0</div>
                                     </div>
-                                    <i class="fa-solid fa-arrow-up text-4xl text-[#F59E0B]/40"></i>
+                                    <i class="fa-solid fa-dollar-sign text-4xl text-emerald-400/30"></i>
                                 </div>
                             </div>
                         </div>
@@ -572,164 +577,88 @@
             </div>
 
             <div id="section-1" class="section">
-                <div class="max-w-4xl mx-auto">
-                    <div class="flex items-center justify-between mb-6">
+                <div class="max-w-5xl mx-auto">
+                    <div class="flex items-center justify-between mb-5">
                         <div>
-                            <h2 id="form-title" class="text-3xl font-black text-[#0F3057]">NUEVO REGISTRO DE ATLETA</h2>
-                            <p class="text-sm text-[#0F3057]/60">Complete los datos del competidor. Los campos con * son obligatorios.</p>
+                            <h2 id="form-title" class="brand-font text-2xl md:text-3xl text-white">Registro de Atleta</h2>
+                            <p class="text-sm text-gray-400 mt-1">Inscripción oficial — categoría asignada automáticamente</p>
                         </div>
-                        <button onclick="cancelEdit()" id="cancel-edit-btn"
-                                class="hidden items-center gap-x-2 text-sm font-bold px-5 h-10 bg-red-100 text-red-600 hover:bg-red-200 transition rounded-2xl">
-                            <i class="fa-solid fa-times"></i>
-                            <span>CANCELAR EDICIÓN</span>
-                        </button>
+                        <button onclick="cancelEdit()" id="cancel-edit-btn" class="hidden items-center gap-2 text-sm font-bold px-4 py-2 bg-red-500/20 text-red-400 rounded-xl"><i class="fa-solid fa-times"></i>Cancelar</button>
                     </div>
+                    <div id="reg-closed-banner" class="hidden mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm font-bold text-center"><i class="fa-solid fa-lock mr-2"></i>Inscripciones cerradas — no se permiten nuevos registros</div>
 
-                    <div class="bg-white border border-[#0F3057]/10 shadow-sm rounded-3xl p-8">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-                            
-                            <div class="md:col-span-2">
-                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">NOMBRE COMPLETO DEL ATLETA *</label>
-                                <input id="fullName" type="text" placeholder="Ej: Carlos Francisco Pérez Mendoza"
-                                       class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
-                            </div>
-
+                    <div class="dark-panel rounded-2xl p-6 md:p-8">
+                        <div class="category-preview rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
                             <div>
-                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">CÉDULA / DOCUMENTO DE IDENTIDAD *</label>
-                                <input id="idCard" type="text" placeholder="1312345678" maxlength="13"
-                                       class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
+                                <div class="text-[10px] text-[#C5A85C] font-bold tracking-widest uppercase">Categoría automática</div>
+                                <div id="auto-category-preview" class="text-lg font-bold text-white mt-1">Complete los datos para calcular</div>
                             </div>
-                            <div>
-                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">NÚMERO DE FICHA (OPCIONAL)</label>
-                                <input id="manualBib" type="number" placeholder="Dejar vacío para auto-asignar"
-                                       class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
-                            </div>
-
-                            <div>
-                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">CLUB O ENTRENADOR</label>
-                                <input id="club" type="text" placeholder="Manta Fitness Club / Entrenador particular"
-                                       class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
-                            </div>
-                            <div>
-                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">PROVINCIA / PAÍS</label>
-                                <input id="province" type="text" placeholder="Manabí / Ecuador"
-                                       class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-2">MODALIDAD OFICIAL IFBB *</label>
-                                <div id="modality-chips" class="flex flex-wrap gap-2"></div>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">CATEGORÍA / DIVISIÓN *</label>
-                                <input id="category" type="text" placeholder="Ej: Senior Open, Junior Sub-21, Master +40, Novice..."
-                                       class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-2">CLASIFICACIÓN DEL ATLETA *</label>
-                                <div class="flex gap-3">
-                                    <div onclick="selectClassification('Novato')" id="class-novato"
-                                         class="flex-1 cursor-pointer border-2 border-[#C5A85C] bg-[#C5A85C]/5 rounded-2xl p-4 flex items-center gap-x-3">
-                                        <i class="fa-solid fa-star text-[#C5A85C]"></i>
-                                        <div>
-                                            <div class="font-extrabold">Novato</div>
-                                            <div class="text-[10px] text-[#0F3057]/60">Primera competencia oficial</div>
-                                        </div>
-                                    </div>
-                                    <div onclick="selectClassification('Clasificado')" id="class-clasificado"
-                                         class="flex-1 cursor-pointer border border-[#0F3057]/20 hover:border-[#C5A85C]/50 rounded-2xl p-4 flex items-center gap-x-3">
-                                        <i class="fa-solid fa-trophy text-[#0F3057]"></i>
-                                        <div>
-                                            <div class="font-extrabold">Clasificado</div>
-                                            <div class="text-[10px] text-[#0F3057]/60">Atleta con experiencia previa</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="biometric-card" class="md:col-span-2 border border-amber-200 bg-amber-50/30 rounded-3xl p-6">
-                                <div class="flex items-center gap-x-2 mb-4">
-                                    <i class="fa-solid fa-weight-hanging text-amber-600"></i>
-                                    <div class="font-extrabold text-sm text-amber-700">CONTROL BIOMÉTRICO EN CABINA</div>
-                                </div>
-                                
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1">PESO OFICIAL (kg) *</label>
-                                        <input id="weight" type="number" step="0.1" placeholder="72.5"
-                                               class="form-input w-full border border-amber-300 focus:border-amber-500 rounded-2xl px-5 py-3 text-sm">
-                                    </div>
-                                    <div>
-                                        <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1">ALTURA (cm)</label>
-                                        <input id="height" type="number" placeholder="178"
-                                               class="form-input w-full border border-amber-300 focus:border-amber-500 rounded-2xl px-5 py-3 text-sm">
-                                    </div>
-                                </div>
-
-                                <div id="weight-advice" class="hidden mt-3 text-xs bg-white border border-amber-300 rounded-2xl p-3 text-amber-700"></div>
-
-                                <div class="mt-5">
-                                    <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-2">¿HIZO EL PESO REGLAMENTARIO?</label>
-                                    <div class="flex gap-2">
-                                        <div onclick="selectPassStatus('Sí')" id="pass-si"
-                                             class="flex-1 cursor-pointer text-center py-3 rounded-2xl border-2 border-emerald-500 bg-emerald-500 text-white text-sm font-extrabold">SÍ</div>
-                                        <div onclick="selectPassStatus('No')" id="pass-no"
-                                             class="flex-1 cursor-pointer text-center py-3 rounded-2xl border border-red-300 hover:bg-red-50 text-sm font-extrabold">NO</div>
-                                        <div onclick="selectPassStatus('Subió de categoría')" id="pass-subio"
-                                             class="flex-1 cursor-pointer text-center py-3 rounded-2xl border border-amber-400 hover:bg-amber-50 text-sm font-extrabold">SUBIÓ DE CATEGORÍA</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">OBSERVACIONES / NOVEDADES</label>
-                                <textarea id="observations" rows="2" placeholder="Ej: Pagó inscripción el día del evento, llegó con 300g de sobrepeso..."
-                                          class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3 text-sm"></textarea>
+                            <div class="text-right">
+                                <div class="text-[10px] text-gray-400">Edad calculada</div>
+                                <div id="age-preview" class="text-2xl font-black text-[#C5A85C]">—</div>
                             </div>
                         </div>
 
-                        <div class="mt-8 flex gap-3">
-                            <button onclick="registerAthlete()"
-                                    class="flex-1 bg-[#0F3057] hover:bg-[#0A1931] transition text-white font-extrabold py-4 rounded-2xl flex items-center justify-center gap-x-3 text-sm tracking-wider">
-                                <i class="fa-solid fa-save"></i>
-                                <span id="submit-btn-text">COMPLETAR INSCRIPCIÓN OFICIAL</span>
-                            </button>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div><label class="lbl">Apellidos *</label><input id="lastName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Pérez Mendoza" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Nombres *</label><input id="firstName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Carlos Francisco" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Cédula / Pasaporte *</label><input id="idCard" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="1312345678" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Fecha de Nacimiento *</label><input id="birthDate" type="date" class="dark-input w-full rounded-xl px-4 py-3 text-sm" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Sexo *</label><select id="sex" class="dark-input w-full rounded-xl px-4 py-3 text-sm" onchange="onFormChange()"><option value="">Seleccionar</option><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option></select></div>
+                            <div><label class="lbl">Nacionalidad</label><input id="nationality" class="dark-input w-full rounded-xl px-4 py-3 text-sm" value="Ecuatoriana" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Provincia / Ciudad</label><input id="province" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Manabí" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Club / Gimnasio</label><input id="club" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Manta Fitness Club" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Entrenador</label><input id="coach" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Nombre del entrenador" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Teléfono</label><input id="phone" type="tel" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="0999999999" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Correo electrónico</label><input id="email" type="email" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="atleta@email.com" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Nº Competidor</label><input id="manualBib" type="number" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Auto-asignar" oninput="onFormChange()"></div>
+                            <div class="md:col-span-2 lg:col-span-3"><label class="lbl">Modalidad IFBB *</label><select id="modality-select" class="dark-input w-full rounded-xl px-4 py-3 text-sm" onchange="onModalityChange()"></select></div>
+                            <div><label class="lbl">Estatura (cm) *</label><input id="height" type="number" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="175" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Peso (kg) *</label><input id="weight" type="number" step="0.1" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="72.5" oninput="onFormChange()"></div>
+                            <div><label class="lbl">Estado de Pago</label><select id="paymentStatus" class="dark-input w-full rounded-xl px-4 py-3 text-sm"><option value="Pendiente">Pendiente</option><option value="Pagado">Pagado</option><option value="Parcial">Parcial</option></select></div>
+                            <input type="hidden" id="category">
+                            <div class="md:col-span-2 lg:col-span-3">
+                                <label class="lbl">Estado del Atleta *</label>
+                                <div class="flex gap-3 mt-1">
+                                    <div onclick="selectClassification('Novato')" id="class-novato" class="flex-1 cursor-pointer border-2 border-[#C5A85C] bg-[#C5A85C]/10 rounded-xl p-3 text-center"><i class="fa-solid fa-star text-[#C5A85C]"></i><div class="font-bold text-sm mt-1">Novato</div></div>
+                                    <div onclick="selectClassification('Clasificado')" id="class-clasificado" class="flex-1 cursor-pointer border border-gray-600 rounded-xl p-3 text-center hover:border-[#C5A85C]/50"><i class="fa-solid fa-trophy text-gray-400"></i><div class="font-bold text-sm mt-1">Clasificado</div></div>
+                                </div>
+                            </div>
+                            <div class="md:col-span-2 lg:col-span-3 border border-amber-500/20 bg-amber-500/5 rounded-xl p-4">
+                                <label class="lbl text-amber-400">Control de Pesaje</label>
+                                <div class="flex gap-2 mt-2">
+                                    <div onclick="selectPassStatus('Sí')" id="pass-si" class="flex-1 cursor-pointer text-center py-2.5 rounded-xl border-2 border-emerald-500 bg-emerald-500/20 text-emerald-400 text-sm font-bold">Sí</div>
+                                    <div onclick="selectPassStatus('No')" id="pass-no" class="flex-1 cursor-pointer text-center py-2.5 rounded-xl border border-red-500/40 text-red-400 text-sm font-bold">No</div>
+                                    <div onclick="selectPassStatus('Subió de categoría')" id="pass-subio" class="flex-1 cursor-pointer text-center py-2.5 rounded-xl border border-amber-500/40 text-amber-400 text-sm font-bold">Subió Cat.</div>
+                                </div>
+                            </div>
+                            <div class="md:col-span-2 lg:col-span-3"><label class="lbl">Observaciones</label><textarea id="observations" rows="2" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Notas adicionales..."></textarea></div>
                         </div>
-                        
-                        <div id="form-warning" class="hidden mt-3 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-4 py-2.5 rounded-2xl"></div>
+                        <button onclick="registerAthlete()" id="submit-btn" class="w-full mt-6 bg-gradient-to-r from-[#FFEA8D] via-[#C5A85C] to-[#8A641B] hover:brightness-110 text-[#0A0F1E] font-extrabold py-4 rounded-xl text-sm flex items-center justify-center gap-2"><i class="fa-solid fa-save"></i><span id="submit-btn-text">Completar Inscripción</span></button>
+                        <div id="form-warning" class="hidden mt-3 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/30 px-4 py-2.5 rounded-xl"></div>
                     </div>
                 </div>
             </div>
 
             <div id="section-2" class="section">
                 <div class="max-w-screen-2xl">
-                    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-y-4 mb-5">
-                        <div>
-                            <h2 class="text-3xl font-black text-[#0F3057]">BÚSQUEDA Y CONTROL DE PESAJE</h2>
-                            <p class="text-[#0F3057]/60">Busque atletas por nombre, cédula, ficha o club. Filtre por modalidad.</p>
-                        </div>
-                        
-                        <div class="flex gap-2">
-                            <div class="relative flex-1 md:w-80">
-                                <input id="search-input" type="text" placeholder="Buscar por nombre, cédula, ficha..." onkeyup="filterAthletes()"
-                                       class="w-full border border-[#0F3057]/20 focus:border-[#C5A85C] pl-11 py-3 rounded-2xl text-sm">
-                                <i class="fa-solid fa-search absolute left-4 top-4 text-[#C5A85C]"></i>
-                            </div>
-                            
-                            <select id="filter-modality" onchange="filterAthletes()" 
-                                    class="border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-4 text-sm bg-white">
-                                <option value="Todas">Todas las modalidades</option>
-                            </select>
-                        </div>
+                    <div class="mb-5">
+                        <h2 class="brand-font text-2xl md:text-3xl text-white">Gestión de Atletas</h2>
+                        <p class="text-gray-400 text-sm mt-1">Búsqueda instantánea con filtros avanzados</p>
                     </div>
-
-                    <div id="athletes-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
-                    
-                    <div id="no-results" class="hidden col-span-full text-center py-12">
-                        <i class="fa-solid fa-search text-6xl text-[#0F3057]/10 mb-4"></i>
-                        <p class="font-bold text-[#0F3057]/70">No se encontraron atletas con esos criterios</p>
+                    <div class="dark-panel rounded-2xl p-4 mb-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                        <div class="relative lg:col-span-2">
+                            <input id="search-input" type="text" placeholder="Nombre, cédula, ficha, club..." onkeyup="filterAthletes()" class="dark-input w-full rounded-xl pl-10 py-3 text-sm">
+                            <i class="fa-solid fa-search absolute left-3.5 top-3.5 text-[#C5A85C]"></i>
+                        </div>
+                        <select id="filter-modality" onchange="filterAthletes()" class="dark-input rounded-xl px-3 py-3 text-sm"><option value="Todas">Todas modalidades</option></select>
+                        <select id="filter-status" onchange="filterAthletes()" class="dark-input rounded-xl px-3 py-3 text-sm"><option value="Todos">Novato y Clasificado</option><option value="Novato">Novatos</option><option value="Clasificado">Clasificados</option></select>
+                        <input id="filter-province" type="text" placeholder="Provincia..." onkeyup="filterAthletes()" class="dark-input rounded-xl px-3 py-3 text-sm">
+                    </div>
+                    <div id="athletes-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                    <div id="no-results" class="hidden text-center py-16">
+                        <i class="fa-solid fa-search text-5xl text-gray-700 mb-3"></i>
+                        <p class="font-bold text-gray-500">No se encontraron atletas</p>
                     </div>
                 </div>
             </div>
@@ -792,7 +721,19 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+                        <button onclick="exportList('oficial')" class="export-card dark-panel rounded-xl p-4 text-left hover:border-[#C5A85C]/40"><i class="fa-solid fa-list text-[#C5A85C] text-lg"></i><div class="text-xs font-bold text-white mt-2">Lista Oficial</div></button>
+                        <button onclick="exportList('pesaje')" class="export-card dark-panel rounded-xl p-4 text-left"><i class="fa-solid fa-weight-hanging text-amber-400 text-lg"></i><div class="text-xs font-bold text-white mt-2">Lista Pesaje</div></button>
+                        <button onclick="exportList('acreditacion')" class="export-card dark-panel rounded-xl p-4 text-left"><i class="fa-solid fa-id-card text-blue-400 text-lg"></i><div class="text-xs font-bold text-white mt-2">Acreditación</div></button>
+                        <button onclick="exportList('modalidad')" class="export-card dark-panel rounded-xl p-4 text-left"><i class="fa-solid fa-layer-group text-purple-400 text-lg"></i><div class="text-xs font-bold text-white mt-2">Por Modalidad</div></button>
+                        <button onclick="exportList('categoria')" class="export-card dark-panel rounded-xl p-4 text-left"><i class="fa-solid fa-tags text-pink-400 text-lg"></i><div class="text-xs font-bold text-white mt-2">Por Categoría</div></button>
+                        <button onclick="exportList('novatos')" class="export-card dark-panel rounded-xl p-4 text-left"><i class="fa-solid fa-star text-yellow-400 text-lg"></i><div class="text-xs font-bold text-white mt-2">Novatos</div></button>
+                        <button onclick="exportList('clasificados')" class="export-card dark-panel rounded-xl p-4 text-left"><i class="fa-solid fa-trophy text-orange-400 text-lg"></i><div class="text-xs font-bold text-white mt-2">Clasificados</div></button>
+                        <button onclick="exportList('jueces')" class="export-card dark-panel rounded-xl p-4 text-left"><i class="fa-solid fa-gavel text-red-400 text-lg"></i><div class="text-xs font-bold text-white mt-2">Hoja Jueces</div></button>
+                        <button onclick="exportList('xlsx')" class="export-card dark-panel rounded-xl p-4 text-left"><i class="fa-solid fa-file-excel text-emerald-400 text-lg"></i><div class="text-xs font-bold text-white mt-2">Excel .xlsx</div></button>
+                        <button onclick="exportList('pdf')" class="export-card dark-panel rounded-xl p-4 text-left"><i class="fa-solid fa-file-pdf text-red-500 text-lg"></i><div class="text-xs font-bold text-white mt-2">PDF / Imprimir</div></button>
+                    </div>
+                    <div class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                         <button onclick="exportToXLSX()"
                                 class="export-card flex items-center gap-x-4 bg-gradient-to-br from-emerald-600 to-emerald-700 text-white font-extrabold py-5 px-6 rounded-3xl">
                             <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
@@ -872,18 +813,24 @@
             </div>
 
             <div id="section-4" class="section">
-                <div class="max-w-4xl mx-auto space-y-6">
-                    <div class="bg-[#0A1931] text-white rounded-3xl p-8">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <div class="text-[#C5A85C] text-xs font-bold tracking-widest">MESA DE CONTROL INTELIGENTE V2</div>
-                                <div class="text-3xl font-black">ADMINISTRACIÓN Y SEGURIDAD</div>
-                            </div>
-                            <div class="text-right text-xs">
-                                <div class="text-white/60">ÚLTIMA ACTIVIDAD</div>
-                                <div id="last-sync" class="font-mono text-[#C5A85C]"></div>
-                            </div>
+                <div class="max-w-4xl mx-auto space-y-5">
+                    <div class="dark-panel rounded-2xl p-6 flex flex-wrap justify-between items-center gap-4">
+                        <div>
+                            <div class="text-[#C5A85C] text-[10px] font-bold tracking-widest">ADMINISTRACIÓN</div>
+                            <div class="text-2xl font-black text-white">Panel de Control</div>
                         </div>
+                        <div class="text-right text-xs text-gray-400">Última actividad<br><span id="last-sync" class="font-mono text-[#C5A85C]"></span></div>
+                    </div>
+
+                    <div class="dark-panel rounded-2xl p-6">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-bold text-white">Inscripciones del Campeonato</div>
+                                <div class="text-xs text-gray-400 mt-1">Bloquea o permite nuevos registros</div>
+                            </div>
+                            <button onclick="toggleRegistrations()" id="toggle-reg-btn" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-[#C5A85C] text-[#0A0F1E]">Cerrar Inscripciones</button>
+                        </div>
+                        <div id="payment-summary" class="mt-4 grid grid-cols-3 gap-3 text-center text-xs"></div>
                     </div>
 
                     <div class="bg-white border border-[#0F3057]/10 rounded-3xl p-6">
@@ -928,9 +875,28 @@
                 </div>
             </div>
         </div>
+        </div>
+
+        <nav class="mobile-nav md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-around py-2 px-1">
+            <button onclick="switchSection(0)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-chart-pie text-base mb-0.5"></i>Inicio</button>
+            <button onclick="switchSection(1)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-user-plus text-base mb-0.5"></i>Registro</button>
+            <button onclick="switchSection(2)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-users text-base mb-0.5"></i>Atletas</button>
+            <button onclick="switchSection(3)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-file-export text-base mb-0.5"></i>Exportar</button>
+            <button onclick="switchSection(4)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-shield text-base mb-0.5"></i>Admin</button>
+        </nav>
     </div>
 
-    <div id="toast-container" class="fixed bottom-6 right-6 z-[100]"></div>
+    <div id="credential-modal" class="hidden fixed inset-0 z-[200] bg-black/80 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl">
+            <div id="credential-content" class="p-6 text-center text-gray-900"></div>
+            <div class="flex gap-2 p-4 border-t bg-gray-50">
+                <button onclick="window.print()" class="flex-1 bg-[#C5A85C] text-[#0A0F1E] font-bold py-2.5 rounded-xl text-sm"><i class="fa-solid fa-print mr-1"></i>Imprimir</button>
+                <button onclick="closeCredential()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-sm">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-20 md:bottom-6 right-6 z-[100]"></div>
 
     <script>
         // ==================== TAILWIND CONFIG ====================
@@ -944,19 +910,96 @@
         let editingAthleteId = null;
         let currentSection = 0;
         let activityLogs = [];
+        let registrationsClosed = localStorage.getItem('mp_reg_closed') === 'true';
 
         const MODALITIES = [
-            "Fitness Coreográfico Infantil", "Fit & Beauty", "Posing Art",
-            "Men's Physique", "Men's Fit", "Muscular Men's Physique", "Games Classic",
-            "Culturismo Clásico", "Classic Physique", "Fisicoculturismo",
-            "Bikini Fitness", "Wellness Fitness", "Body Fitness",
-            "Women's Physique", "Parejas Fitness", "Parejas Culturistas"
+            "Men's Physique", "Muscular Men's Physique", "Classic Physique",
+            "Bodybuilding", "Classic Bodybuilding", "Fit Model Masculino",
+            "Bikini Fitness", "Wellness Fitness", "Fit Model Femenino",
+            "Women's Physique", "Women's Bodyfitness"
         ];
 
-        const NON_WEIGHING = [
-            "Fitness Coreográfico Infantil", "Fit & Beauty", "Posing Art", 
-            "Parejas Fitness", "Parejas Culturistas"
-        ];
+        const HEIGHT_RULES = {
+            "Men's Physique": [170,173,176,179,182],
+            "Muscular Men's Physique": [170,173,176,179,182],
+            "Bikini Fitness": [158,162,166,169],
+            "Fit Model Femenino": [158,162,166,169],
+            "Women's Bodyfitness": [158,162,166,169],
+            "Wellness Fitness": [158,163,168],
+            "Women's Physique": [158,163,168]
+        };
+
+        const WEIGHT_RULES = {
+            "Bodybuilding": [70,75,80,85,90,95,100],
+            "Classic Bodybuilding": [70,75,80,85,90,95,100],
+            "Fit Model Masculino": [70,75,80,85,90]
+        };
+
+        const NON_WEIGHING = [];
+
+        function calcAge(birthDate) {
+            if (!birthDate) return null;
+            const today = new Date();
+            const birth = new Date(birthDate);
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+            return age;
+        }
+
+        function getAgeCategory(age) {
+            if (age == null) return 'Sin edad';
+            if (age < 24) return 'Junior';
+            if (age < 35) return 'Senior';
+            if (age < 40) return 'Master +35';
+            if (age < 45) return 'Master +40';
+            if (age < 50) return 'Master +45';
+            if (age < 55) return 'Master +50';
+            if (age < 60) return 'Master +55';
+            return 'Master +60';
+        }
+
+        function getPhysCategory(modality, height, weight) {
+            const h = parseFloat(height);
+            const w = parseFloat(weight);
+            if (HEIGHT_RULES[modality] && h) {
+                const limits = HEIGHT_RULES[modality];
+                for (const lim of limits) if (h <= lim) return `Hasta ${lim} cm`;
+                return `Más de ${limits[limits.length-1]} cm`;
+            }
+            if (WEIGHT_RULES[modality] && w) {
+                const limits = WEIGHT_RULES[modality];
+                for (const lim of limits) if (w <= lim) return `Hasta ${lim} kg`;
+                return `Más de ${limits[limits.length-1]} kg`;
+            }
+            if (modality === 'Classic Physique' && h) return `Classic • ${h} cm`;
+            return 'Open';
+        }
+
+        function calculateAutoCategory(modality, birthDate, height, weight) {
+            const age = calcAge(birthDate);
+            return `${getAgeCategory(age)} • ${getPhysCategory(modality, height, weight)}`;
+        }
+
+        function getFullName(a) {
+            if (a.lastName || a.firstName) return `${a.lastName || ''} ${a.firstName || ''}`.trim();
+            return a.fullName || '';
+        }
+
+        function normalizeAthlete(a) {
+            if (!a.lastName && !a.firstName && a.fullName) {
+                const parts = a.fullName.trim().split(/\s+/);
+                if (parts.length > 1) { a.lastName = parts.slice(0,-1).join(' '); a.firstName = parts[parts.length-1]; }
+                else { a.firstName = parts[0]; a.lastName = ''; }
+            }
+            a.athleteStatus = a.athleteStatus || a.classification || 'Novato';
+            a.passStatus = a.passStatus || a.didPassWeight || 'Sí';
+            a.paymentStatus = a.paymentStatus || 'Pendiente';
+            if (!a.category && a.modality) {
+                a.category = calculateAutoCategory(a.modality, a.birthDate, a.height, a.weight);
+            }
+            return a;
+        }
 
         // --- CONEXIÓN A RAILWAY ---
         // ¡IMPORTANTE! Reemplaza este enlace por el que te dio Railway en Settings -> Public Domain
@@ -979,15 +1022,15 @@
         socket.on('connect_error', () => updateConnectionStatus(false));
 
         socket.on('cargarAtletas', (datosDeDiscord) => {
-            athletes = datosDeDiscord;
+            athletes = (datosDeDiscord || []).map(normalizeAthlete);
             refreshAllViews();
         });
 
         socket.on('nuevoAtleta', (nuevoAtleta) => {
             if (!athletes.find(a => a.id === nuevoAtleta.id)) {
-                athletes.unshift(nuevoAtleta);
+                athletes.unshift(normalizeAthlete(nuevoAtleta));
                 refreshAllViews();
-                showToast(`Registro remoto: ${nuevoAtleta.fullName}`, 'success');
+                showToast(`Registro remoto: ${getFullName(nuevoAtleta)}`, 'success');
             }
         });
 
@@ -1114,15 +1157,13 @@
             // Hide all
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
             
-            // Deactivate nav
-            document.querySelectorAll('[id^="nav-"]').forEach(el => el.classList.remove('active', 'bg-[#C5A85C]', 'text-white'));
+            document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
             
-            // Activate
             const target = document.getElementById(`section-${section}`);
             if (target) target.classList.add('active');
             
             const nav = document.getElementById(`nav-${section}`);
-            if (nav) nav.classList.add('active', 'bg-[#C5A85C]', 'text-white');
+            if (nav) nav.classList.add('active');
 
             currentSection = section;
 
@@ -1142,7 +1183,9 @@
                 renderAdminUsers();
                 renderActivityLog();
                 updateLastSync();
+                updateDashboardMetrics();
             }
+            if (section === 1) initRegistrationForm();
         }
 
         // ==================== REGISTRATION FORM ====================
@@ -1151,278 +1194,188 @@
         let selectedPassStatus = "Sí";
 
         function initRegistrationForm() {
-            // Modality chips
-            const container = document.getElementById('modality-chips');
-            container.innerHTML = '';
-            
-            MODALITIES.forEach(mod => {
-                const chip = document.createElement('div');
-                chip.className = `modality-chip px-4 py-1.5 text-xs font-bold border cursor-pointer rounded-2xl ${mod === selectedModality ? 'active border-[#C5A85C] bg-[#C5A85C] text-white' : 'border-[#0F3057]/20 hover:border-[#C5A85C]/60'}`;
-                chip.innerHTML = mod;
-                chip.onclick = () => {
-                    selectedModality = mod;
-                    initRegistrationForm(); // re-render chips
-                    toggleBiometricCard();
-                    updateWeightAdvice();
-                };
-                container.appendChild(chip);
-            });
-
-            // Set initial values if editing
-            if (editingAthleteId) {
-                const athlete = athletes.find(a => a.id === editingAthleteId);
-                if (athlete) {
-                    document.getElementById('fullName').value = athlete.fullName || '';
-                    document.getElementById('idCard').value = athlete.idCard || '';
-                    document.getElementById('manualBib').value = athlete.bibNumber || '';
-                    document.getElementById('club').value = athlete.club || '';
-                    document.getElementById('province').value = athlete.province || '';
-                    document.getElementById('category').value = athlete.category || '';
-                    document.getElementById('weight').value = athlete.weight || '';
-                    document.getElementById('height').value = athlete.height || '';
-                    document.getElementById('observations').value = athlete.observations || '';
-                    
-                    selectedModality = athlete.modality;
-                    selectedClassification = athlete.classification || 'Novato';
-                    selectedPassStatus = athlete.didPassWeight || 'Sí';
-                    
-                    // Re-init chips with correct selection
-                    initRegistrationForm();
-                }
-            } else {
-                // New registration defaults
-                document.getElementById('fullName').value = '';
-                document.getElementById('idCard').value = '';
-                document.getElementById('manualBib').value = '';
-                document.getElementById('club').value = '';
-                document.getElementById('province').value = '';
-                document.getElementById('category').value = '';
-                document.getElementById('weight').value = '';
-                document.getElementById('height').value = '';
-                document.getElementById('observations').value = '';
+            const modSelect = document.getElementById('modality-select');
+            if (modSelect && !modSelect.options.length) {
+                MODALITIES.forEach(mod => {
+                    const o = document.createElement('option');
+                    o.value = mod; o.textContent = mod;
+                    modSelect.appendChild(o);
+                });
             }
-
-            // Classification buttons
+            updateRegClosedUI();
+            if (editingAthleteId) {
+                const a = normalizeAthlete({...athletes.find(x => x.id === editingAthleteId)});
+                if (a) {
+                    ['lastName','firstName','idCard','birthDate','club','province','coach','phone','email','height','weight','observations'].forEach(f => {
+                        const el = document.getElementById(f);
+                        if (el) el.value = a[f] || '';
+                    });
+                    document.getElementById('sex').value = a.sex || '';
+                    document.getElementById('nationality').value = a.nationality || 'Ecuatoriana';
+                    document.getElementById('manualBib').value = a.bibNumber || '';
+                    document.getElementById('modality-select').value = a.modality || selectedModality;
+                    document.getElementById('paymentStatus').value = a.paymentStatus || 'Pendiente';
+                    selectedModality = a.modality || selectedModality;
+                    selectedClassification = a.athleteStatus || a.classification || 'Novato';
+                    selectedPassStatus = a.passStatus || a.didPassWeight || 'Sí';
+                }
+                document.getElementById('form-title').textContent = 'Editar Atleta';
+                document.getElementById('submit-btn-text').textContent = 'Guardar Cambios';
+            } else {
+                document.querySelectorAll('#section-1 input:not([type=hidden]), #section-1 textarea').forEach(el => { if (el.id !== 'nationality') el.value = ''; });
+                document.getElementById('nationality').value = 'Ecuatoriana';
+                document.getElementById('modality-select').value = selectedModality;
+                document.getElementById('form-title').textContent = 'Registro de Atleta';
+                document.getElementById('submit-btn-text').textContent = 'Completar Inscripción';
+            }
             selectClassification(selectedClassification);
-            
-            // Pass status
             selectPassStatus(selectedPassStatus);
-            
-            // Biometric visibility
-            toggleBiometricCard();
-            
-            // Weight advice listener
-            const heightInput = document.getElementById('height');
-            const weightInput = document.getElementById('weight');
-            if (heightInput) heightInput.oninput = updateWeightAdvice;
-            if (weightInput) weightInput.oninput = updateWeightAdvice;
-            
-            // Form title
-            document.getElementById('form-title').textContent = editingAthleteId ? 'EDITAR REGISTRO DE ATLETA' : 'NUEVO REGISTRO DE ATLETA';
-            document.getElementById('submit-btn-text').textContent = editingAthleteId ? 'GUARDAR CAMBIOS LOCALES' : 'COMPLETAR INSCRIPCIÓN OFICIAL';
-            
             document.getElementById('cancel-edit-btn').classList.toggle('hidden', !editingAthleteId);
             document.getElementById('cancel-edit-btn').classList.toggle('flex', !!editingAthleteId);
+            onFormChange();
+        }
+
+        function onModalityChange() {
+            selectedModality = document.getElementById('modality-select').value;
+            onFormChange();
+        }
+
+        function onFormChange() {
+            const birthDate = document.getElementById('birthDate')?.value;
+            const height = document.getElementById('height')?.value;
+            const weight = document.getElementById('weight')?.value;
+            const modality = document.getElementById('modality-select')?.value || selectedModality;
+            const age = calcAge(birthDate);
+            const cat = calculateAutoCategory(modality, birthDate, height, weight);
+            document.getElementById('auto-category-preview').textContent = cat;
+            document.getElementById('age-preview').textContent = age != null ? age + ' años' : '—';
+            document.getElementById('category').value = cat;
+            const draft = {};
+            ['lastName','firstName','idCard','birthDate','sex','nationality','province','club','coach','phone','email','height','weight','observations'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) draft[id] = el.value;
+            });
+            localStorage.setItem('mp_form_draft', JSON.stringify(draft));
         }
 
         function selectClassification(type) {
             selectedClassification = type;
-            
             const novato = document.getElementById('class-novato');
             const clasificado = document.getElementById('class-clasificado');
-            
             if (type === 'Novato') {
-                novato.classList.add('border-[#C5A85C]', 'bg-[#C5A85C]/5');
-                novato.classList.remove('border-[#0F3057]/20');
-                clasificado.classList.remove('border-[#C5A85C]', 'bg-[#C5A85C]/5');
-                clasificado.classList.add('border-[#0F3057]/20');
+                novato.className = 'flex-1 cursor-pointer border-2 border-[#C5A85C] bg-[#C5A85C]/10 rounded-xl p-3 text-center';
+                clasificado.className = 'flex-1 cursor-pointer border border-gray-600 rounded-xl p-3 text-center hover:border-[#C5A85C]/50';
             } else {
-                clasificado.classList.add('border-[#C5A85C]', 'bg-[#C5A85C]/5');
-                clasificado.classList.remove('border-[#0F3057]/20');
-                novato.classList.remove('border-[#C5A85C]', 'bg-[#C5A85C]/5');
-                novato.classList.add('border-[#0F3057]/20');
+                clasificado.className = 'flex-1 cursor-pointer border-2 border-[#C5A85C] bg-[#C5A85C]/10 rounded-xl p-3 text-center';
+                novato.className = 'flex-1 cursor-pointer border border-gray-600 rounded-xl p-3 text-center hover:border-[#C5A85C]/50';
             }
         }
 
         function selectPassStatus(status) {
             selectedPassStatus = status;
-            
-            const si = document.getElementById('pass-si');
-            const no = document.getElementById('pass-no');
-            const subio = document.getElementById('pass-subio');
-            
-            [si, no, subio].forEach(el => el.classList.remove('border-2', 'bg-emerald-500', 'text-white', 'border-red-500', 'border-amber-500'));
-            
-            if (status === 'Sí') {
-                si.classList.add('border-2', 'bg-emerald-500', 'text-white');
-            } else if (status === 'No') {
-                no.classList.add('border-2', 'border-red-500', 'bg-red-50');
-            } else {
-                subio.classList.add('border-2', 'border-amber-500', 'bg-amber-50');
-            }
-        }
-
-        function toggleBiometricCard() {
-            const card = document.getElementById('biometric-card');
-            const needsWeighing = !NON_WEIGHING.includes(selectedModality);
-            card.style.display = needsWeighing ? 'block' : 'none';
-            
-            if (!needsWeighing) {
-                selectedPassStatus = 'Sí'; // Auto pass for non-weighing
-            }
-        }
-
-        function updateWeightAdvice() {
-            const adviceEl = document.getElementById('weight-advice');
-            const heightVal = parseFloat(document.getElementById('height').value);
-            
-            if (!heightVal || heightVal < 140) {
-                adviceEl.classList.add('hidden');
-                return;
-            }
-            
-            let advice = null;
-            
-            if (selectedModality === 'Classic Physique') {
-                const base = heightVal - 100;
-                let maxW = base;
-                if (heightVal < 162) maxW = base + 2;
-                else if (heightVal < 168) maxW = base + 4;
-                else if (heightVal < 171) maxW = base + 6;
-                else if (heightVal < 175) maxW = base + 8;
-                else if (heightVal < 180) maxW = base + 11;
-                else maxW = base + 15;
-                
-                advice = `Para ${heightVal}cm en Classic Physique el peso máximo aproximado es ${maxW} kg (regla IFBB).`;
-            } 
-            else if (selectedModality === 'Culturismo Clásico' || selectedModality === 'Games Classic') {
-                const base = heightVal - 100;
-                let maxW = base;
-                if (heightVal <= 168) maxW = base;
-                else if (heightVal <= 171) maxW = base + 2;
-                else if (heightVal <= 175) maxW = base + 4;
-                else if (heightVal <= 180) maxW = base + 6;
-                else maxW = base + 8;
-                
-                advice = `Para ${heightVal}cm en ${selectedModality} el peso máximo aproximado es ${maxW} kg.`;
-            }
-            
-            if (advice) {
-                adviceEl.innerHTML = `<i class="fa-solid fa-info-circle mr-2"></i> ${advice}`;
-                adviceEl.classList.remove('hidden');
-            } else {
-                adviceEl.classList.add('hidden');
-            }
+            const si = document.getElementById('pass-si'), no = document.getElementById('pass-no'), subio = document.getElementById('pass-subio');
+            [si,no,subio].forEach(el => el.className = 'flex-1 cursor-pointer text-center py-2.5 rounded-xl border border-gray-600 text-gray-400 text-sm font-bold');
+            if (status === 'Sí') si.className = 'flex-1 cursor-pointer text-center py-2.5 rounded-xl border-2 border-emerald-500 bg-emerald-500/20 text-emerald-400 text-sm font-bold';
+            else if (status === 'No') no.className = 'flex-1 cursor-pointer text-center py-2.5 rounded-xl border-2 border-red-500 bg-red-500/20 text-red-400 text-sm font-bold';
+            else subio.className = 'flex-1 cursor-pointer text-center py-2.5 rounded-xl border-2 border-amber-500 bg-amber-500/20 text-amber-400 text-sm font-bold';
         }
 
         function registerAthlete() {
-            const fullName = document.getElementById('fullName').value.trim();
+            if (!editingAthleteId && registrationsClosed) { showFormWarning('Inscripciones cerradas.'); return; }
+            const lastName = document.getElementById('lastName').value.trim();
+            const firstName = document.getElementById('firstName').value.trim();
             const idCard = document.getElementById('idCard').value.trim();
-            const category = document.getElementById('category').value.trim();
-            const club = document.getElementById('club').value.trim();
-            const province = document.getElementById('province').value.trim();
-            const observations = document.getElementById('observations').value.trim();
-            const manualBib = parseInt(document.getElementById('manualBib').value) || null;
-            
-            const needsWeighing = !NON_WEIGHING.includes(selectedModality);
-            const weight = needsWeighing ? parseFloat(document.getElementById('weight').value) : null;
-            const height = needsWeighing ? parseFloat(document.getElementById('height').value) : null;
+            const birthDate = document.getElementById('birthDate').value;
+            const sex = document.getElementById('sex').value;
+            const height = parseFloat(document.getElementById('height').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            selectedModality = document.getElementById('modality-select').value;
+            const category = document.getElementById('category').value;
 
-            // Basic validation
-            if (!fullName || !idCard || !category) {
-                showFormWarning("Complete al menos: Nombre completo, Cédula y Categoría.");
+            if (!lastName || !firstName || !idCard || !birthDate || !sex || !height || !weight) {
+                showFormWarning('Complete: Apellidos, Nombres, Cédula, Fecha nacimiento, Sexo, Estatura y Peso.');
                 return;
             }
 
-            let finalBib;
-            if (manualBib && manualBib > 0) {
-                finalBib = manualBib;
-            } else if (editingAthleteId) {
-                const existing = athletes.find(a => a.id === editingAthleteId);
-                finalBib = existing ? existing.bibNumber : (Math.max(0, ...athletes.map(a => a.bibNumber)) + 1);
-            } else {
-                finalBib = (Math.max(0, ...athletes.map(a => a.bibNumber)) || 0) + 1;
-            }
+            const manualBib = parseInt(document.getElementById('manualBib').value) || null;
+            let finalBib = manualBib > 0 ? manualBib : (editingAthleteId ? athletes.find(a => a.id === editingAthleteId)?.bibNumber : null);
+            if (!finalBib) finalBib = (Math.max(0, ...athletes.map(a => a.bibNumber)) || 0) + 1;
 
-            const athleteData = {
-                fullName,
-                idCard,
-                modality: selectedModality,
-                category,
-                weight: weight || null,
-                height: height || null,
-                didPassWeight: needsWeighing ? selectedPassStatus : "Sí",
+            const athleteData = normalizeAthlete({
+                lastName, firstName, fullName: `${lastName} ${firstName}`.trim(),
+                idCard, birthDate, age: calcAge(birthDate), sex,
+                nationality: document.getElementById('nationality').value.trim() || 'Ecuatoriana',
+                province: document.getElementById('province').value.trim() || 'Manabí',
+                club: document.getElementById('club').value.trim() || 'Independiente',
+                coach: document.getElementById('coach').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                modality: selectedModality, category, height, weight,
+                athleteStatus: selectedClassification, classification: selectedClassification,
+                passStatus: selectedPassStatus, didPassWeight: selectedPassStatus,
+                paymentStatus: document.getElementById('paymentStatus').value,
+                observations: document.getElementById('observations').value.trim(),
                 bibNumber: finalBib,
-                observations,
-                club: club || "INDEPENDIENTE",
-                province: province || "MANABÍ",
-                classification: selectedClassification,
-                registrationTimestamp: editingAthleteId ? 
-                    (athletes.find(a => a.id === editingAthleteId)?.registrationTimestamp || Date.now()) : Date.now()
-            };
+                registrationTimestamp: editingAthleteId ? athletes.find(a => a.id === editingAthleteId)?.registrationTimestamp || Date.now() : Date.now()
+            });
 
             if (editingAthleteId) {
-                // Update (Nota: Con Discord como BD, la edición se guarda solo local a menos que crees un socket 'editarDesdeWeb')
-                const index = athletes.findIndex(a => a.id === editingAthleteId);
-                if (index !== -1) {
-                    athletes[index] = { ...athletes[index], ...athleteData };
-                    addLog("Edición", `Editó atleta #${finalBib} - ${fullName}`);
-                    showToast(`Atleta #${finalBib} actualizado correctamente`, 'success');
-                }
+                const idx = athletes.findIndex(a => a.id === editingAthleteId);
+                if (idx !== -1) { athletes[idx] = { ...athletes[idx], ...athleteData }; addLog('Edición', `#${finalBib} ${athleteData.fullName}`); showToast(`Atleta #${finalBib} actualizado`, 'success'); }
             } else {
-                // Create new y enviar a Discord
-                const newAthlete = {
-                    id: Date.now().toString(),
-                    ...athleteData
-                };
-                
-                // Emite al bot de Railway para que lo guarde en Discord
+                const newAthlete = { id: Date.now().toString(), ...athleteData };
                 socket.emit('registrarDesdeWeb', newAthlete);
-                
-                // Agregarlo a la pantalla al instante
-                athletes.unshift(newAthlete); 
-                
-                addLog("Registro", `Registró atleta #${finalBib} - ${fullName}`);
-                showToast(`Atleta #${finalBib} registrado exitosamente`, 'success');
+                athletes.unshift(newAthlete);
+                addLog('Registro', `#${finalBib} ${athleteData.fullName}`);
+                showToast(`Atleta #${finalBib} registrado`, 'success');
+                localStorage.removeItem('mp_form_draft');
             }
-
-            saveAthletes(); // Función vacía, pero mantenida por estabilidad
-            
-            // Reset form
-            editingAthleteId = null;
-            cancelEdit();
-            
-            // Go to search
-            setTimeout(() => {
-                switchSection(2);
-                filterAthletes();
-            }, 600);
+            editingAthleteId = null; cancelEdit();
+            setTimeout(() => { switchSection(2); filterAthletes(); }, 500);
         }
 
         function showFormWarning(msg) {
-            const warn = document.getElementById('form-warning');
-            warn.innerHTML = msg;
-            warn.classList.remove('hidden');
-            setTimeout(() => warn.classList.add('hidden'), 4500);
+            const w = document.getElementById('form-warning');
+            w.textContent = msg; w.classList.remove('hidden');
+            setTimeout(() => w.classList.add('hidden'), 4500);
         }
 
         function cancelEdit() {
             editingAthleteId = null;
-            document.getElementById('cancel-edit-btn').classList.add('hidden');
-            document.getElementById('cancel-edit-btn').classList.remove('flex');
-            
-            // Clear form
-            document.querySelectorAll('#section-1 input, #section-1 textarea').forEach(el => el.value = '');
-            selectedModality = "Men's Physique";
-            selectedClassification = "Novato";
-            selectedPassStatus = "Sí";
-            
             initRegistrationForm();
             document.getElementById('form-warning').classList.add('hidden');
-            
-            document.getElementById('form-title').textContent = 'NUEVO REGISTRO DE ATLETA';
-            document.getElementById('submit-btn-text').textContent = 'COMPLETAR INSCRIPCIÓN OFICIAL';
         }
+
+        function updateRegClosedUI() {
+            const closed = registrationsClosed;
+            document.getElementById('reg-closed-banner')?.classList.toggle('hidden', !closed || editingAthleteId);
+            document.getElementById('sidebar-closed-badge')?.classList.toggle('hidden', !closed);
+            const btn = document.getElementById('submit-btn');
+            if (btn && !editingAthleteId) btn.disabled = closed;
+        }
+
+        function toggleRegistrations() {
+            registrationsClosed = !registrationsClosed;
+            localStorage.setItem('mp_reg_closed', registrationsClosed);
+            updateRegClosedUI();
+            addLog(registrationsClosed ? 'Cierre inscripciones' : 'Apertura inscripciones', registrationsClosed ? 'Inscripciones bloqueadas' : 'Inscripciones abiertas');
+            showToast(registrationsClosed ? 'Inscripciones cerradas' : 'Inscripciones abiertas', 'info');
+        }
+
+        function printCredential(id) {
+            const a = normalizeAthlete({...athletes.find(x => x.id === id)});
+            if (!a) return;
+            document.getElementById('credential-content').innerHTML = `
+                <img src="https://media.discordapp.net/attachments/1516969981525495960/1516982084802052257/Diseno_sin_titulo_1.png" class="h-16 mx-auto mb-3" alt="Logo">
+                <div class="text-4xl font-black text-[#C5A85C] mb-2">#${a.bibNumber}</div>
+                <div class="text-lg font-bold">${getFullName(a)}</div>
+                <div class="text-sm text-gray-500 mt-2">${a.modality}</div>
+                <div class="text-sm font-semibold text-[#0F3057] mt-1">${a.category || '-'}</div>
+                <div class="text-xs text-gray-400 mt-3">${a.club} • ${a.province}</div>
+                <div class="mt-4 inline-block px-4 py-1 rounded-full text-xs font-bold ${a.athleteStatus === 'Novato' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}">${a.athleteStatus}</div>`;
+            document.getElementById('credential-modal').classList.remove('hidden');
+        }
+        function closeCredential() { document.getElementById('credential-modal').classList.add('hidden'); }
 
         function startEditAthlete(athleteId) {
             editingAthleteId = athleteId;
@@ -1460,8 +1413,8 @@
             let filtered = [...athletes];
 
             if (modFilter !== 'Todas') filtered = filtered.filter(a => a.modality === modFilter);
-            if (statusFilter !== 'Todos') filtered = filtered.filter(a => a.didPassWeight === statusFilter);
-            if (classFilter !== 'Todas') filtered = filtered.filter(a => (a.classification || 'Novato') === classFilter);
+            if (statusFilter !== 'Todos') filtered = filtered.filter(a => (a.passStatus || a.didPassWeight) === statusFilter);
+            if (classFilter !== 'Todas') filtered = filtered.filter(a => (a.athleteStatus || a.classification || 'Novato') === classFilter);
 
             if (sortBy === 'name') filtered.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
             else if (sortBy === 'modality') filtered.sort((a, b) => (a.modality || '').localeCompare(b.modality || '') || a.bibNumber - b.bibNumber);
@@ -1492,9 +1445,85 @@
             return `"${str}"`;
         }
 
+        const EXPORT_HEADERS = ['Apellidos y Nombres', 'Cédula', 'Modalidad', 'Categoría', 'Estatura', 'Peso', 'Estado'];
+
+        function getExportRow(a) {
+            a = normalizeAthlete({...a});
+            return [
+                getFullName(a),
+                a.idCard || '',
+                a.modality || '',
+                a.category || '',
+                a.height != null && a.height !== '' ? a.height : '-',
+                a.weight != null && a.weight !== '' ? a.weight : '-',
+                a.passStatus || a.didPassWeight || a.athleteStatus || '-'
+            ];
+        }
+
+        function exportList(type) {
+            let data = getFilteredAthletesForExport().map(normalizeAthlete);
+            if (type === 'pesaje') data = data.filter(a => a.weight);
+            if (type === 'novatos') data = data.filter(a => (a.athleteStatus || a.classification) === 'Novato');
+            if (type === 'clasificados') data = data.filter(a => (a.athleteStatus || a.classification) === 'Clasificado');
+            if (data.length === 0) { showToast('Sin datos para exportar', 'error'); return; }
+            if (type === 'xlsx') return exportToXLSX();
+            if (type === 'pdf') return generateVisualReport();
+            const titles = { oficial:'Lista Oficial de Competidores', pesaje:'Lista de Pesaje', acreditacion:'Lista de Acreditación', modalidad:'Lista por Modalidad', categoria:'Lista por Categoría', novatos:'Lista de Novatos', clasificados:'Lista de Clasificados', jueces:'Hoja de Jueces' };
+            let grouped;
+            if (type === 'jueces') {
+                grouped = {}; data.forEach(a => { const k = `${a.modality}|||${a.category}`; (grouped[k] ||= []).push(a); });
+                return generateExportReport(titles[type], data, false, true, grouped);
+            }
+            if (type === 'categoria') {
+                grouped = {}; data.forEach(a => { const k = a.category || 'Sin categoría'; (grouped[k] ||= []).push(a); });
+                return generateExportReport(titles[type], data, false, true, grouped);
+            }
+            grouped = groupAthletesByModality(data);
+            generateExportReport(titles[type] || 'Exportación', data, type === 'acreditacion', false, grouped);
+        }
+
+        function generateExportReport(title, data, withAccreditation, judgesSheet, grouped) {
+            grouped = grouped || groupAthletesByModality(data);
+            let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+                <style>body{font-family:Segoe UI,Arial,sans-serif;margin:30px;color:#111}h1{color:#0A0F1E;border-bottom:3px solid #C5A85C;padding-bottom:8px}
+                h2{background:#0A0F1E;color:#fff;padding:10px 16px;margin-top:24px;font-size:14px}table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}
+                th{background:#f1f5f9;padding:8px;text-align:left;border-bottom:2px solid #ddd}td{padding:8px;border-bottom:1px solid #eee}
+                .print{position:fixed;top:16px;right:16px;background:#C5A85C;border:none;padding:10px 20px;font-weight:bold;border-radius:8px;cursor:pointer}
+                @media print{.print{display:none}}</style></head><body>
+                <button class="print" onclick="window.print()">Imprimir / PDF</button>
+                <h1>${title} — Manabí Power 2026</h1><p style="color:#666">${new Date().toLocaleString('es-EC')} • ${data.length} atletas</p>`;
+            Object.keys(grouped).sort().forEach(key => {
+                const list = grouped[key];
+                const label = judgesSheet ? key.replace('|||', ' — ') : key;
+                html += `<h2>${label} (${list.length})</h2><table><tr>`;
+                if (withAccreditation) html += `<th>#</th>`;
+                EXPORT_HEADERS.forEach(h => html += `<th>${h}</th>`);
+                if (withAccreditation) html += `<th>Club</th><th>Pago</th>`;
+                html += `</tr>`;
+                list.forEach(a => {
+                    const row = getExportRow(a);
+                    html += '<tr>';
+                    if (withAccreditation) html += `<td><b>#${a.bibNumber}</b></td>`;
+                    row.forEach(c => html += `<td>${c}</td>`);
+                    if (withAccreditation) html += `<td>${a.club || ''}</td><td>${a.paymentStatus || ''}</td>`;
+                    html += '</tr>';
+                });
+                html += '</table>';
+            });
+            html += '</body></html>';
+            const w = window.open('', '_blank'); w.document.write(html); w.document.close();
+            showToast(`${title} generada`, 'success');
+        }
+
+        function getExportRecord(a) {
+            const [apellidosNombres, cedula, modalidad, categoria, estatura, peso, estado] = getExportRow(a);
+            return { 'Apellidos y Nombres': apellidosNombres, 'Cédula': cedula, 'Modalidad': modalidad, 'Categoría': categoria, 'Estatura': estatura, 'Peso': peso, 'Estado': estado };
+        }
+
         function getAthleteInitials(name) {
-            if (!name) return '?';
-            return name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+            const n = name || '';
+            if (!n) return '?';
+            return n.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
         }
 
         function animateCounter(el, target) {
@@ -1513,24 +1542,17 @@
 
         function filterAthletes() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
-            const filter = document.getElementById('filter-modality').value;
-            
-            let filtered = athletes;
-            
-            if (query) {
-                filtered = filtered.filter(a => 
-                    (a.fullName && a.fullName.toLowerCase().includes(query)) ||
-                    (a.idCard && a.idCard.includes(query)) ||
-                    (a.bibNumber && a.bibNumber.toString().includes(query)) ||
-                    (a.club && a.club.toLowerCase().includes(query)) ||
-                    (a.province && a.province.toLowerCase().includes(query))
-                );
-            }
-            
-            if (filter !== "Todas") {
-                filtered = filtered.filter(a => a.modality === filter);
-            }
-            
+            const mod = document.getElementById('filter-modality').value;
+            const status = document.getElementById('filter-status')?.value || 'Todos';
+            const prov = document.getElementById('filter-province')?.value.toLowerCase().trim() || '';
+            let filtered = athletes.map(normalizeAthlete);
+            if (query) filtered = filtered.filter(a =>
+                getFullName(a).toLowerCase().includes(query) || (a.idCard||'').includes(query) ||
+                String(a.bibNumber||'').includes(query) || (a.club||'').toLowerCase().includes(query) ||
+                (a.province||'').toLowerCase().includes(query) || (a.coach||'').toLowerCase().includes(query));
+            if (mod !== 'Todas') filtered = filtered.filter(a => a.modality === mod);
+            if (status !== 'Todos') filtered = filtered.filter(a => (a.athleteStatus||a.classification) === status);
+            if (prov) filtered = filtered.filter(a => (a.province||'').toLowerCase().includes(prov));
             renderAthletesList(filtered);
         }
 
@@ -1548,73 +1570,32 @@
             }
             
             list.forEach(athlete => {
-                const needsWeigh = !NON_WEIGHING.includes(athlete.modality);
-                
-                const statusColor = athlete.didPassWeight === 'Sí' ? 'emerald' : 
-                                   athlete.didPassWeight === 'No' ? 'red' : 'amber';
-                
+                athlete = normalizeAthlete({...athlete});
+                const name = getFullName(athlete);
+                const pass = athlete.passStatus || athlete.didPassWeight || 'Sí';
+                const passCls = pass === 'Sí' ? 'text-emerald-400 bg-emerald-500/10' : pass === 'No' ? 'text-red-400 bg-red-500/10' : 'text-amber-400 bg-amber-500/10';
                 const card = document.createElement('div');
-                card.className = `athlete-card bg-white border border-[#0F3057]/10 rounded-3xl p-5 shadow-sm`;
-                
-                const initials = getAthleteInitials(athlete.fullName);
-
+                card.className = 'athlete-card dark-panel rounded-2xl p-5';
                 card.innerHTML = `
                     <div class="flex justify-between items-start">
-                        <div class="flex items-center gap-x-3">
-                            <div class="relative flex-shrink-0">
-                                <div class="w-11 h-11 athlete-avatar text-white rounded-2xl flex items-center justify-center font-black text-sm shadow-inner">
-                                    ${initials}
-                                </div>
-                                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-[#C5A85C] text-[#0F2238] rounded-lg flex items-center justify-center text-[9px] font-black shadow">
-                                    ${athlete.bibNumber}
-                                </div>
-                            </div>
-                            <div class="min-w-0">
-                                <div class="font-extrabold text-base leading-tight truncate">${athlete.fullName || 'SIN NOMBRE'}</div>
-                                <div class="text-xs text-[#0F3057]/60">${athlete.idCard || 'Sin cédula'}</div>
-                            </div>
+                        <div class="flex items-center gap-3">
+                            <div class="relative"><div class="w-11 h-11 athlete-avatar rounded-xl flex items-center justify-center font-bold text-sm">${getAthleteInitials(name)}</div>
+                            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-[#C5A85C] text-[#0A0F1E] rounded-md flex items-center justify-center text-[9px] font-black">#${athlete.bibNumber}</div></div>
+                            <div class="min-w-0"><div class="font-bold truncate">${name}</div><div class="text-xs text-gray-500">${athlete.idCard||''}</div></div>
                         </div>
-                        
-                        <div class="flex gap-x-1">
-                            <button onclick="startEditAthlete('${athlete.id}'); event.stopImmediatePropagation();" 
-                                    class="w-8 h-8 flex items-center justify-center text-[#0F3057] hover:bg-[#0F3057]/5 rounded-xl">
-                                <i class="fa-solid fa-edit fa-sm"></i>
-                            </button>
-                            <button onclick="deleteAthlete('${athlete.id}'); event.stopImmediatePropagation();" 
-                                    class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-xl">
-                                <i class="fa-solid fa-trash fa-sm"></i>
-                            </button>
+                        <div class="flex gap-1">
+                            <button onclick="printCredential('${athlete.id}')" class="w-8 h-8 flex items-center justify-center text-[#C5A85C] hover:bg-[#C5A85C]/10 rounded-lg" title="Credencial"><i class="fa-solid fa-id-card text-xs"></i></button>
+                            <button onclick="startEditAthlete('${athlete.id}')" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-white/5 rounded-lg"><i class="fa-solid fa-edit text-xs"></i></button>
+                            <button onclick="deleteAthlete('${athlete.id}')" class="w-8 h-8 flex items-center justify-center text-red-400 hover:bg-red-500/10 rounded-lg"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
                     </div>
-                    
-                    <div class="mt-4 text-xs">
-                        <div class="font-bold text-[#0F3057]">${athlete.modality}</div>
-                        <div class="text-[#0F3057]/70">${athlete.category || 'Sin categoría'} • ${athlete.classification || 'Novato'}</div>
-                        
-                        <div class="flex items-center justify-between mt-3">
-                            <div class="text-[10px]">
-                                <span class="font-semibold">${athlete.club}</span><br>
-                                <span class="text-[#0F3057]/50">${athlete.province}</span>
-                            </div>
-                            
-                            ${needsWeigh ? `
-                            <div class="text-right text-xs">
-                                <div>${athlete.weight || '-'} kg</div>
-                                <div class="text-[#0F3057]/50">${athlete.height || '-'} cm</div>
-                            </div>` : ''}
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4 flex items-center justify-between">
-                        <div class="status-badge bg-${statusColor}-100 text-${statusColor}-700 border border-${statusColor}-200">
-                            ${athlete.didPassWeight}
-                        </div>
-                        
-                        ${athlete.observations ? `
-                        <div class="text-[10px] max-w-[140px] truncate text-[#0F3057]/60 italic">"${athlete.observations}"</div>` : ''}
-                    </div>
-                `;
-                
+                    <div class="mt-3 text-xs"><div class="font-semibold text-[#C5A85C]">${athlete.modality}</div><div class="text-gray-400 mt-0.5">${athlete.category||'-'}</div></div>
+                    <div class="mt-3 flex justify-between text-[10px] text-gray-500"><span>${athlete.club} • ${athlete.province}</span><span>${athlete.weight||'-'}kg / ${athlete.height||'-'}cm</span></div>
+                    <div class="mt-3 flex gap-2 flex-wrap">
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${athlete.athleteStatus==='Clasificado'?'bg-blue-500/20 text-blue-300':'bg-amber-500/20 text-amber-300'}">${athlete.athleteStatus||'Novato'}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${passCls}">${pass}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${athlete.paymentStatus==='Pagado'?'bg-emerald-500/20 text-emerald-300':'bg-gray-500/20 text-gray-400'}">${athlete.paymentStatus||'Pendiente'}</span>
+                    </div>`;
                 container.appendChild(card);
             });
         }
@@ -1636,18 +1617,21 @@
 
         // ==================== DASHBOARD ====================
         function updateDashboardMetrics() {
-            const total = athletes.length;
-            const passed = athletes.filter(a => a.didPassWeight === 'Sí').length;
-            const failed = athletes.filter(a => a.didPassWeight === 'No').length;
-            const shifted = athletes.filter(a => a.didPassWeight === 'Subió de categoría').length;
-            
+            const list = athletes.map(normalizeAthlete);
+            const total = list.length;
+            const novatos = list.filter(a => (a.athleteStatus||a.classification)==='Novato').length;
+            const clasificados = list.filter(a => (a.athleteStatus||a.classification)==='Clasificado').length;
+            const pagados = list.filter(a => a.paymentStatus==='Pagado').length;
             animateCounter(document.getElementById('metric-total'), total);
-            animateCounter(document.getElementById('metric-passed'), passed);
-            animateCounter(document.getElementById('metric-failed'), failed);
-            animateCounter(document.getElementById('metric-shifted'), shifted);
-
+            animateCounter(document.getElementById('metric-passed'), novatos);
+            animateCounter(document.getElementById('metric-failed'), clasificados);
+            animateCounter(document.getElementById('metric-shifted'), pagados);
             const heroTotal = document.getElementById('hero-total');
             if (heroTotal) heroTotal.textContent = total;
+            const ps = document.getElementById('payment-summary');
+            if (ps) ps.innerHTML = `<div class="dark-panel rounded-xl p-3"><div class="text-lg font-black text-emerald-400">${pagados}</div><div class="text-gray-500">Pagados</div></div><div class="dark-panel rounded-xl p-3"><div class="text-lg font-black text-amber-400">${list.filter(a=>a.paymentStatus==='Pendiente').length}</div><div class="text-gray-500">Pendientes</div></div><div class="dark-panel rounded-xl p-3"><div class="text-lg font-black text-white">${total}</div><div class="text-gray-500">Total</div></div>`;
+            const tbtn = document.getElementById('toggle-reg-btn');
+            if (tbtn) { tbtn.textContent = registrationsClosed ? 'Abrir Inscripciones' : 'Cerrar Inscripciones'; tbtn.className = registrationsClosed ? 'px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white' : 'px-5 py-2.5 rounded-xl font-bold text-sm bg-red-500/80 text-white'; }
         }
 
         function renderModalitiesOverview() {
@@ -1722,30 +1706,31 @@
                         <table class="w-full text-xs">
                             <thead>
                                 <tr class="bg-[#0F3057] text-white">
-                                    <th class="px-3 py-2 text-left font-bold rounded-l-2xl">#</th>
-                                    <th class="px-3 py-2 text-left font-bold">NOMBRE</th>
-                                    <th class="px-3 py-2 text-left font-bold">CÉDULA</th>
-                                    <th class="px-3 py-2 text-center font-bold">CLASIF.</th>
-                                    <th class="px-3 py-2 text-left font-bold">CLUB / PROCEDENCIA</th>
-                                    ${!NON_WEIGHING.includes(modality) ? `<th class="px-3 py-2 text-center font-bold">PESO</th>` : ''}
-                                    <th class="px-3 py-2 text-center font-bold rounded-r-2xl">ESTADO</th>
+                                    <th class="px-3 py-2 text-left font-bold rounded-l-2xl">Apellidos y Nombres</th>
+                                    <th class="px-3 py-2 text-left font-bold">Cédula</th>
+                                    <th class="px-3 py-2 text-left font-bold">Modalidad</th>
+                                    <th class="px-3 py-2 text-left font-bold">Categoría</th>
+                                    <th class="px-3 py-2 text-center font-bold">Estatura</th>
+                                    <th class="px-3 py-2 text-center font-bold">Peso</th>
+                                    <th class="px-3 py-2 text-center font-bold rounded-r-2xl">Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
                 `;
                 
                 list.forEach(a => {
+                    const [nombre, cedula, mod, cat, estatura, peso, estado] = getExportRow(a);
                     html += `
                         <tr class="border-b border-[#0F3057]/10 last:border-none hover:bg-[#F8FAFC]">
-                            <td class="px-3 py-2.5 font-black">#${a.bibNumber}</td>
-                            <td class="px-3 py-2.5 font-bold">${a.fullName}</td>
-                            <td class="px-3 py-2.5 text-[#0F3057]/70">${a.idCard}</td>
-                            <td class="px-3 py-2.5 text-center"><span class="text-[10px] px-2 py-px bg-[#C5A85C]/10 text-[#C5A85C] rounded font-bold">${a.classification || 'Novato'}</span></td>
-                            <td class="px-3 py-2.5 text-xs">${a.club} <span class="text-[#0F3057]/40">• ${a.province}</span></td>
-                            ${!NON_WEIGHING.includes(modality) ? `<td class="px-3 py-2.5 text-center font-mono text-xs">${a.weight || '-'}kg</td>` : ''}
+                            <td class="px-3 py-2.5 font-bold">${nombre}</td>
+                            <td class="px-3 py-2.5 text-[#0F3057]/70">${cedula}</td>
+                            <td class="px-3 py-2.5 text-xs">${mod}</td>
+                            <td class="px-3 py-2.5 text-xs">${cat || '-'}</td>
+                            <td class="px-3 py-2.5 text-center font-mono text-xs">${estatura !== '-' ? estatura + ' cm' : '-'}</td>
+                            <td class="px-3 py-2.5 text-center font-mono text-xs">${peso !== '-' ? peso + ' kg' : '-'}</td>
                             <td class="px-3 py-2.5 text-center">
-                                <span class="status-badge text-[9px] ${a.didPassWeight === 'Sí' ? 'bg-emerald-100 text-emerald-700' : a.didPassWeight === 'No' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}">
-                                    ${a.didPassWeight}
+                                <span class="status-badge text-[9px] ${estado === 'Sí' ? 'bg-emerald-100 text-emerald-700' : estado === 'No' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}">
+                                    ${estado}
                                 </span>
                             </td>
                         </tr>
@@ -1780,23 +1765,15 @@
             Object.keys(grouped).sort().forEach(modality => {
                 const list = grouped[modality];
                 totalGeneral += list.length;
-                const needsWeigh = !NON_WEIGHING.includes(modality);
                 
                 csv += `═══════════════════════════════════════════════════════════════════════════════\n`;
                 csv += `${modality.toUpperCase()} - PLANILLA MESA DE CONTROL\n`;
                 csv += `═══════════════════════════════════════════════════════════════════════════════\n`;
                 
-                const headers = ['Nro','Nombre Completo','Cédula','Modalidad','Categoría','Clasificación','Club','Provincia'];
-                if (needsWeigh) headers.push('Peso (kg)','Altura (cm)','¿Pasó Peso?');
-                headers.push('Observaciones','Hora Reg.');
-                csv += headers.join(',') + '\n';
+                csv += EXPORT_HEADERS.join(',') + '\n';
                 
                 list.forEach(a => {
-                    const hora = new Date(a.registrationTimestamp || Date.now()).toLocaleTimeString('es-EC', {hour:'2-digit', minute:'2-digit'});
-                    const row = [a.bibNumber, a.fullName, a.idCard, a.modality, a.category || '', a.classification || 'Novato', a.club, a.province];
-                    if (needsWeigh) row.push(a.weight || '-', a.height || '-', a.didPassWeight);
-                    row.push(a.observations || '', hora);
-                    csv += row.map(escapeCSV).join(',') + '\n';
+                    csv += getExportRow(a).map(escapeCSV).join(',') + '\n';
                 });
                 
                 csv += `\nTotal en ${modality}: ${list.length}\n\n`;
@@ -1853,27 +1830,18 @@
 
             Object.keys(grouped).sort().forEach(modality => {
                 const list = grouped[modality];
-                const needsWeigh = !NON_WEIGHING.includes(modality);
                 const sheetData = [
                     [`${modality} — Manabí Power 2026`],
                     [`Total: ${list.length} atletas`],
-                    []
+                    [],
+                    EXPORT_HEADERS
                 ];
-                const headers = ['#','Nombre','Cédula','Categoría','Clasif.','Club','Provincia'];
-                if (needsWeigh) headers.push('Peso','Altura','Estado');
-                headers.push('Observaciones');
-                sheetData.push(headers);
 
-                list.forEach(a => {
-                    const row = [a.bibNumber, a.fullName, a.idCard, a.category || '', a.classification || 'Novato', a.club, a.province];
-                    if (needsWeigh) row.push(a.weight || '-', a.height || '-', a.didPassWeight);
-                    row.push(a.observations || '');
-                    sheetData.push(row);
-                });
+                list.forEach(a => sheetData.push(getExportRow(a)));
 
                 const safeName = modality.substring(0, 28).replace(/[\\/*?:\[\]]/g, '');
                 const ws = XLSX.utils.aoa_to_sheet(sheetData);
-                ws['!cols'] = [{wch:5},{wch:28},{wch:14},{wch:16},{wch:10},{wch:22},{wch:14},{wch:8},{wch:8},{wch:14},{wch:30}];
+                ws['!cols'] = [{wch:30},{wch:14},{wch:24},{wch:18},{wch:10},{wch:8},{wch:16}];
                 XLSX.utils.book_append_sheet(wb, ws, safeName);
             });
 
@@ -1903,6 +1871,7 @@
                     }
                 },
                 summary: {},
+                planilla: data.map(getExportRecord),
                 athletes: data
             };
 
@@ -1957,16 +1926,16 @@
 
             Object.keys(grouped).sort().forEach(modality => {
                 const list = grouped[modality];
-                const needsWeigh = !NON_WEIGHING.includes(modality);
-                html += `<h2>${modality} (${list.length} atletas)</h2><table><tr>
-                    <th>#</th><th>Nombre</th><th>Cédula</th><th>Categoría</th><th>Club</th>`;
-                if (needsWeigh) html += `<th>Peso</th><th>Estado</th>`;
+                html += `<h2>${modality} (${list.length} atletas)</h2><table><tr>`;
+                EXPORT_HEADERS.forEach(h => { html += `<th>${h}</th>`; });
                 html += `</tr>`;
                 list.forEach(a => {
-                    html += `<tr><td>${a.bibNumber}</td><td>${a.fullName}</td><td>${a.idCard}</td>
-                        <td>${a.category || ''}</td><td>${a.club} (${a.province})</td>`;
-                    if (needsWeigh) html += `<td>${a.weight || '-'} kg</td><td>${a.didPassWeight}</td>`;
-                    html += `</tr>`;
+                    const [nombre, cedula, mod, cat, estatura, peso, estado] = getExportRow(a);
+                    html += `<tr>
+                        <td>${nombre}</td><td>${cedula}</td><td>${mod}</td><td>${cat || '-'}</td>
+                        <td>${estatura !== '-' ? estatura + ' cm' : '-'}</td>
+                        <td>${peso !== '-' ? peso + ' kg' : '-'}</td><td>${estado}</td>
+                    </tr>`;
                 });
                 html += `</table>`;
             });
@@ -2040,22 +2009,23 @@
 
             Object.keys(grouped).sort().forEach(modality => {
                 const list = grouped[modality];
-                const needsWeigh = !NON_WEIGHING.includes(modality);
 
                 html += `<div class="modality-section">
                     <div class="modality-header"><span>${modality}</span><span class="count">${list.length} atletas</span></div>
-                    <table><thead><tr>
-                        <th>#</th><th>Nombre</th><th>Cédula</th><th>Categoría</th><th>Club</th>`;
-                if (needsWeigh) html += `<th>Peso</th><th>Estado</th>`;
+                    <table><thead><tr>`;
+                EXPORT_HEADERS.forEach(h => { html += `<th>${h}</th>`; });
                 html += `</tr></thead><tbody>`;
 
                 list.forEach(a => {
-                    const badgeClass = a.didPassWeight === 'Sí' ? 'badge-ok' : a.didPassWeight === 'No' ? 'badge-fail' : 'badge-warn';
-                    html += `<tr><td><strong>#${a.bibNumber}</strong></td><td><strong>${a.fullName}</strong></td>
-                        <td>${a.idCard}</td><td>${a.category || '-'}</td><td>${a.club} • ${a.province}</td>`;
-                    if (needsWeigh) html += `<td>${a.weight ? a.weight + ' kg' : '-'}</td>
-                        <td><span class="badge ${badgeClass}">${a.didPassWeight}</span></td>`;
-                    html += `</tr>`;
+                    const [nombre, cedula, mod, cat, estatura, peso, estado] = getExportRow(a);
+                    const badgeClass = estado === 'Sí' ? 'badge-ok' : estado === 'No' ? 'badge-fail' : 'badge-warn';
+                    html += `<tr>
+                        <td><strong>${nombre}</strong></td>
+                        <td>${cedula}</td><td>${mod}</td><td>${cat || '-'}</td>
+                        <td>${estatura !== '-' ? estatura + ' cm' : '-'}</td>
+                        <td>${peso !== '-' ? peso + ' kg' : '-'}</td>
+                        <td><span class="badge ${badgeClass}">${estado}</span></td>
+                    </tr>`;
                 });
 
                 html += `</tbody></table></div>`;
@@ -2094,30 +2064,19 @@
             
             Object.keys(grouped).sort().forEach(mod => {
                 const list = grouped[mod];
-                report += `┌────────────────────────────────────────────────────────────────────────────┐\n`;
-                report += `│  ${mod.toUpperCase().padEnd(70)}│\n`;
-                report += `│  ${list.length} ATLETAS                                                                │\n`;
-                report += `├────┬──────────────────────────────┬────────────┬──────────┬────────────────────┤\n`;
-                report += `│  # │ NOMBRE                       │ CÉDULA     │ CLASIF.  │ CLUB / PROCEDENCIA │\n`;
-                report += `├────┼──────────────────────────────┼────────────┼──────────┼────────────────────┤\n`;
+                report += `┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────┐\n`;
+                report += `│  ${mod.toUpperCase().padEnd(104)}│\n`;
+                report += `│  ${list.length} ATLETAS                                                                                      │\n`;
+                report += `├────────────────────────────┬────────────┬──────────────────────┬────────────────┬─────────┬───────┬──────────────────┤\n`;
+                report += `│ Apellidos y Nombres        │ Cédula     │ Modalidad            │ Categoría      │ Estatura│ Peso  │ Estado           │\n`;
+                report += `├────────────────────────────┼────────────┼──────────────────────┼────────────────┼─────────┼───────┼──────────────────┤\n`;
                 
                 list.forEach(a => {
-                    const nombre = (a.fullName || '').substring(0, 26).padEnd(26);
-                    const cedula = (a.idCard || '').padEnd(10);
-                    const clasif = (a.classification || 'Novato').padEnd(8);
-                    const club = `${a.club || ''} • ${a.province || ''}`.substring(0, 18).padEnd(18);
-                    
-                    report += `│ ${String(a.bibNumber).padStart(2)} │ ${nombre} │ ${cedula} │ ${clasif} │ ${club} │\n`;
-                    
-                    if (a.weight) {
-                        report += `│    │ Peso: ${a.weight}kg  Altura: ${a.height || '-'}cm   Estado: ${a.didPassWeight}                          │\n`;
-                    }
-                    if (a.observations) {
-                        report += `│    │ Obs: ${a.observations.substring(0, 60)}                              │\n`;
-                    }
+                    const [nombre, cedula, modalidad, categoria, estatura, peso, estado] = getExportRow(a);
+                    report += `│ ${nombre.substring(0, 26).padEnd(26)} │ ${cedula.padEnd(10)} │ ${modalidad.substring(0, 20).padEnd(20)} │ ${(categoria || '-').substring(0, 14).padEnd(14)} │ ${String(estatura).padEnd(7)} │ ${String(peso).padEnd(5)} │ ${estado.padEnd(16)} │\n`;
                 });
                 
-                report += `└────┴──────────────────────────────┴────────────┴──────────┴────────────────────┘\n\n`;
+                report += `└────────────────────────────┴────────────┴──────────────────────┴────────────────┴─────────┴───────┴──────────────────┘\n\n`;
             });
             
             report += `════════════════════════════════════════════════════════════════════════════\n`;
@@ -2316,7 +2275,8 @@
             
             initRegistrationForm();
             updateConnectionStatus(socket.connected);
-            console.log('%c[Manabí Power V3 Pro] Sistema listo — Socket.io + Exportación avanzada', 'color:#C5A85C; font-weight:bold');
+            updateRegClosedUI();
+            console.log('%c[Manabí Power Pro] Gestión IFBB — Categorías automáticas activas', 'color:#C5A85C;font-weight:bold');
         }
 
         // Boot
