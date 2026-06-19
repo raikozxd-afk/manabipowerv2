@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="preload" as="image" href="logo-manabi-power-sm.png" type="image/png">
+    <link rel="preload" as="image" href="logo-manabi-power-sm.png?v=2" type="image/png">
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     
@@ -245,6 +245,7 @@
             max-width: 100%;
             object-fit: contain;
             image-rendering: auto;
+            background: transparent;
         }
 
         .header-logo {
@@ -365,7 +366,7 @@
         <div class="w-full max-w-md relative z-10">
             <div class="flex justify-center mb-6">
                 <div class="relative">
-                    <img src="logo-manabi-power-sm.png"
+                    <img src="logo-manabi-power-sm.png?v=2"
                          alt="Manabí Power Logo"
                          class="app-logo login-logo drop-shadow-[0_8px_25px_rgba(0,0,0,0.6)]"
                          width="400" height="120"
@@ -439,7 +440,7 @@
                 <div class="px-5 md:px-6 py-3 flex items-center justify-between gap-4">
                     <!-- Identidad -->
                     <div class="flex items-center gap-x-3 md:gap-x-4 min-w-0">
-                        <img src="logo-manabi-power-sm.png"
+                        <img src="logo-manabi-power-sm.png?v=2"
                              alt="Manabí Power" class="app-logo header-logo flex-shrink-0"
                              width="160" height="38"
                              loading="eager" decoding="async" fetchpriority="high"
@@ -512,7 +513,7 @@
                             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-y-8">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-x-3 mb-4">
-                                        <img src="logo-manabi-power-sm.png"
+                                        <img src="logo-manabi-power-sm.png?v=2"
                                              alt="Manabí Power" class="app-logo hero-logo drop-shadow-lg flex-shrink-0"
                                              width="200" height="64"
                                              loading="eager" decoding="async"
@@ -953,8 +954,8 @@
 
     <script>
         // ==================== TAILWIND CONFIG ====================
-        const LOGO_SMALL = 'logo-manabi-power-sm.png';
-        const LOGO_FULL = 'logo-manabi-power.png';
+        const LOGO_SMALL = 'logo-manabi-power-sm.png?v=2';
+        const LOGO_FULL = 'logo-manabi-power.png?v=2';
 
         function getLogoUrl(hd = false) {
             const path = hd ? LOGO_FULL : LOGO_SMALL;
@@ -968,7 +969,7 @@
         function handleLogoError(img) {
             if (!img || img.dataset.logoFailed === '1') return;
             const step = img.dataset.logoStep || '0';
-            if (step === '0' && !img.src.includes(encodeURIComponent(LOGO_FULL)) && !img.src.endsWith(LOGO_FULL)) {
+            if (step === '0' && !img.src.includes('logo-manabi-power.png')) {
                 img.dataset.logoStep = '1';
                 img.src = getLogoUrl(true);
                 return;
@@ -1521,7 +1522,7 @@
             const a = normalizeAthlete({...athletes.find(x => x.id === id)});
             if (!a) return;
             document.getElementById('credential-content').innerHTML = `
-                <img src="logo-manabi-power-sm.png" class="app-logo h-16 mx-auto mb-3" alt="Manabí Power" width="200" height="64" loading="eager" onerror="handleLogoError(this)">
+                <img src="logo-manabi-power-sm.png?v=2" class="app-logo h-16 mx-auto mb-3" alt="Manabí Power" width="200" height="64" loading="eager" onerror="handleLogoError(this)">
                 <div class="text-4xl font-black text-[#C5A85C] mb-2">#${a.bibNumber}</div>
                 <div class="text-lg font-bold">${getFullName(a)}</div>
                 <div class="text-sm text-[#C5A85C] mt-2">${a.modality}</div>
