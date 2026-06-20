@@ -682,7 +682,6 @@
                 
                 <div class="mb-6">
                     <div class="text-[#FFEA8D] text-xl font-bold">Mesa de Control IFBB</div>
-                    <p class="text-[10px] text-[#C5A85C]/60 mt-2">admin · escrutador · juez1–juez9</p>
                 </div>
 
                 <div class="space-y-4">
@@ -1948,7 +1947,16 @@
         }
 
         function applyRemoteAthletesList(list) {
-            athletes = (list || []).map(normalizeAthlete);
+            const remote = (list || []).map(normalizeAthlete);
+            if (remote.length === 0 && athletes.length > 0 && !consumeSocketOp('vaciar', 'all-athletes')) {
+                syncState.syncing = false;
+                syncState.lastSync = Date.now();
+                updateConnectionStatus(true);
+                updateLastSync();
+                console.warn('Discord devolvió 0 atletas; se conserva la caché local.');
+                return;
+            }
+            athletes = remote;
             deletedAthleteIds = new Set();
             saveDeletedAthletes();
             saveAthletes();
@@ -1985,7 +1993,16 @@
         }
 
         function applyRemoteJudgesList(list) {
-            judges = (list || []).map(normalizeJudge);
+            const remote = (list || []).map(normalizeJudge);
+            if (remote.length === 0 && judges.length > 0 && !consumeSocketOp('vaciar', 'all-judges')) {
+                syncState.syncing = false;
+                syncState.lastSync = Date.now();
+                updateConnectionStatus(true);
+                updateLastSync();
+                console.warn('Discord devolvió 0 jueces; se conserva la caché local.');
+                return;
+            }
+            judges = remote;
             ensureJudgeSortOrder();
             saveJudges();
             syncState.syncing = false;
@@ -2230,17 +2247,9 @@
             resetLoginForm();
         }
 
-        function migrateAthletesReset() {
-            if (localStorage.getItem('mp_athletes_reset_v2') === '1') return;
-            athletes = [];
-            deletedAthleteIds = new Set();
-            localStorage.setItem('mp_athletes_cache', '[]');
-            localStorage.setItem('mp_deleted_ids', '[]');
-            localStorage.setItem('mp_athletes_reset_v2', '1');
-        }
-
         function clearAllAthletes() {
             if (!confirm('¿Eliminar todos los atletas registrados? Se borrarán también en Discord.')) return;
+            markSocketOp('vaciar', 'all-athletes');
             athletes = [];
             deletedAthleteIds = new Set();
             saveDeletedAthletes();
@@ -2260,7 +2269,6 @@
             localStorage.removeItem('manabi_current_user');
 
             loadDeletedAthletes();
-            migrateAthletesReset();
             loadAthletesFromCache();
             loadJudgesFromCache();
             loadScoringFromCache();
