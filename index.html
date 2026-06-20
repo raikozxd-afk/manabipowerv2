@@ -63,6 +63,15 @@
 
         .stat-dark { background: linear-gradient(135deg, var(--navy-card), var(--navy)); border: 1px solid rgba(197,168,92,0.25); }
         .category-preview { background: linear-gradient(135deg, rgba(197,168,92,0.15), rgba(15,48,87,0.8)); border: 1px solid rgba(197,168,92,0.35); }
+        .judge-card { transition: box-shadow 0.15s, opacity 0.15s, transform 0.15s; }
+        .judge-card.dragging { opacity: 0.45; transform: scale(0.98); }
+        .judge-card.drag-over { box-shadow: 0 0 0 2px rgba(197,168,92,0.55); }
+        .judge-order-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: rgba(197,168,92,0.7); border: 1px solid rgba(197,168,92,0.25); }
+        .judge-order-btn:hover:not(:disabled) { background: rgba(197,168,92,0.12); color: #FFEA8D; }
+        .judge-order-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+        .judge-drag-handle { cursor: grab; color: rgba(197,168,92,0.45); padding: 4px 6px; border-radius: 8px; }
+        .judge-drag-handle:hover { color: #FFEA8D; background: rgba(197,168,92,0.1); }
+        .judge-drag-handle:active { cursor: grabbing; }
         .navy-card { background: var(--navy-card); border: 1px solid rgba(197,168,92,0.2); color: var(--text-gold); }
         .text-gold { color: var(--text-gold) !important; }
         .text-muted-gold { color: var(--text-muted) !important; }
@@ -1216,6 +1225,7 @@
                                 <button onclick="exportJudgesRoster()" class="text-xs font-bold px-4 py-2 bg-[#C5A85C] text-[#0A1931] rounded-2xl"><i class="fa-solid fa-file-export mr-1"></i>Exportar nómina de jueces</button>
                             </div>
                         </div>
+                        <p class="text-xs text-[#C5A85C]/60 mb-3"><i class="fa-solid fa-arrows-up-down mr-1"></i>Arrastre o use las flechas para cambiar el orden de la nómina</p>
                         <div id="judges-list" class="space-y-3"></div>
                     </div>
                 </div>
@@ -1590,6 +1600,7 @@
 
         function applyRemoteJudgesList(list) {
             judges = (list || []).map(normalizeJudge);
+            ensureJudgeSortOrder();
             saveJudges();
             syncState.syncing = false;
             syncState.lastSync = Date.now();
@@ -1684,6 +1695,12 @@
             if (!id) return;
             const silent = consumeSocketOp('delete', id);
             removeJudgeFromRemote(id, !silent);
+        });
+
+        socket.on('juecesReordenados', (datosDeDiscord) => {
+            const silent = consumeSocketOp('reorder', 'all-judges');
+            applyRemoteJudgesList(datosDeDiscord);
+            if (!silent && currentUser) showToast('Orden de jueces sincronizado', 'info');
         });
 
         function refreshAllViews() {
@@ -1806,7 +1823,10 @@
                 const cached = localStorage.getItem('mp_judges_cache');
                 if (cached) {
                     const list = JSON.parse(cached);
-                    if (Array.isArray(list)) judges = list.map(normalizeJudge);
+                    if (Array.isArray(list)) {
+                        judges = list.map(normalizeJudge);
+                        ensureJudgeSortOrder();
+                    }
                 }
             } catch (e) {
                 console.warn('Cache de jueces no válido');
@@ -3023,7 +3043,95 @@
             j.category = j.category || 'Todas';
             j.status = j.status || 'Activo';
             j.role = j.role || 'Staff Técnico';
+            if (j.sortOrder == null || Number.isNaN(Number(j.sortOrder))) j.sortOrder = 0;
             return j;
+        }
+
+        function getSortedJudges() {
+            return [...judges].map(normalizeJudge).sort((a, b) => a.sortOrder - b.sortOrder);
+        }
+
+        function ensureJudgeSortOrder() {
+            getSortedJudges().forEach((j, i) => {
+                const idx = judges.findIndex(x => x.id === j.id);
+                if (idx !== -1) judges[idx].sortOrder = i;
+            });
+        }
+
+        function persistJudgeOrder(notify = true) {
+            ensureJudgeSortOrder();
+            saveJudges();
+            markSocketOp('reorder', 'all-judges');
+            emitToDiscord('reordenarJuecesDesdeWeb', {
+                judges: getSortedJudges().map(j => ({ id: j.id, sortOrder: j.sortOrder }))
+            });
+            renderJudgesList();
+            if (notify) addLog('Orden jueces', 'Se actualizó el orden de la nómina');
+        }
+
+        function moveJudge(id, direction) {
+            const sorted = getSortedJudges();
+            const idx = sorted.findIndex(j => j.id === id);
+            const targetIdx = idx + direction;
+            if (idx === -1 || targetIdx < 0 || targetIdx >= sorted.length) return;
+            const current = judges.find(j => j.id === sorted[idx].id);
+            const target = judges.find(j => j.id === sorted[targetIdx].id);
+            if (!current || !target) return;
+            const tempOrder = current.sortOrder;
+            current.sortOrder = target.sortOrder;
+            target.sortOrder = tempOrder;
+            persistJudgeOrder(false);
+            showToast('Orden de jueces actualizado', 'success');
+        }
+
+        let draggedJudgeId = null;
+
+        function onJudgeDragStart(e, id) {
+            draggedJudgeId = id;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', id);
+            e.currentTarget.classList.add('dragging');
+        }
+
+        function onJudgeDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.judge-card.drag-over').forEach(el => el.classList.remove('drag-over'));
+            draggedJudgeId = null;
+        }
+
+        function onJudgeDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const card = e.currentTarget;
+            if (card.dataset.judgeId !== draggedJudgeId) card.classList.add('drag-over');
+        }
+
+        function onJudgeDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function onJudgeDrop(e, targetId) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            const sourceId = draggedJudgeId || e.dataTransfer.getData('text/plain');
+            if (!sourceId || sourceId === targetId) return;
+            reorderJudgeTo(sourceId, targetId);
+        }
+
+        function reorderJudgeTo(sourceId, targetId) {
+            const sorted = getSortedJudges();
+            const fromIdx = sorted.findIndex(j => j.id === sourceId);
+            const toIdx = sorted.findIndex(j => j.id === targetId);
+            if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+            const reordered = [...sorted];
+            const [moved] = reordered.splice(fromIdx, 1);
+            reordered.splice(toIdx, 0, moved);
+            reordered.forEach((j, i) => {
+                const idx = judges.findIndex(x => x.id === j.id);
+                if (idx !== -1) judges[idx].sortOrder = i;
+            });
+            persistJudgeOrder(false);
+            showToast('Orden de jueces actualizado', 'success');
         }
 
         function getJudgeFullName(j) {
@@ -3101,9 +3209,9 @@
                     showToast(missingJudgeFields.length ? `Juez actualizado (datos incompletos: ${missingJudgeFields.join(', ')})` : 'Juez actualizado', missingJudgeFields.length ? 'info' : 'success');
                 }
             } else {
-                const newJudge = { id: `judge-${Date.now()}`, ...judgeData, registeredAt: Date.now() };
+                const newJudge = { id: `judge-${Date.now()}`, ...judgeData, registeredAt: Date.now(), sortOrder: judges.length };
                 markSocketOp('add', newJudge.id);
-                judges.unshift(newJudge);
+                judges.push(newJudge);
                 emitToDiscord('registrarJuezDesdeWeb', newJudge);
                 addLog('Registro juez', getJudgeFullName(judgeData));
                 showToast(missingJudgeFields.length ? `Juez registrado (datos incompletos: ${missingJudgeFields.join(', ')})` : 'Juez registrado', missingJudgeFields.length ? 'info' : 'success');
@@ -3157,6 +3265,7 @@
             if (!j || !confirm(`¿Eliminar a ${getJudgeFullName(j)}?`)) return;
             markSocketOp('delete', id);
             judges = judges.filter(x => x.id !== id);
+            ensureJudgeSortOrder();
             saveJudges();
             emitToDiscord('eliminarJuezDesdeWeb', { id });
             addLog('Eliminación juez', getJudgeFullName(j));
@@ -3182,19 +3291,42 @@
             const badge = document.getElementById('judges-count-badge');
             if (!container) return;
             container.innerHTML = '';
-            if (badge) badge.textContent = `${judges.length} JUECES`;
+            ensureJudgeSortOrder();
+            const sorted = getSortedJudges();
+            if (badge) badge.textContent = `${sorted.length} JUECES`;
 
-            if (judges.length === 0) {
+            if (sorted.length === 0) {
                 container.innerHTML = `<div class="text-center py-8 text-sm text-[#C5A85C]/60">No hay jueces registrados. Use el formulario superior.</div>`;
                 return;
             }
 
-            judges.forEach(j => {
+            sorted.forEach((j, index) => {
                 const athletesCount = getAthletesForJudge(j).length;
                 const div = document.createElement('div');
-                div.className = 'dark-panel rounded-2xl p-4';
+                div.className = 'judge-card dark-panel rounded-2xl p-4';
+                div.dataset.judgeId = j.id;
+                div.draggable = true;
+                div.addEventListener('dragstart', (e) => {
+                    if (!e.target.closest('.judge-drag-handle')) {
+                        e.preventDefault();
+                        return;
+                    }
+                    onJudgeDragStart(e, j.id);
+                });
+                div.addEventListener('dragend', onJudgeDragEnd);
+                div.addEventListener('dragover', onJudgeDragOver);
+                div.addEventListener('dragleave', onJudgeDragLeave);
+                div.addEventListener('drop', (e) => onJudgeDrop(e, j.id));
                 div.innerHTML = `
                     <div class="flex justify-between items-start gap-3">
+                        <div class="flex items-start gap-2 flex-shrink-0">
+                            <div class="judge-drag-handle" title="Arrastrar para reordenar"><i class="fa-solid fa-grip-vertical"></i></div>
+                            <div class="flex flex-col gap-1">
+                                <button type="button" onclick="moveJudge('${j.id}', -1)" class="judge-order-btn" title="Subir" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-chevron-up text-[10px]"></i></button>
+                                <button type="button" onclick="moveJudge('${j.id}', 1)" class="judge-order-btn" title="Bajar" ${index === sorted.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
+                            </div>
+                            <div class="w-7 h-7 rounded-lg bg-[#C5A85C]/15 border border-[#C5A85C]/30 flex items-center justify-center text-[10px] font-black text-[#FFEA8D]">${index + 1}</div>
+                        </div>
                         <div class="min-w-0 flex-1">
                             <div class="font-bold text-[#FFEA8D]">${getJudgeFullName(j)}</div>
                             <div class="text-xs text-[#C5A85C]/70 mt-1">${j.role} • ${j.judgeLevel || 'Sin nivel'} • ${j.modality}</div>
@@ -3232,9 +3364,9 @@
                     <div class="modality-section">
                         <div class="modality-header"><span>Jueces registrados</span><span class="count">${judges.length}</span></div>
                         <table><thead><tr>${JUDGE_HEADERS.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
-            judges.forEach(j => {
+            getSortedJudges().forEach((j, index) => {
                 html += `<tr>
-                    <td><strong>${getJudgeFullName(j)}</strong></td>
+                    <td><strong>${index + 1}. ${getJudgeFullName(j)}</strong></td>
                     <td>${j.idCard || ''}</td><td>${j.role || ''}</td><td>${j.judgeLevel || '-'}</td><td>${j.modality || ''}</td>
                     <td>${j.category || 'Todas'}</td><td>${j.panel || '-'}</td><td>${j.license || '-'}</td>
                     <td>${j.phone || '-'}</td><td>${j.status || 'Activo'}</td>

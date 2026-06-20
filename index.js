@@ -304,6 +304,22 @@ io.on('connection', async (socket) => {
         await found.message.delete();
         io.emit('juezEliminado', { id: judgeId });
     });
+
+    socket.on('reordenarJuecesDesdeWeb', async (payload) => {
+        const items = payload?.judges || payload || [];
+        if (!Array.isArray(items) || items.length === 0) return;
+
+        for (const item of items) {
+            if (!item?.id) continue;
+            const found = await findJudgeMessage(item.id);
+            if (!found) continue;
+            const updated = { ...found.record, sortOrder: item.sortOrder };
+            await found.message.edit(formatJudgeMessage(updated));
+        }
+
+        const list = await fetchJudgesFromDiscord();
+        io.emit('juecesReordenados', list);
+    });
 });
 
 client.login(process.env.DISCORD_TOKEN);
