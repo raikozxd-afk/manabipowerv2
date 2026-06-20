@@ -39,6 +39,18 @@ function isJudgeRecord(record) {
     return record?.recordType === 'judge';
 }
 
+function isScoringRecord(record) {
+    return record?.recordType === 'scoringRound';
+}
+
+function isScheduleRecord(record) {
+    return record?.recordType === 'schedule';
+}
+
+function isAthleteRecord(record) {
+    return record?.id && !isJudgeRecord(record) && !isScoringRecord(record) && !isScheduleRecord(record);
+}
+
 function formatRecordMessage(record) {
     return `\`\`\`json\n${JSON.stringify(record)}\n\`\`\``;
 }
@@ -50,6 +62,14 @@ function formatAthleteMessage(athlete) {
 
 function formatJudgeMessage(judge) {
     return formatRecordMessage({ recordType: 'judge', ...judge });
+}
+
+function formatScoringMessage(round) {
+    return formatRecordMessage({ recordType: 'scoringRound', ...round });
+}
+
+function formatScheduleMessage(schedule) {
+    return formatRecordMessage({ recordType: 'schedule', ...schedule });
 }
 
 function getDbChannel() {
@@ -76,11 +96,15 @@ async function fetchRecordsFromDiscord(filterFn) {
 }
 
 async function fetchAthletesFromDiscord() {
-    return fetchRecordsFromDiscord((record) => !isJudgeRecord(record));
+    return fetchRecordsFromDiscord(isAthleteRecord);
 }
 
 async function fetchJudgesFromDiscord() {
     return fetchRecordsFromDiscord(isJudgeRecord);
+}
+
+async function fetchScoringRoundsFromDiscord() {
+    return fetchRecordsFromDiscord(isScoringRecord);
 }
 
 async function findRecordMessage(athleteId, filterFn) {
@@ -99,11 +123,24 @@ async function findRecordMessage(athleteId, filterFn) {
 }
 
 async function findAthleteMessage(athleteId) {
-    return findRecordMessage(athleteId, (record) => !isJudgeRecord(record));
+    return findRecordMessage(athleteId, isAthleteRecord);
 }
 
 async function findJudgeMessage(judgeId) {
     return findRecordMessage(judgeId, isJudgeRecord);
+}
+
+async function findScoringMessage(roundId) {
+    return findRecordMessage(roundId, isScoringRecord);
+}
+
+async function findScheduleMessage(scheduleId) {
+    return findRecordMessage(scheduleId, isScheduleRecord);
+}
+
+async function fetchScheduleFromDiscord() {
+    const list = await fetchRecordsFromDiscord(isScheduleRecord);
+    return list[0] || null;
 }
 
 async function emitAthletesList(targetSocket) {
@@ -118,6 +155,20 @@ async function emitJudgesList(targetSocket) {
     if (targetSocket) targetSocket.emit('cargarJueces', list);
     else io.emit('cargarJueces', list);
     return list;
+}
+
+async function emitScoringRoundsList(targetSocket) {
+    const list = await fetchScoringRoundsFromDiscord();
+    if (targetSocket) targetSocket.emit('cargarCalificacion', list);
+    else io.emit('cargarCalificacion', list);
+    return list;
+}
+
+async function emitSchedule(targetSocket) {
+    const schedule = await fetchScheduleFromDiscord();
+    if (targetSocket) targetSocket.emit('cargarCronograma', schedule);
+    else io.emit('cargarCronograma', schedule);
+    return schedule;
 }
 
 client.on('ready', () => {
@@ -183,14 +234,18 @@ client.on('messageDelete', async (message) => {
     if (!message.author || message.author.id !== client.user.id) return;
     const record = parseRecordMessage(message.content);
     if (!record?.id) return;
-    if (isJudgeRecord(record)) io.emit('juezEliminado', { id: record.id });
-    else io.emit('atletaEliminado', { id: record.id });
+    if (isScheduleRecord(record)) io.emit('cronogramaActualizado', null);
+    else if (isScoringRecord(record)) io.emit('rondaEliminada', { id: record.id });
+    else if (isJudgeRecord(record)) io.emit('juezEliminado', { id: record.id });
+    else if (isAthleteRecord(record)) io.emit('atletaEliminado', { id: record.id });
 });
 
 io.on('connection', async (socket) => {
     console.log('Nueva conexión desde la Mesa de Control Web');
     await emitAthletesList(socket);
     await emitJudgesList(socket);
+    await emitScoringRoundsList(socket);
+    await emitSchedule(socket);
 
     socket.on('solicitarAtletas', async () => {
         await emitAthletesList(socket);
@@ -198,6 +253,27 @@ io.on('connection', async (socket) => {
 
     socket.on('solicitarJueces', async () => {
         await emitJudgesList(socket);
+    });
+
+    socket.on('solicitarCalificacion', async () => {
+        await emitScoringRoundsList(socket);
+    });
+
+    socket.on('solicitarCronograma', async () => {
+        await emitSchedule(socket);
+    });
+
+    socket.on('guardarCronogramaDesdeWeb', async (scheduleData) => {
+        const dbChannel = getDbChannel();
+        if (!dbChannel || !scheduleData?.id) return;
+
+        const existing = await findScheduleMessage(scheduleData.id);
+        if (existing) {
+            await existing.message.edit(formatScheduleMessage(scheduleData));
+        } else {
+            await dbChannel.send(formatScheduleMessage(scheduleData));
+        }
+        io.emit('cronogramaActualizado', scheduleData);
     });
 
     socket.on('registrarDesdeWeb', async (athleteData) => {
@@ -253,7 +329,7 @@ io.on('connection', async (socket) => {
         for (const msg of messages.values()) {
             if (msg.author.id !== client.user.id) continue;
             const record = parseRecordMessage(msg.content);
-            if (!record || isJudgeRecord(record)) continue;
+            if (!record || !isAthleteRecord(record)) continue;
             await msg.delete().catch(() => {});
         }
 
@@ -319,6 +395,35 @@ io.on('connection', async (socket) => {
 
         const list = await fetchJudgesFromDiscord();
         io.emit('juecesReordenados', list);
+    });
+
+    socket.on('guardarRondaDesdeWeb', async (roundData) => {
+        const dbChannel = getDbChannel();
+        if (!dbChannel || !roundData?.id) return;
+
+        const existing = await findScoringMessage(roundData.id);
+        if (existing) {
+            await existing.message.edit(formatScoringMessage(roundData));
+            io.emit('rondaActualizada', roundData);
+            return;
+        }
+
+        await dbChannel.send(formatScoringMessage(roundData));
+        io.emit('nuevaRonda', roundData);
+    });
+
+    socket.on('eliminarRondaDesdeWeb', async (payload) => {
+        const roundId = String(payload?.id || payload || '');
+        if (!roundId) return;
+
+        const found = await findScoringMessage(roundId);
+        if (!found) {
+            io.emit('rondaEliminada', { id: roundId });
+            return;
+        }
+
+        await found.message.delete();
+        io.emit('rondaEliminada', { id: roundId });
     });
 });
 

@@ -72,6 +72,50 @@
         .judge-drag-handle { cursor: grab; color: rgba(197,168,92,0.45); padding: 4px 6px; border-radius: 8px; }
         .judge-drag-handle:hover { color: #FFEA8D; background: rgba(197,168,92,0.1); }
         .judge-drag-handle:active { cursor: grabbing; }
+
+        .sched-live-banner { background: linear-gradient(135deg, rgba(197,168,92,0.2), rgba(15,48,87,0.9)); border: 1px solid rgba(197,168,92,0.45); border-radius: 16px; }
+        .sched-card { transition: box-shadow 0.15s, transform 0.15s, border-color 0.15s; border: 2px solid rgba(197,168,92,0.2); }
+        .sched-card.dragging { opacity: 0.45; transform: scale(0.98); }
+        .sched-card.drag-over { box-shadow: 0 0 0 2px rgba(197,168,92,0.55); }
+        .sched-card.status-pendiente { border-color: rgba(148,163,184,0.35); }
+        .sched-card.status-en_curso { border-color: rgba(234,179,8,0.65); background: linear-gradient(135deg, rgba(234,179,8,0.08), rgba(15,48,87,0.5)); }
+        .sched-card.status-finalizada { border-color: rgba(34,197,94,0.45); opacity: 0.82; }
+        .sched-order-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: rgba(197,168,92,0.7); border: 1px solid rgba(197,168,92,0.25); }
+        .sched-order-btn:hover:not(:disabled) { background: rgba(197,168,92,0.12); color: #FFEA8D; }
+        .sched-order-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+        .sched-drag-handle { cursor: grab; color: rgba(197,168,92,0.45); padding: 4px 6px; border-radius: 8px; }
+        .sched-drag-handle:hover { color: #FFEA8D; background: rgba(197,168,92,0.1); }
+        .sched-status-pill { font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em; }
+        .sched-status-pill.pendiente { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+        .sched-status-pill.en_curso { background: rgba(234,179,8,0.2); color: #FFEA8D; border: 1px solid rgba(234,179,8,0.45); }
+        .sched-status-pill.finalizada { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.35); }
+
+        .score-tab { padding: 8px 14px; border-radius: 10px; font-size: 11px; font-weight: 700; color: rgba(197,168,92,0.7); border: 1px solid transparent; transition: all 0.15s; white-space: nowrap; }
+        .score-tab:hover { color: #FFEA8D; background: rgba(197,168,92,0.08); }
+        .score-tab.active { color: #0A1931; background: linear-gradient(135deg, #FFEA8D, #C5A85C); border-color: rgba(197,168,92,0.5); }
+        .score-panel { display: none; }
+        .score-panel.active { display: block; }
+        .score-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .score-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 720px; }
+        .score-table th, .score-table td { padding: 10px 12px; text-align: center; border-bottom: 1px solid rgba(197,168,92,0.15); font-size: 12px; }
+        .score-table th { background: rgba(15,48,87,0.9); color: #FFEA8D; font-weight: 800; position: sticky; top: 0; z-index: 2; }
+        .score-table th:first-child, .score-table td:first-child { text-align: left; position: sticky; left: 0; background: var(--navy-card); z-index: 1; }
+        .score-table th:first-child { z-index: 3; }
+        .score-table tr:hover td { background: rgba(197,168,92,0.05); }
+        .score-table .pos-1 { background: rgba(255,234,141,0.12); font-weight: 800; color: #FFEA8D; }
+        .score-table .pos-2 { background: rgba(197,168,92,0.08); }
+        .score-table .pos-3 { background: rgba(197,168,92,0.05); }
+        .score-input { width: 44px; text-align: center; padding: 6px; border-radius: 8px; background: #0A1931; border: 1px solid rgba(197,168,92,0.3); color: #FFEA8D; font-weight: 700; font-size: 12px; }
+        .score-input:focus { outline: none; border-color: #C5A85C; }
+        .score-input.error { border-color: #ef4444; background: rgba(239,68,68,0.1); }
+        .score-input.readonly { opacity: 0.85; pointer-events: none; }
+        .score-status-badge { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 999px; }
+        .score-status-abierta { background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.35); }
+        .score-status-calificando { background: rgba(234,179,8,0.15); color: #FFEA8D; border: 1px solid rgba(197,168,92,0.45); }
+        .score-status-finalizada { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.35); }
+        .score-metric { background: linear-gradient(135deg, rgba(197,168,92,0.12), rgba(15,48,87,0.6)); border: 1px solid rgba(197,168,92,0.25); border-radius: 14px; padding: 14px 16px; }
+        .judge-score-card { background: var(--navy-card); border: 1px solid rgba(197,168,92,0.2); border-radius: 16px; padding: 14px; display: flex; align-items: center; gap: 12px; }
+        .comparison-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(197,168,92,0.12); border: 1px solid rgba(197,168,92,0.3); font-size: 11px; font-weight: 700; color: #FFEA8D; }
         .navy-card { background: var(--navy-card); border: 1px solid rgba(197,168,92,0.2); color: var(--text-gold); }
         .text-gold { color: var(--text-gold) !important; }
         .text-muted-gold { color: var(--text-muted) !important; }
@@ -619,7 +663,8 @@
             <div class="login-card p-8">
                 
                 <div class="mb-6">
-                    <div class="text-[#FFEA8D] text-xl font-bold">Acceso Administrador</div>
+                    <div class="text-[#FFEA8D] text-xl font-bold">Mesa de Control IFBB</div>
+                    <p class="text-[10px] text-[#C5A85C]/60 mt-2">admin · escrutador · juez1–juez9</p>
                 </div>
 
                 <div class="space-y-4">
@@ -737,6 +782,8 @@
                     <button onclick="switchSection(2)" id="nav-2" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-users w-4"></i>Atletas</button>
                     <button onclick="switchSection(3)" id="nav-3" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-file-export w-4"></i>Exportaciones</button>
                     <button onclick="switchSection(5)" id="nav-5" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-gavel w-4"></i>Jueces</button>
+                    <button onclick="switchSection(6)" id="nav-6" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-ranking-star w-4"></i>Calificación</button>
+                    <button onclick="switchSection(7)" id="nav-7" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-calendar-days w-4"></i>Cronograma</button>
                     <button onclick="switchSection(4)" id="nav-4" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-shield-halved w-4"></i>Administración</button>
                 </nav>
                 <div class="px-4 pt-4 border-t border-[#C5A85C]/15 space-y-3">
@@ -868,6 +915,14 @@
                             </button>
                             <button onclick="switchSection(5)" class="w-full flex items-center justify-between px-5 py-3.5 bg-[#0A1931] hover:bg-[#0F3057] border border-[#C5A85C]/20 hover:border-[#C5A85C]/50 text-[#FFEA8D] transition rounded-2xl text-sm font-bold group">
                                 <div class="flex items-center gap-x-3"><i class="fa-solid fa-gavel text-[#C5A85C]"></i> <span>Registrar jueces</span></div>
+                                <i class="fa-solid fa-chevron-right text-xs text-[#C5A85C]"></i>
+                            </button>
+                            <button onclick="switchSection(6)" class="w-full flex items-center justify-between px-5 py-3.5 bg-[#0A1931] hover:bg-[#0F3057] border border-[#C5A85C]/20 hover:border-[#C5A85C]/50 text-[#FFEA8D] transition rounded-2xl text-sm font-bold group">
+                                <div class="flex items-center gap-x-3"><i class="fa-solid fa-ranking-star text-[#C5A85C]"></i> <span>Calificación en vivo</span></div>
+                                <i class="fa-solid fa-chevron-right text-xs text-[#C5A85C]"></i>
+                            </button>
+                            <button onclick="switchSection(7)" class="w-full flex items-center justify-between px-5 py-3.5 bg-[#0A1931] hover:bg-[#0F3057] border border-[#C5A85C]/20 hover:border-[#C5A85C]/50 text-[#FFEA8D] transition rounded-2xl text-sm font-bold group">
+                                <div class="flex items-center gap-x-3"><i class="fa-solid fa-calendar-days text-[#C5A85C]"></i> <span>Cronograma oficial</span></div>
                                 <i class="fa-solid fa-chevron-right text-xs text-[#C5A85C]"></i>
                             </button>
                         </div>
@@ -1231,6 +1286,213 @@
                 </div>
             </div>
 
+            <div id="section-6" class="section">
+                <div class="max-w-screen-2xl mx-auto">
+                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
+                        <div>
+                            <h2 class="brand-font text-2xl md:text-3xl text-[#FFEA8D]">Sistema de Calificación IFBB</h2>
+                            <p class="text-sm text-[#C5A85C]/80 mt-1">Registro de posiciones, cálculo automático y publicación de resultados en tiempo real</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 items-center">
+                            <span id="score-round-status" class="score-status-badge score-status-abierta">Sin ronda activa</span>
+                            <span id="score-judges-progress" class="text-xs font-bold text-[#C5A85C]/80 navy-card px-3 py-1.5 rounded-full">0/0 jueces calificaron</span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 overflow-x-auto pb-2 mb-5 custom-scroll" id="score-subtabs">
+                        <button type="button" class="score-tab active" data-score-tab="config" onclick="switchScoreTab('config')"><i class="fa-solid fa-sliders mr-1"></i>Configuración</button>
+                        <button type="button" class="score-tab" data-score-tab="mesa" onclick="switchScoreTab('mesa')"><i class="fa-solid fa-table mr-1"></i>Mesa</button>
+                        <button type="button" class="score-tab" data-score-tab="juez" onclick="switchScoreTab('juez')"><i class="fa-solid fa-gavel mr-1"></i>Panel Juez</button>
+                        <button type="button" class="score-tab" data-score-tab="comparaciones" onclick="switchScoreTab('comparaciones')"><i class="fa-solid fa-people-arrows mr-1"></i>Comparaciones</button>
+                        <button type="button" class="score-tab" data-score-tab="escrutador" onclick="switchScoreTab('escrutador')"><i class="fa-solid fa-calculator mr-1"></i>Escrutador</button>
+                        <button type="button" class="score-tab" data-score-tab="resultados" onclick="switchScoreTab('resultados')"><i class="fa-solid fa-trophy mr-1"></i>Resultados</button>
+                    </div>
+
+                    <!-- CONFIGURACIÓN -->
+                    <div id="score-panel-config" class="score-panel active">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                            <div class="lg:col-span-2 dark-panel rounded-2xl p-6">
+                                <div class="font-extrabold text-[#FFEA8D] mb-4 flex items-center gap-2"><i class="fa-solid fa-plus-circle text-[#C5A85C]"></i>Nueva ronda de calificación</div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div><label class="lbl">Modalidad</label><select id="score-modality" class="dark-input w-full rounded-xl px-4 py-3 text-sm"></select></div>
+                                    <div><label class="lbl">Categoría</label><select id="score-category" class="dark-input w-full rounded-xl px-4 py-3 text-sm"><option value="">Seleccione modalidad primero</option></select></div>
+                                    <div><label class="lbl">Ronda</label><select id="score-round-type" class="dark-input w-full rounded-xl px-4 py-3 text-sm"><option value="Prejudging">Prejudging</option><option value="Comparaciones">Comparaciones</option><option value="Finales">Finales</option></select></div>
+                                    <div><label class="lbl">Cantidad de jueces</label><select id="score-judge-count" class="dark-input w-full rounded-xl px-4 py-3 text-sm"><option value="3">3 jueces</option><option value="5">5 jueces</option><option value="7">7 jueces</option><option value="9">9 jueces</option></select></div>
+                                </div>
+                                <button onclick="createScoringRound()" class="w-full mt-5 bg-gradient-to-r from-[#FFEA8D] via-[#C5A85C] to-[#8A641B] hover:brightness-110 text-[#0A0F1E] font-extrabold py-3.5 rounded-xl text-sm"><i class="fa-solid fa-play mr-2"></i>Crear e iniciar ronda</button>
+                            </div>
+                            <div class="navy-card rounded-3xl p-6">
+                                <div class="font-extrabold text-[#FFEA8D] mb-3">Rondas activas</div>
+                                <div id="score-rounds-list" class="space-y-2 max-h-80 overflow-auto custom-scroll text-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MESA DE CALIFICACIÓN -->
+                    <div id="score-panel-mesa" class="score-panel">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                            <div class="score-metric"><div class="text-[10px] text-[#C5A85C] font-bold">MODALIDAD</div><div id="score-info-modality" class="text-sm font-bold text-[#FFEA8D] mt-1">—</div></div>
+                            <div class="score-metric"><div class="text-[10px] text-[#C5A85C] font-bold">CATEGORÍA</div><div id="score-info-category" class="text-sm font-bold text-[#FFEA8D] mt-1">—</div></div>
+                            <div class="score-metric"><div class="text-[10px] text-[#C5A85C] font-bold">COMPETIDORES</div><div id="score-info-athletes" class="text-2xl font-black text-[#C5A85C] mt-1">0</div></div>
+                            <div class="score-metric"><div class="text-[10px] text-[#C5A85C] font-bold">JUECES</div><div id="score-info-judges" class="text-2xl font-black text-[#C5A85C] mt-1">0</div></div>
+                        </div>
+                        <div class="dark-panel rounded-2xl p-4 md:p-6">
+                            <div class="score-table-wrap custom-scroll">
+                                <table class="score-table" id="score-main-table">
+                                    <thead id="score-main-thead"></thead>
+                                    <tbody id="score-main-tbody"></tbody>
+                                </table>
+                            </div>
+                            <div id="score-mesa-empty" class="hidden text-center py-12 text-[#C5A85C]/60 text-sm">Seleccione o cree una ronda de calificación</div>
+                        </div>
+                    </div>
+
+                    <!-- PANEL JUEZ -->
+                    <div id="score-panel-juez" class="score-panel">
+                        <div class="dark-panel rounded-2xl p-6 mb-4">
+                            <div class="flex flex-wrap justify-between gap-3 items-start">
+                                <div>
+                                    <div class="font-extrabold text-[#FFEA8D]">Panel Individual de Juez</div>
+                                    <p class="text-xs text-[#C5A85C]/70 mt-1">Usuario: <span id="score-judge-user" class="text-[#FFEA8D]">—</span> • Asignación: <span id="score-judge-slot-label" class="text-[#FFEA8D]">—</span></p>
+                                    <p class="text-xs text-[#C5A85C]/60 mt-1">Categoría: <span id="score-judge-category-label">—</span></p>
+                                </div>
+                                <div class="text-right text-xs text-[#C5A85C]/70">
+                                    <div>Ronda: <span id="score-judge-round-label" class="text-[#FFEA8D] font-bold">—</span></div>
+                                    <div class="mt-1" id="score-judge-validation-msg"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="score-judge-cards" class="space-y-3"></div>
+                        <div id="score-judge-empty" class="text-center py-12 text-[#C5A85C]/60 text-sm">No hay ronda activa para su categoría o no tiene permisos de juez</div>
+                        <button id="score-judge-save-btn" onclick="saveJudgeScores()" class="hidden w-full mt-5 bg-gradient-to-r from-[#FFEA8D] via-[#C5A85C] to-[#8A641B] text-[#0A0F1E] font-extrabold py-4 rounded-xl text-sm"><i class="fa-solid fa-lock mr-2"></i>Confirmar y enviar calificación</button>
+                    </div>
+
+                    <!-- COMPARACIONES -->
+                    <div id="score-panel-comparaciones" class="score-panel">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                            <div class="dark-panel rounded-2xl p-6">
+                                <div class="font-extrabold text-[#FFEA8D] mb-4">Seleccionar atletas para comparación</div>
+                                <div id="score-comparison-select" class="space-y-2 max-h-96 overflow-auto custom-scroll"></div>
+                                <button onclick="sendToComparison()" class="w-full mt-4 bg-[#C5A85C] text-[#0A1931] font-extrabold py-3 rounded-xl text-sm"><i class="fa-solid fa-people-arrows mr-2"></i>Enviar a Comparación</button>
+                            </div>
+                            <div class="navy-card rounded-3xl p-6">
+                                <div class="font-extrabold text-[#FFEA8D] mb-3">Panel de Comparación</div>
+                                <div id="score-comparison-panel" class="flex flex-wrap gap-2 min-h-[120px]"></div>
+                                <p class="text-xs text-[#C5A85C]/60 mt-4">Los atletas seleccionados se envían al escrutador y se muestran en pantalla de comparaciones.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ESCRUTADOR -->
+                    <div id="score-panel-escrutador" class="score-panel">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                            <div class="score-metric text-center"><div class="text-[10px] text-[#C5A85C]">Jueces que calificaron</div><div id="score-scrut-done" class="text-3xl font-black text-[#86efac] mt-1">0</div></div>
+                            <div class="score-metric text-center"><div class="text-[10px] text-[#C5A85C]">Jueces pendientes</div><div id="score-scrut-pending" class="text-3xl font-black text-[#FFEA8D] mt-1">0</div></div>
+                            <div class="score-metric text-center"><div class="text-[10px] text-[#C5A85C]">Estado categoría</div><div id="score-scrut-status" class="text-lg font-bold text-[#FFEA8D] mt-2">—</div></div>
+                        </div>
+                        <div class="dark-panel rounded-2xl p-4 mb-4">
+                            <div class="font-bold text-[#FFEA8D] text-sm mb-2">Jueces pendientes de calificar</div>
+                            <div id="score-pending-judges" class="flex flex-wrap gap-2 text-xs"></div>
+                        </div>
+                        <div class="dark-panel rounded-2xl p-4 md:p-6 mb-4">
+                            <div class="font-extrabold text-[#FFEA8D] mb-3">Edición de resultados (antes de cerrar)</div>
+                            <div class="score-table-wrap custom-scroll">
+                                <table class="score-table" id="score-scrut-table">
+                                    <thead id="score-scrut-thead"></thead>
+                                    <tbody id="score-scrut-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <button onclick="confirmScoringRound()" class="flex-1 min-w-[200px] bg-[#C5A85C] text-[#0A1931] font-extrabold py-3.5 rounded-xl text-sm"><i class="fa-solid fa-check-double mr-2"></i>Confirmar clasificación final</button>
+                            <button onclick="publishScoringResults()" class="flex-1 min-w-[200px] bg-gradient-to-r from-[#FFEA8D] to-[#C5A85C] text-[#0A1931] font-extrabold py-3.5 rounded-xl text-sm"><i class="fa-solid fa-bullhorn mr-2"></i>Publicar resultados</button>
+                        </div>
+                    </div>
+
+                    <!-- RESULTADOS -->
+                    <div id="score-panel-resultados" class="score-panel">
+                        <div class="flex flex-wrap justify-between gap-3 mb-4">
+                            <div class="font-extrabold text-[#FFEA8D] text-lg">Clasificación Final</div>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="exportScorePDF()" class="text-xs font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-file-pdf mr-1"></i>PDF</button>
+                                <button onclick="exportScoreExcel()" class="text-xs font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-file-excel mr-1"></i>Excel</button>
+                                <button onclick="exportScoreJudgesSheet()" class="text-xs font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-gavel mr-1"></i>Hoja Jueces</button>
+                                <button onclick="exportScoreCategoryReport()" class="text-xs font-bold px-4 py-2 bg-[#C5A85C] text-[#0A1931] rounded-xl"><i class="fa-solid fa-tags mr-1"></i>Por Categoría</button>
+                                <button onclick="exportScoreEventReport()" class="text-xs font-bold px-4 py-2 bg-[#C5A85C] text-[#0A1931] rounded-xl"><i class="fa-solid fa-list mr-1"></i>Reporte General</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+                            <div class="navy-card rounded-3xl p-5 border-2 border-[#FFEA8D]/40"><div class="text-[10px] text-[#C5A85C] font-bold">CAMPEÓN</div><div id="score-winner" class="text-xl font-black text-[#FFEA8D] mt-2">—</div></div>
+                            <div class="navy-card rounded-3xl p-5"><div class="text-[10px] text-[#C5A85C] font-bold">2° LUGAR</div><div id="score-second" class="text-lg font-bold text-[#FFEA8D] mt-2">—</div></div>
+                            <div class="navy-card rounded-3xl p-5"><div class="text-[10px] text-[#C5A85C] font-bold">3° LUGAR</div><div id="score-third" class="text-lg font-bold text-[#FFEA8D] mt-2">—</div></div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                            <div class="dark-panel rounded-2xl p-4"><div class="text-xs font-bold text-[#C5A85C] mb-2">TOP 6</div><div id="score-top6" class="text-sm space-y-1 text-[#FFEA8D]"></div></div>
+                            <div class="dark-panel rounded-2xl p-4"><div class="text-xs font-bold text-[#C5A85C] mb-2">TOP 10</div><div id="score-top10" class="text-sm space-y-1 text-[#FFEA8D]"></div></div>
+                            <div class="dark-panel rounded-2xl p-4"><div class="text-xs font-bold text-[#C5A85C] mb-2">TOP 15</div><div id="score-top15" class="text-sm space-y-1 text-[#FFEA8D]"></div></div>
+                        </div>
+                        <div class="dark-panel rounded-2xl p-4">
+                            <div class="score-table-wrap custom-scroll">
+                                <table class="score-table" id="score-results-table">
+                                    <thead id="score-results-thead"></thead>
+                                    <tbody id="score-results-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-7" class="section">
+                <div class="max-w-screen-2xl mx-auto">
+                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
+                        <div>
+                            <h2 class="brand-font text-2xl md:text-3xl text-[#FFEA8D]">Cronograma Oficial</h2>
+                            <p class="text-sm text-[#C5A85C]/80 mt-1">Orden de salida, horarios estimados y estado en vivo del campeonato</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2" id="schedule-admin-actions">
+                            <button onclick="resetEventSchedule()" class="text-xs font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-rotate-left mr-1"></i>Restablecer</button>
+                            <button onclick="exportScheduleExcel()" class="text-xs font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-file-excel mr-1"></i>Excel</button>
+                            <button onclick="exportSchedulePDF()" class="text-xs font-bold px-4 py-2 bg-[#C5A85C] text-[#0A1931] rounded-xl"><i class="fa-solid fa-file-pdf mr-1"></i>PDF / Imprimir</button>
+                        </div>
+                    </div>
+
+                    <div class="sched-live-banner p-5 mb-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <div class="text-[10px] text-[#C5A85C] font-bold tracking-widest">EN COMPETENCIA AHORA</div>
+                            <div id="sched-live-current" class="text-lg font-black text-[#FFEA8D] mt-1">—</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-[#C5A85C] font-bold tracking-widest">SIGUIENTE MODALIDAD</div>
+                            <div id="sched-live-next" class="text-lg font-bold text-[#C5A85C] mt-1">—</div>
+                        </div>
+                        <div class="text-right md:text-left">
+                            <div class="text-[10px] text-[#C5A85C] font-bold tracking-widest">FINALIZACIÓN ESTIMADA</div>
+                            <div id="sched-live-end" class="text-2xl font-black text-[#C5A85C] mt-1">—</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-5 mb-5">
+                        <div class="lg:col-span-3 dark-panel rounded-2xl p-5">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div><label class="lbl">Hora de inicio del evento</label><input id="sched-event-start" type="time" class="dark-input w-full rounded-xl px-4 py-3 text-sm" value="08:00" onchange="onScheduleSettingsChange()"></div>
+                                <div><label class="lbl">Minutos por atleta</label><input id="sched-min-per-athlete" type="number" min="1" max="15" class="dark-input w-full rounded-xl px-4 py-3 text-sm" value="4" onchange="onScheduleSettingsChange()"></div>
+                                <div><label class="lbl">Minutos base por modalidad</label><input id="sched-base-minutes" type="number" min="5" max="60" class="dark-input w-full rounded-xl px-4 py-3 text-sm" value="12" onchange="onScheduleSettingsChange()"></div>
+                            </div>
+                            <p class="text-[10px] text-[#C5A85C]/60 mt-3"><i class="fa-solid fa-arrows-up-down mr-1"></i>Arrastre o use las flechas para reordenar. Los horarios se recalculan automáticamente.</p>
+                        </div>
+                        <div class="navy-card rounded-3xl p-5">
+                            <div class="text-[10px] text-[#C5A85C] font-bold">RESUMEN</div>
+                            <div class="text-3xl font-black text-[#FFEA8D] mt-2" id="sched-total-athletes">0</div>
+                            <div class="text-xs text-[#C5A85C]/70">atletas en cronograma</div>
+                            <div class="text-sm font-bold text-[#C5A85C] mt-4" id="sched-total-duration">Duración: —</div>
+                        </div>
+                    </div>
+
+                    <div id="schedule-cards-list" class="space-y-3"></div>
+                </div>
+            </div>
+
             <div id="section-4" class="section">
                 <div class="max-w-4xl mx-auto space-y-5">
                     <div class="dark-panel rounded-2xl p-6 flex flex-wrap justify-between items-center gap-4">
@@ -1334,8 +1596,10 @@
             <button onclick="switchSection(1)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-user-plus text-base mb-0.5"></i>Registro</button>
             <button onclick="switchSection(2)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-users text-base mb-0.5"></i>Atletas</button>
             <button onclick="switchSection(3)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-file-export text-base mb-0.5"></i>Exportar</button>
-            <button onclick="switchSection(5)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-gavel text-base mb-0.5"></i>Jueces</button>
-            <button onclick="switchSection(4)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1 transition"><i class="fa-solid fa-shield text-base mb-0.5"></i>Admin</button>
+            <button onclick="switchSection(5)" class="flex flex-col items-center text-[10px] text-gray-400 px-1 py-1"><i class="fa-solid fa-gavel text-base mb-0.5"></i>Jueces</button>
+            <button onclick="switchSection(6)" class="flex flex-col items-center text-[10px] text-gray-400 px-1 py-1"><i class="fa-solid fa-ranking-star text-base mb-0.5"></i>Notas</button>
+            <button onclick="switchSection(7)" class="flex flex-col items-center text-[10px] text-gray-400 px-1 py-1"><i class="fa-solid fa-calendar-days text-base mb-0.5"></i>Horario</button>
+            <button onclick="switchSection(4)" class="flex flex-col items-center text-[10px] text-gray-400 px-1 py-1 transition"><i class="fa-solid fa-shield text-base mb-0.5"></i>Admin</button>
             <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center text-[10px] text-[#C5A85C] px-2 py-1 transition" title="Instagram">
                 <i class="fa-brands fa-instagram text-base mb-0.5"></i>IG
             </a>
@@ -1406,7 +1670,15 @@
             }
         })();
         let currentUser = null;
+        let currentUserRole = 'admin';
+        let currentJudgeSlot = null;
         let editingAthleteId = null;
+        let scoringRounds = [];
+        let activeScoringRoundId = null;
+        let scoreSaveTimer = null;
+        let eventSchedule = null;
+        let draggedScheduleModality = null;
+        const SCHEDULE_ID = 'mp-event-schedule';
         let currentSection = 0;
         let activityLogs = [];
         let registrationsClosed = localStorage.getItem('mp_reg_closed') === 'true';
@@ -1425,6 +1697,23 @@
             "Fit Model Masculino": "Men's Fit",
             "Fit Model Femenino": "Fit & Beauty",
             "Women's Bodyfitness": "Body Fitness"
+        };
+
+        const SCHEDULE_DEFAULT_ORDER = [
+            "Men's Physique", "Bikini Fitness", "Wellness", "Classic Physique",
+            "Bodybuilding", "Classic Bodybuilding", "Women's Physique", "Women's Bodyfitness",
+            "Fit Model", "Men's Fit Model", "Games Classic Bodybuilding", "Fitness Challenge"
+        ];
+
+        const SCHEDULE_TO_APP_MODALITY = {
+            "Bodybuilding": "Fisicoculturismo",
+            "Classic Bodybuilding": "Culturismo Clásico",
+            "Wellness": "Wellness Fitness",
+            "Women's Bodyfitness": "Body Fitness",
+            "Fit Model": "Fit & Beauty",
+            "Men's Fit Model": "Men's Fit",
+            "Games Classic Bodybuilding": "Games Classic",
+            "Fitness Challenge": "Posing Art"
         };
 
         const HEIGHT_RULES = {
@@ -1558,6 +1847,8 @@
             updateConnectionStatus(true);
             socket.emit('solicitarAtletas');
             socket.emit('solicitarJueces');
+            socket.emit('solicitarCalificacion');
+            socket.emit('solicitarCronograma');
             if (!silent) addLog('Sincronización', 'Solicitó listas actualizadas desde Discord');
         }
 
@@ -1703,12 +1994,46 @@
             if (!silent && currentUser) showToast('Orden de jueces sincronizado', 'info');
         });
 
+        socket.on('cargarCalificacion', (list) => {
+            applyRemoteScoringList(list);
+        });
+
+        socket.on('nuevaRonda', (round) => {
+            if (!round?.id) return;
+            const silent = consumeSocketOp('add', round.id);
+            upsertScoringRoundFromRemote(round, !silent);
+        });
+
+        socket.on('rondaActualizada', (round) => {
+            if (!round?.id) return;
+            const silent = consumeSocketOp('edit', round.id);
+            upsertScoringRoundFromRemote(round, !silent);
+        });
+
+        socket.on('rondaEliminada', (payload) => {
+            const id = String(payload?.id || payload || '');
+            if (!id) return;
+            const silent = consumeSocketOp('delete', id);
+            removeScoringRoundFromRemote(id, !silent);
+        });
+
+        socket.on('cargarCronograma', (data) => {
+            applyRemoteSchedule(data);
+        });
+
+        socket.on('cronogramaActualizado', (data) => {
+            const silent = consumeSocketOp('edit', SCHEDULE_ID);
+            applyRemoteSchedule(data, !silent);
+        });
+
         function refreshAllViews() {
             populateClubFilters();
-            if (currentSection === 0) { updateDashboardMetrics(); renderModalitiesOverview(); }
+            if (currentSection === 0) { updateDashboardMetrics(); renderModalitiesOverview(); renderScheduleLiveWidget(); }
             if (currentSection === 2) filterAthletes();
             if (currentSection === 3) { renderPlanillasList(); updateExportPreview(); }
             if (currentSection === 5) renderJudgesList();
+            if (currentSection === 6) renderScoringSection();
+            if (currentSection === 7) renderScheduleSection();
         }
 
         // ==================== PERSISTENCE (LOCAL PARA LOGIN) ====================
@@ -1732,14 +2057,32 @@
         const SESSION_KEY = 'mp_session';
         const SESSION_MAX_MS = 8 * 60 * 60 * 1000;
 
-        function createSession(user) {
+        const AUTH_USERS = {
+            admin: { password: 'raikoz7841', role: 'admin', label: 'Administrador' },
+            escrutador: { password: 'scrut2026', role: 'scrutineer', label: 'Escrutador' },
+            juez1: { password: 'juez2026', role: 'judge', judgeSlot: 0, label: 'Juez 1' },
+            juez2: { password: 'juez2026', role: 'judge', judgeSlot: 1, label: 'Juez 2' },
+            juez3: { password: 'juez2026', role: 'judge', judgeSlot: 2, label: 'Juez 3' },
+            juez4: { password: 'juez2026', role: 'judge', judgeSlot: 3, label: 'Juez 4' },
+            juez5: { password: 'juez2026', role: 'judge', judgeSlot: 4, label: 'Juez 5' },
+            juez6: { password: 'juez2026', role: 'judge', judgeSlot: 5, label: 'Juez 6' },
+            juez7: { password: 'juez2026', role: 'judge', judgeSlot: 6, label: 'Juez 7' },
+            juez8: { password: 'juez2026', role: 'judge', judgeSlot: 7, label: 'Juez 8' },
+            juez9: { password: 'juez2026', role: 'judge', judgeSlot: 8, label: 'Juez 9' }
+        };
+
+        function createSession(user, role = 'admin', judgeSlot = null) {
             const session = {
                 user,
+                role,
+                judgeSlot,
                 token: (crypto.randomUUID && crypto.randomUUID()) || `sess-${Date.now()}-${Math.random().toString(36).slice(2)}`,
                 createdAt: Date.now()
             };
             sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
             currentUser = user;
+            currentUserRole = role;
+            currentJudgeSlot = judgeSlot;
         }
 
         function getValidSession() {
@@ -1752,6 +2095,8 @@
                     clearSession();
                     return null;
                 }
+                currentUserRole = session.role || 'admin';
+                currentJudgeSlot = session.judgeSlot ?? null;
                 return session;
             } catch (e) {
                 clearSession();
@@ -1763,6 +2108,8 @@
             sessionStorage.removeItem(SESSION_KEY);
             localStorage.removeItem('manabi_current_user');
             currentUser = null;
+            currentUserRole = 'admin';
+            currentJudgeSlot = null;
         }
 
         function resetLoginForm() {
@@ -1816,6 +2163,41 @@
             migrateAthletesReset();
             loadAthletesFromCache();
             loadJudgesFromCache();
+            loadScoringFromCache();
+            loadScheduleFromCache();
+        }
+
+        function loadScheduleFromCache() {
+            try {
+                const cached = localStorage.getItem('mp_schedule_cache');
+                if (cached) eventSchedule = normalizeSchedule(JSON.parse(cached));
+            } catch (e) {
+                console.warn('Cache de cronograma no válido');
+            }
+            if (!eventSchedule) eventSchedule = createDefaultSchedule();
+        }
+
+        function saveScheduleLocal() {
+            if (eventSchedule) localStorage.setItem('mp_schedule_cache', JSON.stringify(eventSchedule));
+        }
+
+        function loadScoringFromCache() {
+            try {
+                const cached = localStorage.getItem('mp_scoring_cache');
+                if (cached) {
+                    const list = JSON.parse(cached);
+                    if (Array.isArray(list)) scoringRounds = list.map(normalizeScoringRound);
+                }
+                const active = localStorage.getItem('mp_active_scoring_round');
+                if (active) activeScoringRoundId = active;
+            } catch (e) {
+                console.warn('Cache de calificación no válido');
+            }
+        }
+
+        function saveScoringRounds() {
+            localStorage.setItem('mp_scoring_cache', JSON.stringify(scoringRounds));
+            if (activeScoringRoundId) localStorage.setItem('mp_active_scoring_round', activeScoringRoundId);
         }
 
         function loadJudgesFromCache() {
@@ -2030,36 +2412,28 @@
 
         // ==================== LOGIN ====================
         function attemptLogin() {
-            const user = document.getElementById('login-user').value.trim();
+            const user = document.getElementById('login-user').value.trim().toLowerCase();
             const pass = document.getElementById('login-pass').value.trim();
             const errorEl = document.getElementById('login-error');
-
-            const correctUser = 'admin';
-            const correctPass = 'raikoz7841';
 
             if (!user || !pass) {
                 showLoginError("Por favor complete usuario y contraseña.");
                 return;
             }
 
-            if (user !== correctUser) {
-                showLoginError("Usuario no autorizado en esta mesa de control.");
+            const account = AUTH_USERS[user];
+            if (!account || pass !== account.password) {
+                showLoginError("Usuario o contraseña incorrectos.");
                 return;
             }
 
-            if (pass !== correctPass) {
-                showLoginError("Contraseña incorrecta.");
-                return;
-            }
-
-            // Success
-            createSession(user);
+            createSession(user, account.role, account.judgeSlot ?? null);
             errorEl.classList.add('hidden');
             document.getElementById('login-pass').value = '';
 
             showMainApp();
-            showToast(`Bienvenido, ${user}. ${athletes.length} atletas en sistema.`, 'success');
-            addLog("Inicio de Sesión", `El operador ${user} ingresó al sistema`);
+            showToast(`Bienvenido, ${account.label || user}. ${athletes.length} atletas en sistema.`, 'success');
+            addLog("Inicio de Sesión", `${account.label || user} ingresó al sistema`);
         }
 
         function showLoginError(msg) {
@@ -2082,13 +2456,16 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             
-            document.getElementById('header-user').innerHTML = currentUser;
+            const roleLabel = AUTH_USERS[currentUser]?.label || currentUser;
+            document.getElementById('header-user').innerHTML = `${roleLabel}<span class="block text-[9px] text-[#C5A85C]/60 font-normal">${currentUserRole === 'judge' ? 'Juez ' + (currentJudgeSlot + 1) : currentUserRole}</span>`;
             
-            // Initialize filters
             populateModalityFilter();
+            applyScoreTabVisibility();
+            applyRoleNavVisibility();
 
-            // Render initial section
-            switchSection(0);
+            if (currentUserRole === 'judge') switchSection(6);
+            else if (currentUserRole === 'scrutineer') switchSection(6);
+            else switchSection(0);
             
             // Update metrics
             updateDashboardMetrics();
@@ -2132,6 +2509,13 @@
             if (section === 5) {
                 initJudgeForm();
                 renderJudgesList();
+            }
+            if (section === 6) {
+                initScoringForm();
+                renderScoringSection();
+            }
+            if (section === 7) {
+                renderScheduleSection();
             }
             if (section === 4) {
                 renderAdminUsers();
@@ -3900,6 +4284,1027 @@
             }, 3200);
         }
 
+        // ==================== CALIFICACIÓN ====================
+        function normalizeScoringRound(r) {
+            r.judgeCount = parseInt(r.judgeCount, 10) || 3;
+            r.scores = r.scores || {};
+            r.judgeSubmitted = r.judgeSubmitted || {};
+            r.scrutineerEdits = r.scrutineerEdits || {};
+            r.comparisonIds = r.comparisonIds || [];
+            r.athleteIds = r.athleteIds || [];
+            r.status = r.status || 'Abierta';
+            r.published = !!r.published;
+            r.results = r.results || [];
+            return r;
+        }
+
+        function getActiveScoringRound() {
+            if (!activeScoringRoundId) return scoringRounds[scoringRounds.length - 1] || null;
+            return scoringRounds.find(r => r.id === activeScoringRoundId) || null;
+        }
+
+        function getAthletesForScoringRound(round) {
+            if (!round) return [];
+            let list = athletes.map(normalizeAthlete).filter(a => a.modality === round.modality);
+            const cat = (round.category || '').trim();
+            if (cat && cat !== 'Todas') {
+                list = list.filter(a => (a.category || '').toLowerCase().includes(cat.toLowerCase()));
+            }
+            if (round.athleteIds?.length) {
+                const idSet = new Set(round.athleteIds.map(String));
+                list = list.filter(a => idSet.has(String(a.id)));
+            }
+            return sortAthletesList(list, 'bib');
+        }
+
+        function applyRemoteScoringList(list) {
+            scoringRounds = (list || []).map(normalizeScoringRound);
+            if (!activeScoringRoundId && scoringRounds.length) {
+                activeScoringRoundId = scoringRounds[scoringRounds.length - 1].id;
+            }
+            saveScoringRounds();
+            if (currentSection === 6) renderScoringSection();
+        }
+
+        function upsertScoringRoundFromRemote(raw, notify = true) {
+            const round = normalizeScoringRound(raw);
+            const idx = scoringRounds.findIndex(r => String(r.id) === String(round.id));
+            if (idx !== -1) scoringRounds[idx] = { ...scoringRounds[idx], ...round };
+            else scoringRounds.push(round);
+            saveScoringRounds();
+            if (currentSection === 6) renderScoringSection();
+            if (notify) showToast('Ronda de calificación actualizada', 'info');
+        }
+
+        function removeScoringRoundFromRemote(id, notify = true) {
+            scoringRounds = scoringRounds.filter(r => String(r.id) !== String(id));
+            if (activeScoringRoundId === id) activeScoringRoundId = scoringRounds.length ? scoringRounds[scoringRounds.length - 1].id : null;
+            saveScoringRounds();
+            if (currentSection === 6) renderScoringSection();
+            if (notify) showToast('Ronda eliminada', 'info');
+        }
+
+        function persistScoringRound(round, opType = 'edit') {
+            if (!round?.id) return;
+            round.updatedAt = Date.now();
+            const idx = scoringRounds.findIndex(r => r.id === round.id);
+            if (idx !== -1) scoringRounds[idx] = round;
+            else scoringRounds.push(round);
+            saveScoringRounds();
+            markSocketOp(opType, round.id);
+            emitToDiscord('guardarRondaDesdeWeb', round);
+            clearTimeout(scoreSaveTimer);
+            scoreSaveTimer = setTimeout(() => {}, 300);
+        }
+
+        let scoringFormInitialized = false;
+        function initScoringForm() {
+            const modSel = document.getElementById('score-modality');
+            if (modSel && !modSel.options.length) {
+                MODALITIES.forEach(mod => {
+                    const o = document.createElement('option');
+                    o.value = mod; o.textContent = mod;
+                    modSel.appendChild(o);
+                });
+            }
+            if (!scoringFormInitialized) {
+                modSel?.addEventListener('change', populateScoreCategories);
+                scoringFormInitialized = true;
+            }
+            populateScoreCategories();
+        }
+
+        function populateScoreCategories() {
+            const mod = document.getElementById('score-modality')?.value;
+            const catSel = document.getElementById('score-category');
+            if (!catSel) return;
+            catSel.innerHTML = '<option value="Todas">Todas las categorías</option>';
+            if (!mod) return;
+            const cats = new Set();
+            athletes.map(normalizeAthlete).filter(a => a.modality === mod).forEach(a => {
+                if (a.category) cats.add(a.category);
+            });
+            [...cats].sort().forEach(c => {
+                const o = document.createElement('option');
+                o.value = c; o.textContent = c;
+                catSel.appendChild(o);
+            });
+        }
+
+        function createScoringRound() {
+            if (currentUserRole === 'judge') { showToast('Sin permisos', 'error'); return; }
+            const modality = document.getElementById('score-modality')?.value;
+            const category = document.getElementById('score-category')?.value || 'Todas';
+            const roundType = document.getElementById('score-round-type')?.value || 'Prejudging';
+            const judgeCount = parseInt(document.getElementById('score-judge-count')?.value, 10) || 3;
+            if (!modality) { showToast('Seleccione modalidad', 'error'); return; }
+
+            const athleteList = athletes.map(normalizeAthlete).filter(a => {
+                if (a.modality !== modality) return false;
+                if (category !== 'Todas' && !(a.category || '').toLowerCase().includes(category.toLowerCase())) return false;
+                return true;
+            });
+            if (athleteList.length === 0) { showToast('No hay competidores en esa categoría', 'error'); return; }
+
+            const round = normalizeScoringRound({
+                id: `score-${Date.now()}`,
+                modality, category, round: roundType, judgeCount,
+                status: 'En Calificación',
+                athleteIds: athleteList.map(a => a.id),
+                scores: {}, judgeSubmitted: {}, scrutineerEdits: {},
+                comparisonIds: [], published: false, results: [],
+                createdAt: Date.now(), updatedAt: Date.now()
+            });
+            for (let i = 0; i < judgeCount; i++) round.scores[String(i)] = {};
+
+            activeScoringRoundId = round.id;
+            markSocketOp('add', round.id);
+            scoringRounds.push(round);
+            persistScoringRound(round, 'add');
+            addLog('Calificación', `Nueva ronda: ${modality} — ${category} (${roundType})`);
+            showToast(`Ronda creada: ${athleteList.length} competidores, ${judgeCount} jueces`, 'success');
+            switchScoreTab('mesa');
+            renderScoringSection();
+        }
+
+        function selectScoringRound(id) {
+            activeScoringRoundId = id;
+            saveScoringRounds();
+            renderScoringSection();
+        }
+
+        function deleteScoringRound(id) {
+            if (!confirm('¿Eliminar esta ronda de calificación?')) return;
+            markSocketOp('delete', id);
+            scoringRounds = scoringRounds.filter(r => r.id !== id);
+            if (activeScoringRoundId === id) activeScoringRoundId = scoringRounds.length ? scoringRounds[scoringRounds.length - 1].id : null;
+            saveScoringRounds();
+            emitToDiscord('eliminarRondaDesdeWeb', { id });
+            renderScoringSection();
+        }
+
+        function switchScoreTab(tab) {
+            document.querySelectorAll('.score-tab').forEach(el => el.classList.toggle('active', el.dataset.scoreTab === tab));
+            document.querySelectorAll('.score-panel').forEach(el => el.classList.remove('active'));
+            document.getElementById(`score-panel-${tab}`)?.classList.add('active');
+        }
+
+        function applyRoleNavVisibility() {
+            const allowed = {
+                admin: [0, 1, 2, 3, 4, 5, 6, 7],
+                scrutineer: [3, 6, 7],
+                judge: [6, 7]
+            }[currentUserRole] || [0, 1, 2, 3, 4, 5, 6, 7];
+            document.querySelectorAll('.sidebar-link, .mobile-nav button').forEach(btn => {
+                const match = btn.getAttribute('onclick')?.match(/switchSection\((\d+)\)/);
+                if (!match) return;
+                const sec = parseInt(match[1], 10);
+                btn.style.display = allowed.includes(sec) ? '' : 'none';
+            });
+        }
+
+        function applyScoreTabVisibility() {
+            const tabs = document.querySelectorAll('.score-tab');
+            const roleTabs = {
+                admin: ['config', 'mesa', 'juez', 'comparaciones', 'escrutador', 'resultados'],
+                scrutineer: ['mesa', 'comparaciones', 'escrutador', 'resultados'],
+                judge: ['juez']
+            };
+            const allowed = roleTabs[currentUserRole] || roleTabs.admin;
+            tabs.forEach(t => {
+                const show = allowed.includes(t.dataset.scoreTab);
+                t.style.display = show ? '' : 'none';
+            });
+            if (!allowed.includes(document.querySelector('.score-tab.active')?.dataset?.scoreTab)) {
+                switchScoreTab(allowed[0]);
+            }
+        }
+
+        function getJudgeScore(round, judgeIdx, athleteId) {
+            const key = String(judgeIdx);
+            const edit = round.scrutineerEdits?.[athleteId];
+            if (edit?.positions?.[key] != null) return edit.positions[key];
+            return round.scores?.[key]?.[athleteId] ?? '';
+        }
+
+        function setJudgeScore(round, judgeIdx, athleteId, value) {
+            const key = String(judgeIdx);
+            if (!round.scores[key]) round.scores[key] = {};
+            if (value === '' || value == null) delete round.scores[key][athleteId];
+            else round.scores[key][athleteId] = parseInt(value, 10);
+        }
+
+        function calculateRoundResults(round) {
+            const athletesList = getAthletesForScoringRound(round);
+            const jc = round.judgeCount;
+            const rows = athletesList.map(a => {
+                let total = 0;
+                let count = 0;
+                const positions = {};
+                for (let j = 0; j < jc; j++) {
+                    const pos = getJudgeScore(round, j, a.id);
+                    if (pos !== '' && pos != null && !isNaN(pos)) {
+                        positions[j] = parseInt(pos, 10);
+                        total += positions[j];
+                        count++;
+                    }
+                }
+                const edit = round.scrutineerEdits?.[a.id];
+                if (edit?.total != null) total = edit.total;
+                return { athlete: a, total, positions, count };
+            });
+            rows.sort((a, b) => {
+                if (a.total !== b.total) return a.total - b.total;
+                return (a.athlete.bibNumber || 0) - (b.athlete.bibNumber || 0);
+            });
+            rows.forEach((r, i) => { r.finalPosition = i + 1; });
+            round.results = rows;
+            return rows;
+        }
+
+        function countSubmittedJudges(round) {
+            let done = 0;
+            for (let i = 0; i < round.judgeCount; i++) {
+                if (round.judgeSubmitted[String(i)]) done++;
+            }
+            return done;
+        }
+
+        function renderScoringRoundStatus(round) {
+            const badge = document.getElementById('score-round-status');
+            const progress = document.getElementById('score-judges-progress');
+            if (!round) {
+                badge.textContent = 'Sin ronda activa';
+                badge.className = 'score-status-badge score-status-abierta';
+                if (progress) progress.textContent = '0/0 jueces calificaron';
+                return;
+            }
+            const statusMap = { 'Abierta': 'score-status-abierta', 'En Calificación': 'score-status-calificando', 'Finalizada': 'score-status-finalizada' };
+            badge.textContent = round.status;
+            badge.className = `score-status-badge ${statusMap[round.status] || 'score-status-abierta'}`;
+            const done = countSubmittedJudges(round);
+            if (progress) progress.textContent = `${done}/${round.judgeCount} jueces calificaron`;
+        }
+
+        function buildScoreTableHead(round, editable = false, judgeFilter = null) {
+            const jc = round.judgeCount;
+            let html = '<tr><th>N.º</th><th>Nombre</th>';
+            for (let j = 0; j < jc; j++) {
+                if (judgeFilter != null && j !== judgeFilter) continue;
+                html += `<th>J${j + 1}</th>`;
+            }
+            if (judgeFilter == null) html += '<th>Total</th><th>Pos. Final</th>';
+            html += '</tr>';
+            return html;
+        }
+
+        function renderScoringSection() {
+            applyScoreTabVisibility();
+            renderScoringRoundsList();
+            const round = getActiveScoringRound();
+            renderScoringRoundStatus(round);
+            renderScoreMesa(round);
+            renderScoreJudgePanel(round);
+            renderScoreComparison(round);
+            renderScoreScrutineer(round);
+            renderScoreResults(round);
+        }
+
+        function renderScoringRoundsList() {
+            const el = document.getElementById('score-rounds-list');
+            if (!el) return;
+            if (!scoringRounds.length) {
+                el.innerHTML = '<div class="text-[#C5A85C]/50 text-xs">No hay rondas creadas</div>';
+                return;
+            }
+            el.innerHTML = scoringRounds.map(r => `
+                <div class="flex items-center justify-between gap-2 p-2 rounded-xl ${r.id === activeScoringRoundId ? 'bg-[#C5A85C]/15 border border-[#C5A85C]/40' : 'bg-[#0A1931] border border-[#C5A85C]/15'} cursor-pointer" onclick="selectScoringRound('${r.id}')">
+                    <div class="min-w-0">
+                        <div class="font-bold text-[#FFEA8D] text-xs truncate">${r.modality}</div>
+                        <div class="text-[10px] text-[#C5A85C]/60">${r.category} • ${r.round}</div>
+                    </div>
+                    <button onclick="event.stopPropagation();deleteScoringRound('${r.id}')" class="text-[#C5A85C]/50 hover:text-red-400 px-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                </div>`).join('');
+        }
+
+        function renderScoreMesa(round) {
+            const thead = document.getElementById('score-main-thead');
+            const tbody = document.getElementById('score-main-tbody');
+            const empty = document.getElementById('score-mesa-empty');
+            if (!round || !thead || !tbody) {
+                empty?.classList.remove('hidden');
+                return;
+            }
+            empty?.classList.add('hidden');
+            const athletesList = getAthletesForScoringRound(round);
+            const results = calculateRoundResults(round);
+
+            document.getElementById('score-info-modality').textContent = round.modality;
+            document.getElementById('score-info-category').textContent = round.category;
+            document.getElementById('score-info-athletes').textContent = athletesList.length;
+            document.getElementById('score-info-judges').textContent = round.judgeCount;
+
+            thead.innerHTML = buildScoreTableHead(round);
+            tbody.innerHTML = results.map(row => {
+                const a = row.athlete;
+                const posCls = row.finalPosition <= 3 ? `pos-${row.finalPosition}` : '';
+                let cells = `<td><strong>#${a.bibNumber}</strong></td><td>${getFullName(a)}</td>`;
+                for (let j = 0; j < round.judgeCount; j++) {
+                    const v = getJudgeScore(round, j, a.id);
+                    const submitted = round.judgeSubmitted[String(j)];
+                    cells += `<td class="${submitted ? '' : 'text-[#C5A85C]/40'}">${v !== '' && v != null ? v : '—'}</td>`;
+                }
+                cells += `<td><strong>${row.total || '—'}</strong></td><td class="${posCls}"><strong>${row.count >= round.judgeCount ? row.finalPosition : '—'}</strong></td>`;
+                return `<tr class="${posCls}">${cells}</tr>`;
+            }).join('');
+        }
+
+        function validateJudgePositions(round, judgeIdx) {
+            const athletesList = getAthletesForScoringRound(round);
+            const n = athletesList.length;
+            const positions = [];
+            const errors = [];
+            athletesList.forEach(a => {
+                const v = round.scores[String(judgeIdx)]?.[a.id];
+                if (v == null || v === '' || isNaN(v)) errors.push(`Atleta #${a.bibNumber} sin posición`);
+                else positions.push(parseInt(v, 10));
+            });
+            const unique = new Set(positions);
+            if (unique.size !== positions.length) errors.push('Hay posiciones repetidas');
+            if (positions.some(p => p < 1 || p > n)) errors.push(`Las posiciones deben ser entre 1 y ${n}`);
+            const expected = new Set(Array.from({ length: n }, (_, i) => i + 1));
+            positions.forEach(p => expected.delete(p));
+            if (expected.size > 0) errors.push('Faltan posiciones por asignar');
+            return errors;
+        }
+
+        function renderScoreJudgePanel(round) {
+            const cards = document.getElementById('score-judge-cards');
+            const empty = document.getElementById('score-judge-empty');
+            const saveBtn = document.getElementById('score-judge-save-btn');
+            const userEl = document.getElementById('score-judge-user');
+            const slotEl = document.getElementById('score-judge-slot-label');
+            const catEl = document.getElementById('score-judge-category-label');
+            const roundEl = document.getElementById('score-judge-round-label');
+            const msgEl = document.getElementById('score-judge-validation-msg');
+
+            userEl.textContent = currentUser || '—';
+            const canJudge = currentUserRole === 'judge' || currentUserRole === 'admin';
+            const judgeIdx = currentUserRole === 'judge' ? currentJudgeSlot : (currentUserRole === 'admin' ? 0 : null);
+
+            if (!round || !canJudge || judgeIdx == null || judgeIdx >= round.judgeCount) {
+                cards.innerHTML = '';
+                empty.classList.remove('hidden');
+                saveBtn.classList.add('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+            saveBtn.classList.remove('hidden');
+            slotEl.textContent = `J${judgeIdx + 1}`;
+            catEl.textContent = `${round.modality} — ${round.category}`;
+            roundEl.textContent = round.round;
+
+            const athletesList = getAthletesForScoringRound(round);
+            const submitted = round.judgeSubmitted[String(judgeIdx)];
+            const key = String(judgeIdx);
+
+            cards.innerHTML = athletesList.map(a => {
+                const val = round.scores[key]?.[a.id] ?? '';
+                return `<div class="judge-score-card">
+                    <div class="w-10 h-10 rounded-xl bg-[#C5A85C]/20 flex items-center justify-center font-black text-[#FFEA8D] text-sm">#${a.bibNumber}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-[#FFEA8D] text-sm truncate">${getFullName(a)}</div>
+                        <div class="text-[10px] text-[#C5A85C]/60">${a.club || ''}</div>
+                    </div>
+                    <input type="number" min="1" max="${athletesList.length}" class="score-input ${submitted ? 'readonly' : ''}"
+                        value="${val}" ${submitted ? 'disabled' : ''}
+                        onchange="onJudgeScoreInput('${round.id}', ${judgeIdx}, '${a.id}', this.value)"
+                        placeholder="Pos.">
+                </div>`;
+            }).join('');
+
+            if (submitted) {
+                msgEl.innerHTML = '<span class="text-[#86efac]"><i class="fa-solid fa-check mr-1"></i>Calificación enviada</span>';
+                saveBtn.classList.add('hidden');
+            } else {
+                const errs = validateJudgePositions(round, judgeIdx);
+                msgEl.innerHTML = errs.length ? `<span class="text-red-400">${errs[0]}</span>` : '<span class="text-[#C5A85C]">Asigne posiciones únicas del 1 al ' + athletesList.length + '</span>';
+            }
+        }
+
+        function onJudgeScoreInput(roundId, judgeIdx, athleteId, value) {
+            const round = scoringRounds.find(r => r.id === roundId);
+            if (!round || round.judgeSubmitted[String(judgeIdx)]) return;
+            setJudgeScore(round, judgeIdx, athleteId, value);
+            persistScoringRound(round);
+            renderScoreJudgePanel(round);
+            renderScoreMesa(round);
+        }
+
+        function saveJudgeScores() {
+            const round = getActiveScoringRound();
+            if (!round) return;
+            const judgeIdx = currentUserRole === 'judge' ? currentJudgeSlot : 0;
+            const errors = validateJudgePositions(round, judgeIdx);
+            if (errors.length) { showToast(errors[0], 'error'); return; }
+            round.judgeSubmitted[String(judgeIdx)] = true;
+            round.status = 'En Calificación';
+            persistScoringRound(round);
+            addLog('Calificación', `Juez ${judgeIdx + 1} envió calificación`);
+            showToast('Calificación enviada correctamente', 'success');
+            renderScoringSection();
+        }
+
+        function renderScoreComparison(round) {
+            const sel = document.getElementById('score-comparison-select');
+            const panel = document.getElementById('score-comparison-panel');
+            if (!sel || !panel) return;
+            if (!round) { sel.innerHTML = ''; panel.innerHTML = '<span class="text-[#C5A85C]/50 text-xs">Sin ronda activa</span>'; return; }
+            const athletesList = getAthletesForScoringRound(round);
+            sel.innerHTML = athletesList.map(a => `
+                <label class="flex items-center gap-3 p-3 rounded-xl bg-[#0A1931] border border-[#C5A85C]/15 cursor-pointer hover:border-[#C5A85C]/40">
+                    <input type="checkbox" class="score-comp-check accent-[#C5A85C]" value="${a.id}" ${round.comparisonIds.includes(a.id) ? 'checked' : ''}>
+                    <span class="font-bold text-[#FFEA8D] text-sm">#${a.bibNumber}</span>
+                    <span class="text-xs text-[#C5A85C]/80 truncate">${getFullName(a)}</span>
+                </label>`).join('');
+            panel.innerHTML = round.comparisonIds.length
+                ? round.comparisonIds.map(id => {
+                    const a = athletes.find(x => x.id === id);
+                    return a ? `<span class="comparison-chip"><i class="fa-solid fa-user"></i>#${a.bibNumber} ${getFullName(a)}</span>` : '';
+                }).join('')
+                : '<span class="text-[#C5A85C]/50 text-xs">Ningún atleta en comparación</span>';
+        }
+
+        function sendToComparison() {
+            const round = getActiveScoringRound();
+            if (!round) { showToast('Seleccione una ronda', 'error'); return; }
+            const checked = [...document.querySelectorAll('.score-comp-check:checked')].map(el => el.value);
+            if (checked.length < 2) { showToast('Seleccione al menos 2 atletas', 'error'); return; }
+            round.comparisonIds = checked;
+            round.round = round.round === 'Comparaciones' ? 'Comparaciones' : round.round;
+            persistScoringRound(round);
+            showToast(`${checked.length} atletas enviados a comparación`, 'success');
+            renderScoreComparison(round);
+            switchScoreTab('comparaciones');
+        }
+
+        function renderScoreScrutineer(round) {
+            const doneEl = document.getElementById('score-scrut-done');
+            const pendEl = document.getElementById('score-scrut-pending');
+            const statusEl = document.getElementById('score-scrut-status');
+            const pendingEl = document.getElementById('score-pending-judges');
+            const thead = document.getElementById('score-scrut-thead');
+            const tbody = document.getElementById('score-scrut-tbody');
+            if (!round) {
+                [doneEl, pendEl, statusEl, pendingEl, thead, tbody].forEach(e => { if (e) e.innerHTML = e === statusEl ? '—' : (e === doneEl || e === pendEl ? '0' : ''); });
+                return;
+            }
+            const done = countSubmittedJudges(round);
+            const pending = round.judgeCount - done;
+            doneEl.textContent = done;
+            pendEl.textContent = pending;
+            statusEl.textContent = round.status;
+            pendingEl.innerHTML = Array.from({ length: round.judgeCount }, (_, i) => {
+                const ok = round.judgeSubmitted[String(i)];
+                return `<span class="px-3 py-1 rounded-full text-[10px] font-bold ${ok ? 'bg-[#86efac]/20 text-[#86efac]' : 'bg-red-500/15 text-red-300'}">J${i + 1} ${ok ? '✓' : 'Pendiente'}</span>`;
+            }).join('');
+
+            const canEdit = currentUserRole === 'admin' || currentUserRole === 'scrutineer';
+            const athletesList = getAthletesForScoringRound(round);
+            const results = calculateRoundResults(round);
+            thead.innerHTML = buildScoreTableHead(round, canEdit);
+            tbody.innerHTML = results.map(row => {
+                const a = row.athlete;
+                let cells = `<td><strong>#${a.bibNumber}</strong></td><td>${getFullName(a)}</td>`;
+                for (let j = 0; j < round.judgeCount; j++) {
+                    const v = getJudgeScore(round, j, a.id);
+                    if (canEdit && !round.published) {
+                        cells += `<td><input type="number" class="score-input" style="width:36px" value="${v !== '' && v != null ? v : ''}" onchange="onScrutineerEdit('${round.id}','${a.id}',${j},this.value)"></td>`;
+                    } else {
+                        cells += `<td>${v !== '' && v != null ? v : '—'}</td>`;
+                    }
+                }
+                cells += `<td><strong>${row.total || '—'}</strong></td><td><strong>${row.finalPosition}</strong></td>`;
+                return `<tr>${cells}</tr>`;
+            }).join('');
+        }
+
+        function onScrutineerEdit(roundId, athleteId, judgeIdx, value) {
+            const round = scoringRounds.find(r => r.id === roundId);
+            if (!round || round.published) return;
+            if (!round.scrutineerEdits[athleteId]) round.scrutineerEdits[athleteId] = { positions: {} };
+            if (value === '' || value == null) {
+                delete round.scrutineerEdits[athleteId].positions[String(judgeIdx)];
+                setJudgeScore(round, judgeIdx, athleteId, '');
+            } else {
+                round.scrutineerEdits[athleteId].positions[String(judgeIdx)] = parseInt(value, 10);
+                setJudgeScore(round, judgeIdx, athleteId, value);
+            }
+            delete round.scrutineerEdits[athleteId].total;
+            persistScoringRound(round);
+            renderScoringSection();
+        }
+
+        function confirmScoringRound() {
+            const round = getActiveScoringRound();
+            if (!round) return;
+            if (currentUserRole !== 'admin' && currentUserRole !== 'scrutineer') { showToast('Sin permisos', 'error'); return; }
+            calculateRoundResults(round);
+            round.status = 'Finalizada';
+            round.finalizedAt = Date.now();
+            persistScoringRound(round);
+            addLog('Calificación', `Clasificación confirmada: ${round.modality} — ${round.category}`);
+            showToast('Clasificación final confirmada', 'success');
+            renderScoringSection();
+            switchScoreTab('resultados');
+        }
+
+        function publishScoringResults() {
+            const round = getActiveScoringRound();
+            if (!round) return;
+            if (round.status !== 'Finalizada') { showToast('Confirme la clasificación primero', 'error'); return; }
+            round.published = true;
+            persistScoringRound(round);
+            addLog('Calificación', `Resultados publicados: ${round.modality}`);
+            showToast('Resultados publicados', 'success');
+            renderScoringSection();
+        }
+
+        function renderScoreResults(round) {
+            const renderTop = (elId, rows, n) => {
+                const el = document.getElementById(elId);
+                if (!el) return;
+                el.innerHTML = rows.slice(0, n).map((r, i) =>
+                    `<div>${i + 1}. #${r.athlete.bibNumber} ${getFullName(r.athlete)} <span class="text-[#C5A85C]">(${r.total} pts)</span></div>`
+                ).join('') || '<div class="text-[#C5A85C]/50">—</div>';
+            };
+            if (!round) {
+                ['score-winner','score-second','score-third'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = '—'; });
+                ['score-top6','score-top10','score-top15'].forEach(id => { const e = document.getElementById(id); if (e) e.innerHTML = ''; });
+                return;
+            }
+            const results = calculateRoundResults(round);
+            document.getElementById('score-winner').textContent = results[0] ? `#${results[0].athlete.bibNumber} ${getFullName(results[0].athlete)}` : '—';
+            document.getElementById('score-second').textContent = results[1] ? `#${results[1].athlete.bibNumber} ${getFullName(results[1].athlete)}` : '—';
+            document.getElementById('score-third').textContent = results[2] ? `#${results[2].athlete.bibNumber} ${getFullName(results[2].athlete)}` : '—';
+            renderTop('score-top6', results, 6);
+            renderTop('score-top10', results, 10);
+            renderTop('score-top15', results, 15);
+
+            const thead = document.getElementById('score-results-thead');
+            const tbody = document.getElementById('score-results-tbody');
+            if (thead && tbody) {
+                thead.innerHTML = buildScoreTableHead(round);
+                tbody.innerHTML = results.map(row => {
+                    const a = row.athlete;
+                    const posCls = row.finalPosition <= 3 ? `pos-${row.finalPosition}` : '';
+                    let cells = `<td><strong>#${a.bibNumber}</strong></td><td>${getFullName(a)}</td>`;
+                    for (let j = 0; j < round.judgeCount; j++) {
+                        const v = getJudgeScore(round, j, a.id);
+                        cells += `<td>${v !== '' && v != null ? v : '—'}</td>`;
+                    }
+                    cells += `<td><strong>${row.total}</strong></td><td class="${posCls}"><strong>${row.finalPosition}</strong></td>`;
+                    return `<tr class="${posCls}">${cells}</tr>`;
+                }).join('');
+            }
+        }
+
+        function getScoreReportHtml(round, title) {
+            const results = calculateRoundResults(round);
+            const fecha = new Date().toLocaleString('es-EC');
+            const logoUrl = getLogoUrl(true);
+            let rows = results.map(r => `<tr>
+                <td>${r.finalPosition}</td><td>#${r.athlete.bibNumber}</td><td>${getFullName(r.athlete)}</td>
+                <td>${r.athlete.club || ''}</td><td><strong>${r.total}</strong></td>
+            </tr>`).join('');
+            return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${title}</title>
+                <style>${getProfessionalReportCss()}</style></head><body>
+                <button class="print-btn" onclick="window.print()">Imprimir / PDF</button>
+                <div class="page"><div class="header">
+                    <img src="${logoUrl}" alt="Logo" onerror="this.style.display='none'">
+                    <h1>MANABÍ <span class="gold">POWER</span> 2026</h1>
+                    <p>${title}</p>
+                    <p>${round.modality} — ${round.category} — ${round.round}</p>
+                    <p>${fecha}</p>
+                </div>
+                <table><thead><tr><th>Pos.</th><th>N.º</th><th>Nombre</th><th>Club</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>
+                </div></body></html>`;
+        }
+
+        function exportScorePDF() {
+            const round = getActiveScoringRound();
+            if (!round) { showToast('Sin ronda activa', 'error'); return; }
+            const win = window.open('', '_blank');
+            win.document.write(getScoreReportHtml(round, 'RESULTADOS OFICIALES'));
+            win.document.close();
+            showToast('Reporte PDF generado', 'success');
+        }
+
+        function exportScoreExcel() {
+            const round = getActiveScoringRound();
+            if (!round || typeof XLSX === 'undefined') { showToast('Sin datos o XLSX no disponible', 'error'); return; }
+            const results = calculateRoundResults(round);
+            const headers = ['Posición', 'N.º', 'Nombre', 'Club', ...Array.from({length: round.judgeCount}, (_, i) => `J${i+1}`), 'Total'];
+            const rows = results.map(r => {
+                const judgeScores = Array.from({length: round.judgeCount}, (_, j) => getJudgeScore(round, j, r.athlete.id) || '');
+                return [r.finalPosition, r.athlete.bibNumber, getFullName(r.athlete), r.athlete.club || '', ...judgeScores, r.total];
+            });
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet([[`Manabí Power 2026 — ${round.modality} — ${round.category}`], [], headers, ...rows]);
+            XLSX.utils.book_append_sheet(wb, ws, 'Resultados');
+            XLSX.writeFile(wb, `Resultados_${round.modality.replace(/\s/g,'_')}_${dateStamp()}.xlsx`);
+            showToast('Excel exportado', 'success');
+        }
+
+        function exportScoreJudgesSheet() {
+            const round = getActiveScoringRound();
+            if (!round) return;
+            const win = window.open('', '_blank');
+            const results = calculateRoundResults(round);
+            let judgeRows = Array.from({length: round.judgeCount}, (_, j) => {
+                const submitted = round.judgeSubmitted[String(j)] ? 'Completado' : 'Pendiente';
+                return `<tr><td>J${j+1}</td><td>${submitted}</td><td>${results.length} atletas</td></tr>`;
+            }).join('');
+            win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${getProfessionalReportCss()}</style></head><body>
+                <div class="page"><h1>Hoja de Jueces — ${round.modality}</h1>
+                <table><thead><tr><th>Juez</th><th>Estado</th><th>Atletas</th></tr></thead><tbody>${judgeRows}</tbody></table></div></body></html>`);
+            win.document.close();
+            showToast('Hoja de jueces generada', 'success');
+        }
+
+        function exportScoreCategoryReport() { exportScorePDF(); }
+        function exportScoreEventReport() {
+            if (!scoringRounds.length) { showToast('Sin rondas', 'error'); return; }
+            const win = window.open('', '_blank');
+            let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${getProfessionalReportCss()}</style></head><body><div class="page">
+                <h1>REPORTE GENERAL DEL EVENTO</h1><p>Manabí Power 2026 — ${new Date().toLocaleString('es-EC')}</p>`;
+            scoringRounds.forEach(round => {
+                const results = calculateRoundResults(round);
+                html += `<h2>${round.modality} — ${round.category} (${round.round})</h2><table><thead><tr><th>Pos</th><th>Atleta</th><th>Total</th></tr></thead><tbody>`;
+                results.slice(0, 15).forEach(r => {
+                    html += `<tr><td>${r.finalPosition}</td><td>#${r.athlete.bibNumber} ${getFullName(r.athlete)}</td><td>${r.total}</td></tr>`;
+                });
+                html += '</tbody></table>';
+            });
+            html += '</div></body></html>';
+            win.document.write(html);
+            win.document.close();
+            showToast('Reporte general generado', 'success');
+        }
+
+        // ==================== CRONOGRAMA ====================
+        function createDefaultSchedule() {
+            const statuses = {};
+            SCHEDULE_DEFAULT_ORDER.forEach(m => { statuses[m] = 'pendiente'; });
+            return normalizeSchedule({
+                id: SCHEDULE_ID,
+                eventStart: '08:00',
+                minutesPerAthlete: 4,
+                baseMinutesPerModality: 12,
+                order: [...SCHEDULE_DEFAULT_ORDER],
+                statuses,
+                updatedAt: Date.now()
+            });
+        }
+
+        function normalizeSchedule(s) {
+            if (!s.order?.length) s.order = [...SCHEDULE_DEFAULT_ORDER];
+            s.statuses = s.statuses || {};
+            s.order.forEach(m => { if (!s.statuses[m]) s.statuses[m] = 'pendiente'; });
+            s.eventStart = s.eventStart || '08:00';
+            s.minutesPerAthlete = parseInt(s.minutesPerAthlete, 10) || 4;
+            s.baseMinutesPerModality = parseInt(s.baseMinutesPerModality, 10) || 12;
+            return s;
+        }
+
+        function getAppModalityForSchedule(scheduleMod) {
+            return SCHEDULE_TO_APP_MODALITY[scheduleMod] || scheduleMod;
+        }
+
+        function countAthletesForScheduleModality(scheduleMod) {
+            const appMod = getAppModalityForSchedule(scheduleMod);
+            return athletes.filter(a => {
+                const norm = normalizeAthlete({ ...a });
+                return norm.modality === appMod || norm.modality === scheduleMod;
+            }).length;
+        }
+
+        function parseTimeToMinutes(timeStr) {
+            const [h, m] = (timeStr || '08:00').split(':').map(Number);
+            return (h || 0) * 60 + (m || 0);
+        }
+
+        function formatMinutesToTime(totalMin) {
+            const h = Math.floor(totalMin / 60) % 24;
+            const m = totalMin % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function getModalityDurationMinutes(schedule, scheduleMod) {
+            const count = countAthletesForScheduleModality(scheduleMod);
+            return schedule.baseMinutesPerModality + Math.max(count, 1) * schedule.minutesPerAthlete;
+        }
+
+        function buildScheduleTimeline(schedule) {
+            let cursor = parseTimeToMinutes(schedule.eventStart);
+            return schedule.order.map((mod, index) => {
+                const duration = getModalityDurationMinutes(schedule, mod);
+                const start = cursor;
+                const end = cursor + duration;
+                cursor = end;
+                return {
+                    modality: mod,
+                    index,
+                    order: index + 1,
+                    athleteCount: countAthletesForScheduleModality(mod),
+                    duration,
+                    startTime: formatMinutesToTime(start),
+                    endTime: formatMinutesToTime(end),
+                    status: schedule.statuses[mod] || 'pendiente'
+                };
+            });
+        }
+
+        function getCurrentAndNextModality(schedule) {
+            const timeline = buildScheduleTimeline(schedule);
+            let current = timeline.find(t => t.status === 'en_curso');
+            if (!current) current = timeline.find(t => t.status === 'pendiente');
+            const currentIdx = current ? current.index : -1;
+            const next = currentIdx >= 0 ? timeline.find(t => t.index === currentIdx + 1 && t.status === 'pendiente') : timeline.find(t => t.status === 'pendiente');
+            const eventEnd = timeline.length ? timeline[timeline.length - 1].endTime : '—';
+            return { current, next, eventEnd, timeline };
+        }
+
+        function persistSchedule(notify = false) {
+            if (!eventSchedule) return;
+            eventSchedule.updatedAt = Date.now();
+            saveScheduleLocal();
+            markSocketOp('edit', SCHEDULE_ID);
+            emitToDiscord('guardarCronogramaDesdeWeb', eventSchedule);
+            renderScheduleSection();
+            if (notify) showToast('Cronograma guardado y sincronizado', 'success');
+        }
+
+        function applyRemoteSchedule(data, notify = false) {
+            if (data) eventSchedule = normalizeSchedule(data);
+            else if (!eventSchedule) eventSchedule = createDefaultSchedule();
+            saveScheduleLocal();
+            syncScheduleSettingsInputs();
+            renderScheduleSection();
+            renderScheduleLiveWidget();
+            if (notify) showToast('Cronograma actualizado desde la nube', 'info');
+        }
+
+        function syncScheduleSettingsInputs() {
+            if (!eventSchedule) return;
+            const startEl = document.getElementById('sched-event-start');
+            const perAthlete = document.getElementById('sched-min-per-athlete');
+            const baseMin = document.getElementById('sched-base-minutes');
+            if (startEl) startEl.value = eventSchedule.eventStart;
+            if (perAthlete) perAthlete.value = eventSchedule.minutesPerAthlete;
+            if (baseMin) baseMin.value = eventSchedule.baseMinutesPerModality;
+        }
+
+        function onScheduleSettingsChange() {
+            if (!eventSchedule || currentUserRole !== 'admin') return;
+            eventSchedule.eventStart = document.getElementById('sched-event-start')?.value || '08:00';
+            eventSchedule.minutesPerAthlete = parseInt(document.getElementById('sched-min-per-athlete')?.value, 10) || 4;
+            eventSchedule.baseMinutesPerModality = parseInt(document.getElementById('sched-base-minutes')?.value, 10) || 12;
+            persistSchedule();
+        }
+
+        function moveScheduleModality(mod, direction) {
+            if (!eventSchedule || currentUserRole !== 'admin') return;
+            const order = [...eventSchedule.order];
+            const idx = order.indexOf(mod);
+            const target = idx + direction;
+            if (idx === -1 || target < 0 || target >= order.length) return;
+            [order[idx], order[target]] = [order[target], order[idx]];
+            eventSchedule.order = order;
+            persistSchedule(true);
+        }
+
+        function reorderScheduleModality(sourceMod, targetMod) {
+            if (!eventSchedule || currentUserRole !== 'admin' || sourceMod === targetMod) return;
+            const order = [...eventSchedule.order];
+            const from = order.indexOf(sourceMod);
+            const to = order.indexOf(targetMod);
+            if (from === -1 || to === -1) return;
+            order.splice(from, 1);
+            order.splice(to, 0, sourceMod);
+            eventSchedule.order = order;
+            persistSchedule(true);
+        }
+
+        function setScheduleModalityStatus(mod, status) {
+            if (!eventSchedule || currentUserRole !== 'admin') return;
+            if (status === 'en_curso') {
+                eventSchedule.order.forEach(m => {
+                    if (eventSchedule.statuses[m] === 'en_curso') eventSchedule.statuses[m] = 'finalizada';
+                });
+            }
+            eventSchedule.statuses[mod] = status;
+            persistSchedule();
+            addLog('Cronograma', `${mod} → ${status}`);
+        }
+
+        function advanceScheduleNext() {
+            if (!eventSchedule || currentUserRole !== 'admin') return;
+            const { current } = getCurrentAndNextModality(eventSchedule);
+            if (current) {
+                eventSchedule.statuses[current.modality] = 'finalizada';
+                const next = eventSchedule.order.find((m, i) => i > current.index && eventSchedule.statuses[m] === 'pendiente');
+                if (next) eventSchedule.statuses[next] = 'en_curso';
+            } else {
+                const first = eventSchedule.order.find(m => eventSchedule.statuses[m] === 'pendiente');
+                if (first) eventSchedule.statuses[first] = 'en_curso';
+            }
+            persistSchedule(true);
+        }
+
+        function resetEventSchedule() {
+            if (currentUserRole !== 'admin') return;
+            if (!confirm('¿Restablecer el cronograma al orden predeterminado? Se reiniciarán los estados.')) return;
+            eventSchedule = createDefaultSchedule();
+            syncScheduleSettingsInputs();
+            persistSchedule(true);
+            addLog('Cronograma', 'Cronograma restablecido al orden predeterminado');
+        }
+
+        function onScheduleDragStart(e, mod) {
+            if (currentUserRole !== 'admin') { e.preventDefault(); return; }
+            draggedScheduleModality = mod;
+            e.dataTransfer.effectAllowed = 'move';
+            e.currentTarget.classList.add('dragging');
+        }
+
+        function onScheduleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.sched-card.drag-over').forEach(el => el.classList.remove('drag-over'));
+            draggedScheduleModality = null;
+        }
+
+        function onScheduleDragOver(e) {
+            e.preventDefault();
+            if (currentUserRole !== 'admin') return;
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function onScheduleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function onScheduleDrop(e, targetMod) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            const source = draggedScheduleModality || e.dataTransfer.getData('text/plain');
+            reorderScheduleModality(source, targetMod);
+        }
+
+        function renderScheduleLiveWidget() {
+            if (!eventSchedule) return;
+            const { current, next, eventEnd } = getCurrentAndNextModality(eventSchedule);
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            set('sched-live-current', current ? `${current.modality} (${current.startTime})` : 'Sin modalidad activa');
+            set('sched-live-next', next ? `${next.modality} (${next.startTime})` : '—');
+            set('sched-live-end', eventEnd);
+        }
+
+        function renderScheduleSection() {
+            if (!eventSchedule) eventSchedule = createDefaultSchedule();
+            syncScheduleSettingsInputs();
+            const isAdmin = currentUserRole === 'admin';
+            const actions = document.getElementById('schedule-admin-actions');
+            if (actions) actions.style.display = isAdmin ? '' : 'none';
+            ['sched-event-start', 'sched-min-per-athlete', 'sched-base-minutes'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = !isAdmin;
+            });
+
+            const timeline = buildScheduleTimeline(eventSchedule);
+            const { current, next, eventEnd } = getCurrentAndNextModality(eventSchedule);
+            const totalAthletes = timeline.reduce((s, t) => s + t.athleteCount, 0);
+            const totalMin = timeline.reduce((s, t) => s + t.duration, 0);
+
+            document.getElementById('sched-total-athletes').textContent = totalAthletes;
+            document.getElementById('sched-total-duration').textContent = `Duración: ${Math.floor(totalMin / 60)}h ${totalMin % 60}min`;
+            document.getElementById('sched-live-current').textContent = current ? `${current.modality} • ${current.startTime}` : '—';
+            document.getElementById('sched-live-next').textContent = next ? `${next.modality} • ${next.startTime}` : '—';
+            document.getElementById('sched-live-end').textContent = eventEnd;
+
+            const container = document.getElementById('schedule-cards-list');
+            if (!container) return;
+            container.innerHTML = timeline.map((item, idx) => {
+                const status = item.status;
+                const statusLabel = { pendiente: 'Pendiente', en_curso: 'En curso', finalizada: 'Finalizada' }[status] || status;
+                const adminControls = isAdmin ? `
+                    <div class="flex flex-col gap-1 flex-shrink-0">
+                        <button type="button" onclick="moveScheduleModality('${item.modality.replace(/'/g, "\\'")}', -1)" class="sched-order-btn" ${idx === 0 ? 'disabled' : ''}><i class="fa-solid fa-chevron-up text-[10px]"></i></button>
+                        <button type="button" onclick="moveScheduleModality('${item.modality.replace(/'/g, "\\'")}', 1)" class="sched-order-btn" ${idx === timeline.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
+                    </div>
+                    <div class="flex flex-wrap gap-1">
+                        <button onclick="setScheduleModalityStatus('${item.modality.replace(/'/g, "\\'")}', 'en_curso')" class="text-[9px] font-bold px-2 py-1 rounded-lg bg-[#C5A85C]/20 text-[#FFEA8D] border border-[#C5A85C]/30">En curso</button>
+                        <button onclick="setScheduleModalityStatus('${item.modality.replace(/'/g, "\\'")}', 'finalizada')" class="text-[9px] font-bold px-2 py-1 rounded-lg bg-[#0F3057] text-[#86efac] border border-green-500/30">Finalizada</button>
+                    </div>` : '';
+                return `<div class="sched-card dark-panel rounded-2xl p-4 status-${status}" data-sched-mod="${item.modality}" draggable="${isAdmin}" id="sched-card-${idx}">
+                    <div class="flex flex-wrap items-center gap-3">
+                        ${isAdmin ? `<div class="sched-drag-handle" title="Arrastrar"><i class="fa-solid fa-grip-vertical"></i></div>` : ''}
+                        ${adminControls}
+                        <div class="w-10 h-10 rounded-xl bg-[#C5A85C]/15 border border-[#C5A85C]/35 flex items-center justify-center font-black text-[#FFEA8D]">${item.order}</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="font-bold text-[#FFEA8D]">${item.modality}</span>
+                                <span class="sched-status-pill ${status}">${statusLabel}</span>
+                            </div>
+                            <div class="text-xs text-[#C5A85C]/70 mt-1">
+                                <i class="fa-solid fa-users mr-1"></i>${item.athleteCount} atletas
+                                <span class="mx-2">•</span>
+                                <i class="fa-solid fa-clock mr-1"></i>${item.startTime} – ${item.endTime}
+                                <span class="mx-2">•</span>
+                                ~${item.duration} min
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            if (isAdmin) {
+                container.querySelectorAll('.sched-card').forEach(card => {
+                    const mod = card.dataset.schedMod;
+                    card.addEventListener('dragstart', e => {
+                        if (!e.target.closest('.sched-drag-handle')) { e.preventDefault(); return; }
+                        onScheduleDragStart(e, mod);
+                    });
+                    card.addEventListener('dragend', onScheduleDragEnd);
+                    card.addEventListener('dragover', onScheduleDragOver);
+                    card.addEventListener('dragleave', onScheduleDragLeave);
+                    card.addEventListener('drop', e => onScheduleDrop(e, mod));
+                });
+            }
+
+            if (isAdmin && !timeline.some(t => t.status === 'en_curso')) {
+                const hint = document.createElement('div');
+                hint.className = 'text-center mt-4';
+                hint.innerHTML = `<button onclick="advanceScheduleNext()" class="text-sm font-bold px-6 py-3 bg-[#C5A85C] text-[#0A1931] rounded-xl"><i class="fa-solid fa-play mr-2"></i>Iniciar primera modalidad</button>`;
+                container.appendChild(hint);
+            } else if (isAdmin && current) {
+                const hint = document.createElement('div');
+                hint.className = 'text-center mt-4';
+                hint.innerHTML = `<button onclick="advanceScheduleNext()" class="text-sm font-bold px-6 py-3 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-forward mr-2"></i>Finalizar actual e iniciar siguiente</button>`;
+                container.appendChild(hint);
+            }
+        }
+
+        function exportSchedulePDF() {
+            if (!eventSchedule) return;
+            const timeline = buildScheduleTimeline(eventSchedule);
+            const fecha = new Date().toLocaleString('es-EC');
+            const logoUrl = getLogoUrl(true);
+            let rows = timeline.map(t => `<tr>
+                <td>${t.order}</td><td><strong>${t.modality}</strong></td><td>${t.athleteCount}</td>
+                <td>${t.startTime}</td><td>${t.endTime}</td><td>~${t.duration} min</td>
+                <td>${({pendiente:'Pendiente',en_curso:'En curso',finalizada:'Finalizada'})[t.status]}</td>
+            </tr>`).join('');
+            const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Cronograma Oficial</title>
+                <style>${getProfessionalReportCss()}</style></head><body>
+                <button class="print-btn" onclick="window.print()">Imprimir / PDF</button>
+                <div class="page"><div class="header">
+                    <img src="${logoUrl}" alt="Logo" onerror="this.style.display='none'">
+                    <h1>MANABÍ <span class="gold">POWER</span> 2026</h1>
+                    <p>CRONOGRAMA OFICIAL DE COMPETENCIA</p>
+                    <p>Inicio: ${eventSchedule.eventStart} • ${fecha}</p>
+                </div>
+                <table><thead><tr><th>#</th><th>Modalidad</th><th>Atletas</th><th>Inicio</th><th>Fin</th><th>Duración</th><th>Estado</th></tr></thead>
+                <tbody>${rows}</tbody></table>
+                <p class="total">Fin estimado del evento: ${timeline.length ? timeline[timeline.length-1].endTime : '—'}</p>
+                </div></body></html>`;
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            showToast('Cronograma listo para imprimir / PDF', 'success');
+        }
+
+        function exportScheduleExcel() {
+            if (!eventSchedule || typeof XLSX === 'undefined') { showToast('XLSX no disponible', 'error'); return; }
+            const timeline = buildScheduleTimeline(eventSchedule);
+            const headers = ['Orden', 'Modalidad', 'Atletas', 'Inicio', 'Fin', 'Duración (min)', 'Estado'];
+            const rows = timeline.map(t => [t.order, t.modality, t.athleteCount, t.startTime, t.endTime, t.duration,
+                ({pendiente:'Pendiente',en_curso:'En curso',finalizada:'Finalizada'})[t.status]]);
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet([
+                ['MANABÍ POWER 2026 — CRONOGRAMA OFICIAL'],
+                [`Inicio del evento: ${eventSchedule.eventStart}`],
+                [],
+                headers,
+                ...rows,
+                [],
+                ['Fin estimado:', timeline.length ? timeline[timeline.length - 1].endTime : '']
+            ]);
+            XLSX.utils.book_append_sheet(wb, ws, 'Cronograma');
+            XLSX.writeFile(wb, `Cronograma_Manabi_Power_${dateStamp()}.xlsx`);
+            showToast('Cronograma exportado a Excel', 'success');
+        }
+
         // ==================== INITIALIZATION ====================
         function initializeApp() {
             initTailwind();
@@ -3939,6 +5344,8 @@
 
             if (currentUser) {
                 refreshAllViews();
+            } else if (!eventSchedule) {
+                eventSchedule = createDefaultSchedule();
             }
 
             console.log('%c[Manabí Power Pro] Gestión IFBB — Categorías automáticas activas', 'color:#C5A85C;font-weight:bold');
