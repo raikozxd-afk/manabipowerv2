@@ -8,7 +8,21 @@ const cors = require('cors');
 
 const app = express();
 app.use(cors());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(__dirname));
+
+function getServerStatus() {
+    return {
+        discordReady: client.isReady(),
+        dbChannel: !!getDbChannel(),
+        botTag: client.user?.tag || null,
+        uptime: Math.floor(process.uptime())
+    };
+}
+
+app.get('/api/status', (_req, res) => {
+    res.json({ ok: true, ...getServerStatus() });
+});
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -262,9 +276,46 @@ async function emitSchedule(targetSocket) {
     return schedule;
 }
 
+async function fetchFullSyncPayload() {
+    const [athletes, judges, scoring, schedule] = await Promise.all([
+        fetchAthletesFromDiscord(),
+        fetchJudgesFromDiscord(),
+        fetchScoringRoundsFromDiscord(),
+        fetchScheduleFromDiscord()
+    ]);
+    return {
+        athletes,
+        judges,
+        scoring,
+        schedule,
+        syncedAt: Date.now(),
+        discordReady: client.isReady(),
+        dbChannel: !!getDbChannel()
+    };
+}
+
+async function emitFullSync(targetSocket) {
+    const payload = await fetchFullSyncPayload();
+    console.log(`Discord sync completa: ${payload.athletes.length} atletas, ${payload.judges.length} jueces, ${payload.scoring.length} rondas, cronograma ${payload.schedule ? 'sí' : 'no'}`);
+    if (targetSocket) {
+        targetSocket.emit('sincronizacionCompleta', payload);
+        targetSocket.emit('estadoServidor', getServerStatus());
+    } else {
+        io.emit('sincronizacionCompleta', payload);
+        io.emit('estadoServidor', getServerStatus());
+    }
+    return payload;
+}
+
 client.on('ready', () => {
     console.log(`Bot encendido: ${client.user.tag}`);
     console.log(`Servidor Web escuchando en el puerto ${process.env.PORT || 3000}`);
+    const status = getServerStatus();
+    if (!status.dbChannel) {
+        console.warn('Discord: DB_CHANNEL_ID no válido o canal no accesible. Revise .env');
+    }
+    io.emit('estadoServidor', status);
+    emitFullSync().catch((err) => console.error('Error en sincronización inicial:', err.message));
 });
 
 client.on('messageCreate', async (message) => {
@@ -294,6 +345,7 @@ client.on('messageCreate', async (message) => {
         await dbChannel.send(formatAthleteMessage(newAthlete));
         message.reply(`Atleta **${args[0]}** guardado correctamente.`);
         io.emit('nuevoAtleta', newAthlete);
+        emitFullSync().catch(() => {});
         return;
     }
 
@@ -333,10 +385,12 @@ client.on('messageDelete', async (message) => {
 
 io.on('connection', async (socket) => {
     console.log('Nueva conexión desde la Mesa de Control Web');
-    await emitAthletesList(socket);
-    await emitJudgesList(socket);
-    await emitScoringRoundsList(socket);
-    await emitSchedule(socket);
+    socket.emit('estadoServidor', getServerStatus());
+    try {
+        await emitFullSync(socket);
+    } catch (err) {
+        console.error('Error al sincronizar cliente nuevo:', err.message);
+    }
 
     socket.on('intentarLogin', (payload, callback) => {
         const user = String(payload?.user || '').trim().toLowerCase();
@@ -409,6 +463,22 @@ io.on('connection', async (socket) => {
 
     socket.on('solicitarCronograma', async () => {
         await emitSchedule(socket);
+    });
+
+    socket.on('solicitarSincronizacionCompleta', async (_payload, callback) => {
+        try {
+            const payload = await emitFullSync(socket);
+            callback?.({
+                ok: true,
+                athletes: payload.athletes.length,
+                judges: payload.judges.length,
+                scoring: payload.scoring.length,
+                hasSchedule: !!payload.schedule
+            });
+        } catch (err) {
+            console.error('solicitarSincronizacionCompleta:', err);
+            callback?.({ ok: false, error: err.message || 'Error al leer Discord' });
+        }
     });
 
     socket.on('guardarCronogramaDesdeWeb', async (scheduleData) => {
@@ -522,13 +592,18 @@ io.on('connection', async (socket) => {
 
     socket.on('subirRespaldoDesdeWeb', async (payload, callback) => {
         const dbChannel = getDbChannel();
+        if (!client.isReady()) {
+            callback?.({ ok: false, error: 'El bot de Discord aún no está listo. Espere unos segundos e intente de nuevo.' });
+            return;
+        }
         if (!dbChannel) {
-            callback?.({ ok: false, error: 'Sin conexión con el canal de Discord.' });
+            callback?.({ ok: false, error: 'Canal de Discord no configurado. Revise DB_CHANNEL_ID en el servidor.' });
             return;
         }
 
         let athletesOk = 0;
         let judgesOk = 0;
+        let scheduleOk = 0;
         let failed = 0;
 
         for (const athlete of payload?.athletes || []) {
@@ -557,12 +632,40 @@ io.on('connection', async (socket) => {
             }
         }
 
-        await emitAthletesList();
-        await emitJudgesList();
+        const scheduleData = payload?.schedule;
+        if (scheduleData?.id) {
+            try {
+                const existing = await findScheduleMessage(scheduleData.id);
+                if (existing) await existing.message.edit(formatScheduleMessage(scheduleData));
+                else await dbChannel.send(formatScheduleMessage(scheduleData));
+                scheduleOk = 1;
+            } catch (err) {
+                console.error('Error al subir cronograma desde respaldo:', err);
+                failed++;
+            }
+        }
+
+        let scoringOk = 0;
+        for (const round of payload?.scoring || []) {
+            if (!round?.id) continue;
+            try {
+                const existing = await findScoringMessage(round.id);
+                if (existing) await existing.message.edit(formatScoringMessage(round));
+                else await dbChannel.send(formatScoringMessage(round));
+                scoringOk++;
+            } catch (err) {
+                console.error('Error al subir ronda desde respaldo:', round.id, err);
+                failed++;
+            }
+        }
+
+        await emitFullSync();
         callback?.({
             ok: failed === 0,
             athletesOk,
             judgesOk,
+            scheduleOk,
+            scoringOk,
             failed,
             error: failed ? `${failed} registro(s) no se pudieron subir a Discord` : null
         });
@@ -694,5 +797,18 @@ io.on('connection', async (socket) => {
     });
 });
 
-client.login(process.env.DISCORD_TOKEN);
-server.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Servidor Web escuchando en el puerto ${PORT}`);
+});
+
+const discordToken = process.env.DISCORD_TOKEN;
+if (!discordToken || discordToken === 'tu_token_del_bot_de_discord') {
+    console.error('DISCORD_TOKEN no configurado. Edite .env con el token real del bot.');
+    io.emit('estadoServidor', getServerStatus());
+} else {
+    client.login(discordToken).catch((err) => {
+        console.error('No se pudo iniciar sesión en Discord:', err.message);
+        io.emit('estadoServidor', getServerStatus());
+    });
+}

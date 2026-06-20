@@ -1590,14 +1590,22 @@
                                     <i class="fa-brands fa-discord"></i>
                                     <span>SINCRONIZAR AHORA</span>
                                 </button>
+                                <button onclick="reconnectDiscord()" class="text-xs font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/50 rounded-2xl flex items-center gap-x-2">
+                                    <i class="fa-solid fa-plug"></i>
+                                    <span>RECONECTAR</span>
+                                </button>
                                 <button onclick="pushLocalDataToDiscord()" class="text-xs font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/50 rounded-2xl flex items-center gap-x-2">
                                     <i class="fa-solid fa-cloud-arrow-up"></i>
                                     <span>SUBIR A DISCORD</span>
                                 </button>
                             </div>
                         </div>
-                        <p class="text-xs text-[#C5A85C]/70">Las listas de atletas y jueces se actualizan en tiempo real al registrar, editar o eliminar. Si Discord aparece vacío pero tiene datos locales, use <strong>Subir a Discord</strong>. También responde a cambios hechos en Discord con <code class="text-[#FFEA8D]">!registrar</code> y <code class="text-[#FFEA8D]">!eliminar ID</code>.</p>
-                        <div class="mt-3 text-[11px] text-[#C5A85C]/60">Última sincronización: <span id="last-discord-sync" class="font-mono text-[#FFEA8D]">—</span></div>
+                        <p class="text-xs text-[#C5A85C]/70">Abra la app desde <strong>http://localhost:3000</strong> (con <code class="text-[#FFEA8D]">npm start</code>) o desde <strong>https://manabipower.com</strong>. No abra el archivo HTML directamente. Si hay datos locales, use <strong>Subir a Discord</strong> para sincronizar atletas, jueces y cronograma.</p>
+                        <div class="mt-3 text-[11px] text-[#C5A85C]/60 space-y-1">
+                            <div>Servidor: <span id="sync-server-url" class="font-mono text-[#FFEA8D]">—</span></div>
+                            <div>Estado Discord: <span id="sync-discord-status" class="font-mono text-[#FFEA8D]">—</span></div>
+                            <div>Última sincronización: <span id="last-discord-sync" class="font-mono text-[#FFEA8D]">—</span></div>
+                        </div>
                     </div>
 
                     <div class="navy-card rounded-3xl p-6">
@@ -1872,8 +1880,13 @@
         }
 
         function emitAthleteToDiscord(event, athlete, onError) {
-            if (!socket.connected) {
-                showToast('Sin conexión con Discord. Cambio guardado solo en este navegador.', 'error');
+            if (!socket?.connected) {
+                showToast('Sin conexión al servidor. Cambio guardado solo en este navegador. Use Sincronizar o ejecute npm start.', 'error');
+                reconnectDiscord();
+                return;
+            }
+            if (!isDiscordFullyReady()) {
+                showToast('Discord no está listo en el servidor. El cambio quedó solo en este navegador.', 'error');
                 return;
             }
             socket.emit(event, athlete, (res) => {
@@ -1906,9 +1919,37 @@
         }
 
         // --- CONEXIÓN DISCORD EN TIEMPO REAL ---
-        const URL_DEL_BOT = "https://manabipower.com/";
-        const socket = io(URL_DEL_BOT, { transports: ['websocket', 'polling'], reconnection: true, reconnectionAttempts: Infinity });
+        const SOCKET_CANDIDATES = (() => {
+            const seen = new Set();
+            const list = [];
+            const add = (url) => {
+                const normalized = String(url || '').replace(/\/$/, '');
+                if (normalized && !seen.has(normalized)) {
+                    seen.add(normalized);
+                    list.push(normalized);
+                }
+            };
+            const paramServer = new URLSearchParams(window.location.search).get('server');
+            add(paramServer);
+            if (/^https?:\/\//.test(window.location.origin)) add(window.location.origin);
+            if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(window.location.origin)) {
+                add('https://manabipower.com');
+            }
+            add('http://localhost:3000');
+            add('http://127.0.0.1:3000');
+            if (!list.includes('https://manabipower.com')) add('https://manabipower.com');
+            return list;
+        })();
+
+        let socketCandidateIndex = 0;
+        let activeSocketUrl = SOCKET_CANDIDATES[0] || 'https://manabipower.com';
+        let socket = null;
         let isSocketConnected = false;
+        let discordBotReady = false;
+        let discordDbChannelReady = false;
+        let socketConnectFailures = 0;
+        let pendingFullSync = null;
+        let autoSyncIntervalId = null;
         let syncState = { syncing: false, lastSync: null };
         const pendingSocketOps = new Set();
 
@@ -1928,31 +1969,145 @@
             return true;
         }
 
+        function isDiscordFullyReady() {
+            return isSocketConnected && discordBotReady && discordDbChannelReady;
+        }
+
         function updateConnectionStatus(connected) {
             isSocketConnected = connected;
             const dot = document.getElementById('connection-dot');
             const text = document.getElementById('connection-text');
+            const syncServerEl = document.getElementById('sync-server-url');
+            const syncDiscordEl = document.getElementById('sync-discord-status');
+            if (syncServerEl) syncServerEl.textContent = activeSocketUrl;
+            if (syncDiscordEl) {
+                syncDiscordEl.textContent = isDiscordFullyReady()
+                    ? 'Discord conectado'
+                    : (connected ? 'Servidor en línea — Discord no disponible' : 'Sin conexión al servidor');
+            }
             if (!dot || !text) return;
-            dot.className = `connection-dot ${connected ? 'online' : 'offline'}`;
+            const fullyReady = isDiscordFullyReady();
+            dot.className = `connection-dot ${fullyReady ? 'online' : 'offline'}`;
             if (!connected) {
-                text.textContent = 'Desconectado — modo local';
+                text.textContent = `Sin servidor (${activeSocketUrl})`;
                 text.className = 'text-[#C5A85C]/50';
                 return;
             }
-            text.className = 'text-[#FFEA8D]';
+            text.className = fullyReady ? 'text-[#FFEA8D]' : 'text-amber-300';
+            if (!discordBotReady || !discordDbChannelReady) {
+                text.textContent = 'Servidor OK — Discord no listo';
+                return;
+            }
             if (syncState.syncing) text.textContent = 'Sincronizando con Discord...';
-            else text.textContent = `En línea • ${athletes.length} atletas • ${judges.length} jueces`;
+            else text.textContent = `Discord OK • ${athletes.length} atletas • ${judges.length} jueces`;
+        }
+
+        function refreshEntireAppFromDiscord() {
+            populateModalityFilter();
+            populateClubFilters();
+            refreshScheduleFromAthletes();
+            updateDashboardMetrics();
+            renderModalitiesOverview();
+            renderScheduleLiveWidget();
+            syncScheduleSettingsInputs();
+            applyScoreTabVisibility();
+            if (currentSection === 1) initRegistrationForm();
+            if (currentSection === 4) {
+                renderActivityLog();
+                updateLastSync();
+            }
+            refreshAllViews();
+            updateLastSync();
+        }
+
+        function applyFullDiscordSync(payload, options = {}) {
+            const { silent = true, notify = false } = options;
+            if (!payload) return;
+            if (!localDataReady) {
+                pendingFullSync = payload;
+                return;
+            }
+            pendingFullSync = null;
+            syncState.syncing = true;
+
+            if (payload.athletes) {
+                const remote = (payload.athletes || []).map(normalizeAthlete);
+                const keepLocal = remote.length === 0 && athletes.length > 0 && !consumeSocketOp('vaciar', 'all-athletes');
+                if (!keepLocal) {
+                    athletes = remote;
+                    deletedAthleteIds = new Set();
+                    saveDeletedAthletes();
+                    saveAthletes();
+                }
+            }
+
+            if (payload.judges) {
+                const remote = (payload.judges || []).map(normalizeJudge);
+                const keepLocal = remote.length === 0 && judges.length > 0 && !consumeSocketOp('vaciar', 'all-judges');
+                if (!keepLocal) {
+                    judges = remote;
+                    ensureJudgeSortOrder();
+                    saveJudges();
+                }
+            }
+
+            if (payload.scoring !== undefined) {
+                scoringRounds = (payload.scoring || []).map(normalizeScoringRound);
+                saveScoringRounds();
+            }
+
+            if (payload.schedule !== undefined) {
+                if (payload.schedule) eventSchedule = normalizeSchedule(payload.schedule);
+                else if (!eventSchedule) eventSchedule = createDefaultSchedule();
+                saveScheduleLocal();
+            }
+
+            if (payload.discordReady !== undefined) discordBotReady = !!payload.discordReady;
+            if (payload.dbChannel !== undefined) discordDbChannelReady = !!payload.dbChannel;
+
+            syncState.syncing = false;
+            syncState.lastSync = payload.syncedAt || Date.now();
+            refreshEntireAppFromDiscord();
+            updateConnectionStatus(isSocketConnected);
+
+            if (notify && currentUser) {
+                showToast(`Discord sincronizado: ${athletes.length} atletas, ${judges.length} jueces`, 'success');
+            } else if (!silent && currentUser && !isDiscordFullyReady()) {
+                showToast('Servidor conectado pero Discord no está listo. Revise DISCORD_TOKEN y DB_CHANNEL_ID.', 'error');
+            }
         }
 
         function requestDiscordSync(silent = false) {
-            if (!socket.connected) return;
+            if (!socket?.connected) {
+                if (!silent) {
+                    showToast('Sin conexión al servidor. Abra https://manabipower.com o http://localhost:3000', 'error');
+                    reconnectDiscord();
+                }
+                return;
+            }
             syncState.syncing = true;
             updateConnectionStatus(true);
-            socket.emit('solicitarAtletas');
-            socket.emit('solicitarJueces');
-            socket.emit('solicitarCalificacion');
-            socket.emit('solicitarCronograma');
-            if (!silent) addLog('Sincronización', 'Solicitó listas actualizadas desde Discord');
+            socket.emit('solicitarSincronizacionCompleta', (res) => {
+                syncState.syncing = false;
+                updateConnectionStatus(true);
+                if (res?.ok === false && !silent) {
+                    showToast(res.error || 'Error al sincronizar con Discord', 'error');
+                }
+            });
+            if (!silent) addLog('Sincronización', 'Solicitó sincronización completa desde Discord');
+        }
+
+        function startAutoDiscordSync() {
+            if (autoSyncIntervalId) clearInterval(autoSyncIntervalId);
+            autoSyncIntervalId = setInterval(() => {
+                if (socket?.connected && localDataReady) requestDiscordSync(true);
+            }, 45000);
+        }
+
+        function reconnectDiscord() {
+            socketConnectFailures = 0;
+            initSocketConnection(socketCandidateIndex);
+            showToast(`Reconectando a ${activeSocketUrl}...`, 'info');
         }
 
         function applyRemoteAthletesList(list) {
@@ -2043,120 +2198,167 @@
         }
 
         function emitToDiscord(event, payload) {
-            if (!socket.connected) {
-                showToast('Sin conexión con Discord. Cambio guardado solo en este navegador.', 'error');
+            if (!socket?.connected) {
+                showToast('Sin conexión al servidor. Cambio guardado solo en este navegador.', 'error');
+                reconnectDiscord();
+                return false;
+            }
+            if (!isDiscordFullyReady()) {
+                showToast('Discord no está listo en el servidor. Cambio guardado solo localmente.', 'error');
                 return false;
             }
             socket.emit(event, payload);
             return true;
         }
 
-        socket.on('connect', () => {
-            updateConnectionStatus(true);
-            if (localDataReady) requestDiscordSync(true);
-        });
-        socket.on('disconnect', () => updateConnectionStatus(false));
-        socket.on('connect_error', () => updateConnectionStatus(false));
-        socket.on('reconnect', () => requestDiscordSync(true));
+        function tryNextSocketServer() {
+            if (socketCandidateIndex >= SOCKET_CANDIDATES.length - 1) return false;
+            socketCandidateIndex += 1;
+            initSocketConnection(socketCandidateIndex);
+            return true;
+        }
 
-        socket.on('cargarAtletas', (datosDeDiscord) => {
-            if (!localDataReady) return;
-            const count = (datosDeDiscord || []).length;
-            applyRemoteAthletesList(datosDeDiscord);
-            if (currentUser) {
-                if (count > 0) showToast(`Lista sincronizada: ${count} atletas`, 'success');
-                else if (athletes.length === 0) showToast('Discord no devolvió atletas. Revise el canal o restaure un respaldo JSON.', 'error');
+        function bindSocketHandlers(sock) {
+            sock.on('connect', () => {
+                socketConnectFailures = 0;
+                updateConnectionStatus(true);
+                if (localDataReady) requestDiscordSync(true);
+            });
+            sock.on('disconnect', () => updateConnectionStatus(false));
+            sock.on('connect_error', () => {
+                socketConnectFailures += 1;
+                updateConnectionStatus(false);
+                if (socketConnectFailures >= 2) tryNextSocketServer();
+            });
+            sock.on('reconnect', () => requestDiscordSync(true));
+
+            sock.on('estadoServidor', (status) => {
+                discordBotReady = !!status?.discordReady;
+                discordDbChannelReady = !!status?.dbChannel;
+                updateConnectionStatus(sock.connected);
+            });
+
+            sock.on('sincronizacionCompleta', (payload) => {
+                applyFullDiscordSync(payload, { silent: true, notify: false });
+            });
+
+            sock.on('cargarAtletas', (datosDeDiscord) => {
+                if (!localDataReady) return;
+                const count = (datosDeDiscord || []).length;
+                applyRemoteAthletesList(datosDeDiscord);
+                if (currentUser) {
+                    if (count > 0) showToast(`Lista sincronizada: ${count} atletas`, 'success');
+                    else if (athletes.length === 0) showToast('Discord no devolvió atletas. Revise el canal o restaure un respaldo JSON.', 'error');
+                }
+            });
+
+            sock.on('nuevoAtleta', (nuevoAtleta) => {
+                if (!nuevoAtleta?.id) return;
+                const silent = consumeSocketOp('add', nuevoAtleta.id);
+                upsertAthleteFromRemote(nuevoAtleta, !silent);
+            });
+
+            sock.on('atletaActualizado', (atletaData) => {
+                if (!atletaData?.id) return;
+                const silent = consumeSocketOp('edit', atletaData.id);
+                upsertAthleteFromRemote(atletaData, !silent);
+            });
+
+            sock.on('atletaEliminado', (payload) => {
+                const id = String(payload?.id || payload || '');
+                if (!id) return;
+                const silent = consumeSocketOp('delete', id);
+                removeAthleteFromRemote(id, !silent);
+            });
+
+            sock.on('cargarJueces', (datosDeDiscord) => {
+                if (!localDataReady) return;
+                const count = (datosDeDiscord || []).length;
+                applyRemoteJudgesList(datosDeDiscord);
+                if (currentUser) {
+                    if (count > 0) showToast(`Jueces sincronizados: ${count}`, 'success');
+                    else if (judges.length === 0) showToast('Discord no devolvió jueces. Revise el canal o restaure un respaldo JSON.', 'error');
+                }
+            });
+
+            sock.on('nuevoJuez', (nuevoJuez) => {
+                if (!nuevoJuez?.id) return;
+                const silent = consumeSocketOp('add', nuevoJuez.id);
+                upsertJudgeFromRemote(nuevoJuez, !silent);
+            });
+
+            sock.on('juezActualizado', (juezData) => {
+                if (!juezData?.id) return;
+                const silent = consumeSocketOp('edit', juezData.id);
+                upsertJudgeFromRemote(juezData, !silent);
+            });
+
+            sock.on('juezEliminado', (payload) => {
+                const id = String(payload?.id || payload || '');
+                if (!id) return;
+                const silent = consumeSocketOp('delete', id);
+                removeJudgeFromRemote(id, !silent);
+            });
+
+            sock.on('juecesReordenados', (datosDeDiscord) => {
+                const silent = consumeSocketOp('reorder', 'all-judges');
+                applyRemoteJudgesList(datosDeDiscord);
+                if (!silent) {
+                    showJudgeSyncStatus(false);
+                    if (currentUser) showToast('Orden de jueces actualizado desde Discord', 'info');
+                }
+            });
+
+            sock.on('cargarCalificacion', (list) => {
+                applyRemoteScoringList(list);
+            });
+
+            sock.on('nuevaRonda', (round) => {
+                if (!round?.id) return;
+                const silent = consumeSocketOp('add', round.id);
+                upsertScoringRoundFromRemote(round, !silent);
+            });
+
+            sock.on('rondaActualizada', (round) => {
+                if (!round?.id) return;
+                const silent = consumeSocketOp('edit', round.id);
+                upsertScoringRoundFromRemote(round, !silent);
+            });
+
+            sock.on('rondaEliminada', (payload) => {
+                const id = String(payload?.id || payload || '');
+                if (!id) return;
+                const silent = consumeSocketOp('delete', id);
+                removeScoringRoundFromRemote(id, !silent);
+            });
+
+            sock.on('cargarCronograma', (data) => {
+                applyRemoteSchedule(data);
+            });
+
+            sock.on('cronogramaActualizado', (data) => {
+                const silent = consumeSocketOp('edit', SCHEDULE_ID);
+                applyRemoteSchedule(data, !silent);
+            });
+        }
+
+        function initSocketConnection(candidateIndex = 0) {
+            socketCandidateIndex = Math.max(0, Math.min(candidateIndex, SOCKET_CANDIDATES.length - 1));
+            activeSocketUrl = SOCKET_CANDIDATES[socketCandidateIndex];
+            if (socket) {
+                socket.removeAllListeners();
+                socket.disconnect();
             }
-        });
-
-        socket.on('nuevoAtleta', (nuevoAtleta) => {
-            if (!nuevoAtleta?.id) return;
-            const silent = consumeSocketOp('add', nuevoAtleta.id);
-            upsertAthleteFromRemote(nuevoAtleta, !silent);
-        });
-
-        socket.on('atletaActualizado', (atletaData) => {
-            if (!atletaData?.id) return;
-            const silent = consumeSocketOp('edit', atletaData.id);
-            upsertAthleteFromRemote(atletaData, !silent);
-        });
-
-        socket.on('atletaEliminado', (payload) => {
-            const id = String(payload?.id || payload || '');
-            if (!id) return;
-            const silent = consumeSocketOp('delete', id);
-            removeAthleteFromRemote(id, !silent);
-        });
-
-        socket.on('cargarJueces', (datosDeDiscord) => {
-            if (!localDataReady) return;
-            const count = (datosDeDiscord || []).length;
-            applyRemoteJudgesList(datosDeDiscord);
-            if (currentUser) {
-                if (count > 0) showToast(`Jueces sincronizados: ${count}`, 'success');
-                else if (judges.length === 0) showToast('Discord no devolvió jueces. Revise el canal o restaure un respaldo JSON.', 'error');
-            }
-        });
-
-        socket.on('nuevoJuez', (nuevoJuez) => {
-            if (!nuevoJuez?.id) return;
-            const silent = consumeSocketOp('add', nuevoJuez.id);
-            upsertJudgeFromRemote(nuevoJuez, !silent);
-        });
-
-        socket.on('juezActualizado', (juezData) => {
-            if (!juezData?.id) return;
-            const silent = consumeSocketOp('edit', juezData.id);
-            upsertJudgeFromRemote(juezData, !silent);
-        });
-
-        socket.on('juezEliminado', (payload) => {
-            const id = String(payload?.id || payload || '');
-            if (!id) return;
-            const silent = consumeSocketOp('delete', id);
-            removeJudgeFromRemote(id, !silent);
-        });
-
-        socket.on('juecesReordenados', (datosDeDiscord) => {
-            const silent = consumeSocketOp('reorder', 'all-judges');
-            applyRemoteJudgesList(datosDeDiscord);
-            if (!silent) {
-                showJudgeSyncStatus(false);
-                if (currentUser) showToast('Orden de jueces actualizado desde Discord', 'info');
-            }
-        });
-
-        socket.on('cargarCalificacion', (list) => {
-            applyRemoteScoringList(list);
-        });
-
-        socket.on('nuevaRonda', (round) => {
-            if (!round?.id) return;
-            const silent = consumeSocketOp('add', round.id);
-            upsertScoringRoundFromRemote(round, !silent);
-        });
-
-        socket.on('rondaActualizada', (round) => {
-            if (!round?.id) return;
-            const silent = consumeSocketOp('edit', round.id);
-            upsertScoringRoundFromRemote(round, !silent);
-        });
-
-        socket.on('rondaEliminada', (payload) => {
-            const id = String(payload?.id || payload || '');
-            if (!id) return;
-            const silent = consumeSocketOp('delete', id);
-            removeScoringRoundFromRemote(id, !silent);
-        });
-
-        socket.on('cargarCronograma', (data) => {
-            applyRemoteSchedule(data);
-        });
-
-        socket.on('cronogramaActualizado', (data) => {
-            const silent = consumeSocketOp('edit', SCHEDULE_ID);
-            applyRemoteSchedule(data, !silent);
-        });
+            socket = io(activeSocketUrl, {
+                transports: ['websocket', 'polling'],
+                reconnection: true,
+                reconnectionAttempts: 8,
+                reconnectionDelay: 1500,
+                timeout: 12000
+            });
+            bindSocketHandlers(socket);
+            updateConnectionStatus(false);
+        }
 
         function refreshScheduleFromAthletes() {
             if (!eventSchedule) {
@@ -2169,7 +2371,8 @@
         function refreshAllViews() {
             populateClubFilters();
             refreshScheduleFromAthletes();
-            if (currentSection === 0) { updateDashboardMetrics(); renderModalitiesOverview(); }
+            updateDashboardMetrics();
+            renderModalitiesOverview();
             renderScheduleLiveWidget();
             if (currentSection === 2) filterAthletes();
             if (currentSection === 3) { renderPlanillasList(); updateExportPreview(); }
@@ -2301,7 +2504,12 @@
             loadScheduleFromCache();
 
             localDataReady = true;
-            if (socket.connected) requestDiscordSync(true);
+            if (pendingFullSync) {
+                applyFullDiscordSync(pendingFullSync, { silent: true });
+            } else if (socket?.connected) {
+                requestDiscordSync(true);
+            }
+            startAutoDiscordSync();
         }
 
         function loadScheduleFromCache() {
@@ -2574,7 +2782,8 @@
                 errorEl.classList.add('hidden');
                 document.getElementById('login-pass').value = '';
                 showMainApp();
-                showToast(`Bienvenido, ${res.label || res.user}. ${athletes.length} atletas en sistema.`, 'success');
+                requestDiscordSync(true);
+                showToast(`Bienvenido, ${res.label || res.user}. Sincronizando con Discord...`, 'success');
                 addLog('Inicio de Sesión', `${res.label || res.user} ingresó al sistema`);
             });
         }
@@ -2611,9 +2820,9 @@
             else if (currentUserRole === 'scrutineer') switchSection(6);
             else switchSection(0);
             
-            // Update metrics
             updateDashboardMetrics();
             renderModalitiesOverview();
+            requestDiscordSync(true);
         }
 
         // ==================== NAVIGATION ====================
@@ -4397,22 +4606,38 @@
         }
 
         function pushLocalDataToDiscord(notify = true) {
-            if (!socket.connected) {
-                showToast('Sin conexión con Discord. Datos guardados solo en este navegador.', 'error');
+            if (!socket?.connected) {
+                showToast('Sin conexión al servidor. Ejecute npm start y abra http://localhost:3000', 'error');
+                reconnectDiscord();
                 return;
             }
-            if (!athletes.length && !judges.length) {
-                showToast('No hay atletas ni jueces para subir a Discord.', 'error');
+            if (!isDiscordFullyReady()) {
+                showToast('Discord no está listo en el servidor. Revise DISCORD_TOKEN y DB_CHANNEL_ID.', 'error');
                 return;
             }
-            socket.emit('subirRespaldoDesdeWeb', { athletes, judges }, (res) => {
+            if (!athletes.length && !judges.length && !eventSchedule) {
+                showToast('No hay atletas, jueces ni cronograma para subir a Discord.', 'error');
+                return;
+            }
+            refreshScheduleFromAthletes();
+            socket.emit('subirRespaldoDesdeWeb', {
+                athletes,
+                judges,
+                schedule: eventSchedule,
+                scoring: scoringRounds
+            }, (res) => {
                 if (res?.ok === false) {
                     showToast(res.error || 'Error al subir datos a Discord', 'error');
                     return;
                 }
+                requestDiscordSync(true);
                 if (notify) {
-                    showToast(`Subido a Discord: ${res?.athletesOk || 0} atletas, ${res?.judgesOk || 0} jueces`, 'success');
-                    addLog('Sincronización', `Subió respaldo a Discord (${res?.athletesOk || 0} atletas, ${res?.judgesOk || 0} jueces)`);
+                    const extras = [];
+                    if (res?.scheduleOk) extras.push('cronograma');
+                    if (res?.scoringOk) extras.push(`${res.scoringOk} rondas`);
+                    const extraMsg = extras.length ? `, ${extras.join(', ')}` : '';
+                    showToast(`Subido a Discord: ${res?.athletesOk || 0} atletas, ${res?.judgesOk || 0} jueces${extraMsg}`, 'success');
+                    addLog('Sincronización', `Subió respaldo a Discord (${res?.athletesOk || 0} atletas, ${res?.judgesOk || 0} jueces${extraMsg})`);
                 }
             });
         }
@@ -4546,7 +4771,7 @@
                 activeScoringRoundId = scoringRounds[scoringRounds.length - 1].id;
             }
             saveScoringRounds();
-            if (currentSection === 6) renderScoringSection();
+            renderScoringSection();
         }
 
         function upsertScoringRoundFromRemote(raw, notify = true) {
@@ -4555,7 +4780,7 @@
             if (idx !== -1) scoringRounds[idx] = { ...scoringRounds[idx], ...round };
             else scoringRounds.push(round);
             saveScoringRounds();
-            if (currentSection === 6) renderScoringSection();
+            refreshEntireAppFromDiscord();
             if (notify) showToast('Ronda de calificación actualizada', 'info');
         }
 
@@ -4563,7 +4788,7 @@
             scoringRounds = scoringRounds.filter(r => String(r.id) !== String(id));
             if (activeScoringRoundId === id) activeScoringRoundId = scoringRounds.length ? scoringRounds[scoringRounds.length - 1].id : null;
             saveScoringRounds();
-            if (currentSection === 6) renderScoringSection();
+            refreshEntireAppFromDiscord();
             if (notify) showToast('Ronda eliminada', 'info');
         }
 
@@ -5227,40 +5452,129 @@
             return APP_TO_SCHEDULE_MODALITY[canonicalMod] || canonicalMod;
         }
 
-        function parseDoblajesEntries(doblajesText, athlete = null) {
-            if (!doblajesText?.trim()) return [];
-            const raw = doblajesText.trim();
-            const parts = raw
-                .split(/\s*;\s*|\n+|\s*\|\s*|(?=\btambién\b)/i)
-                .map(p => p.replace(/^(?:también|doblaje)\s*:?\s*/i, '').trim())
+        function isIgnorableDoblajesText(text) {
+            const t = String(text || '').trim();
+            if (!t) return true;
+            if (/^(no|ninguno|n\/a|na|sin|null|—|-|\.)$/i.test(t)) return true;
+            if (/^doblajes?$/i.test(t)) return true;
+            if (/^doble\s+inscripci[oó]n$/i.test(t)) return true;
+            if (/^s[ií]$/i.test(t)) return true;
+            if (/^tiene\s+doblaje$/i.test(t)) return true;
+            return false;
+        }
+
+        function splitDoblajesParts(raw) {
+            return raw
+                .split(/\s*;\s*|\n+|\s*\|\s*|,\s*(?=[A-Za-zÁÉÍÓÚÑ"'(])/i|(?=\btambi[eé]n\b)/i)
+                .map(p => p.replace(/^(?:tambi[eé]n|doblajes?|doble inscripci[oó]n)\s*:?\s*/i, '').trim())
                 .filter(Boolean);
+        }
+
+        function autoCategoryForDoblaje(modality, athlete) {
+            return athlete
+                ? calculateAutoCategory(modality, athlete.birthDate, athlete.height, athlete.weight)
+                : calculateAutoCategory(modality, null, null, null);
+        }
+
+        function findModalityInText(text) {
+            const candidates = [
+                ...MODALITIES,
+                ...Object.keys(MODALITY_ALIASES),
+                ...Object.keys(SCHEDULE_TO_APP_MODALITY)
+            ].sort((a, b) => b.length - a.length);
+            const lower = text.toLowerCase();
+            for (const candidate of candidates) {
+                const idx = lower.indexOf(candidate.toLowerCase());
+                if (idx !== -1) {
+                    const canonical = toCanonicalModality(candidate);
+                    if (canonical) return { canonical, index: idx, length: candidate.length };
+                }
+            }
+            return null;
+        }
+
+        function tryParseDoblajePart(part, athlete = null) {
+            if (!part) return null;
+            part = part.trim();
+            if (isIgnorableDoblajesText(part)) return null;
+
+            const dashMatch = part.match(/^(.+?)\s*(?:[—–\-]|\/|→|»)\s*(.+)$/);
+            if (dashMatch) {
+                const mod = toCanonicalModality(dashMatch[1].trim());
+                const cat = dashMatch[2].trim();
+                if (isValidScheduleEntry(mod, cat)) return { modality: mod, category: cat };
+            }
+
+            const colonMatch = part.match(/^modalidad\s*:?\s*(.+?)\s*(?:[,;|]\s*|\s+)categor[ií]a\s*:?\s*(.+)$/i);
+            if (colonMatch) {
+                const mod = toCanonicalModality(colonMatch[1].trim());
+                const cat = colonMatch[2].trim();
+                if (isValidScheduleEntry(mod, cat)) return { modality: mod, category: cat };
+            }
+
+            const parenMatch = part.match(/^(.+?)\s*\(\s*(.+?)\s*\)\s*$/);
+            if (parenMatch) {
+                const mod = toCanonicalModality(parenMatch[1].trim());
+                const cat = parenMatch[2].trim();
+                if (isValidScheduleEntry(mod, cat)) return { modality: mod, category: cat };
+            }
+
+            const enMatch = part.match(/(?:en\s+(?:la\s+modalidad\s+)?)(.+?)(?:\s*[,;|]\s*|\s+)categor[ií]a\s+(.+)$/i);
+            if (enMatch) {
+                const mod = toCanonicalModality(enMatch[1].trim());
+                const cat = enMatch[2].trim();
+                if (isValidScheduleEntry(mod, cat)) return { modality: mod, category: cat };
+            }
+
+            const found = findModalityInText(part);
+            if (found) {
+                const remainder = part.slice(found.index + found.length)
+                    .replace(/^[\s,;:\/\-–—|]+/, '')
+                    .replace(/^(?:categor[ií]a\s*:?\s*)/i, '')
+                    .trim();
+                const cat = remainder || autoCategoryForDoblaje(found.canonical, athlete);
+                if (isValidScheduleEntry(found.canonical, cat)) {
+                    return { modality: found.canonical, category: cat };
+                }
+            }
+
+            const modOnly = toCanonicalModality(part);
+            if (modOnly && MODALITIES.includes(modOnly)) {
+                const cat = autoCategoryForDoblaje(modOnly, athlete);
+                if (isValidScheduleEntry(modOnly, cat)) return { modality: modOnly, category: cat };
+            }
+
+            return null;
+        }
+
+        function parseDoblajesEntries(doblajesText, athlete = null) {
+            if (!doblajesText?.trim() || isIgnorableDoblajesText(doblajesText)) return [];
+            const parts = splitDoblajesParts(doblajesText.trim());
             const entries = [];
             const seen = new Set();
             parts.forEach(part => {
-                const match = part.match(/^(.+?)\s*[—–\-:]+\s*(.+)$/);
-                if (match) {
-                    const mod = toCanonicalModality(match[1].trim());
-                    const cat = match[2].trim();
-                    const slotKey = `${mod}::${cat}`;
-                    if (isValidScheduleEntry(mod, cat) && !seen.has(slotKey)) {
-                        seen.add(slotKey);
-                        entries.push({ modality: mod, category: cat });
-                    }
-                    return;
-                }
-                const modOnly = toCanonicalModality(part);
-                if (modOnly && MODALITIES.includes(modOnly)) {
-                    const cat = athlete
-                        ? calculateAutoCategory(modOnly, athlete.birthDate, athlete.height, athlete.weight)
-                        : calculateAutoCategory(modOnly, null, null, null);
-                    const slotKey = `${modOnly}::${cat}`;
-                    if (isValidScheduleEntry(modOnly, cat) && !seen.has(slotKey)) {
-                        seen.add(slotKey);
-                        entries.push({ modality: modOnly, category: cat });
-                    }
+                const parsed = tryParseDoblajePart(part, athlete);
+                if (!parsed) return;
+                const slotKey = `${parsed.modality}::${parsed.category}`;
+                if (!seen.has(slotKey)) {
+                    seen.add(slotKey);
+                    entries.push(parsed);
                 }
             });
             return entries;
+        }
+
+        function getUnparsedDoblajesAthletes() {
+            return athletes.filter(a => {
+                const text = a.doblajes?.trim();
+                if (!text || isIgnorableDoblajesText(text)) return false;
+
+                const athlete = normalizeAthlete({ ...a });
+                const parsed = parseDoblajesEntries(text, athlete);
+                if (parsed.length > 0) return false;
+
+                return !!findModalityInText(text);
+            });
         }
 
         function getAthleteScheduleEntries(athlete) {
@@ -5394,10 +5708,7 @@
                 return !entries.length || !entries[0].modality;
             });
 
-            const unparsedDoblajes = athletes.filter(a => {
-                if (!a.doblajes?.trim()) return false;
-                return parseDoblajesEntries(a.doblajes).length === 0;
-            });
+            const unparsedDoblajes = getUnparsedDoblajesAthletes();
 
             const activeModalities = getModalitiesWithScheduleEntries().size;
             return {
@@ -5448,11 +5759,21 @@
                 issues.push(`${stats.missingAthletes.length} atleta(s) sin modalidad asignada`);
             }
             if (stats.unparsedDoblajes.length) {
-                issues.push(`${stats.unparsedDoblajes.length} doblaje(s) no interpretado(s) — use formato: Modalidad — Categoría`);
+                const names = stats.unparsedDoblajes
+                    .slice(0, 3)
+                    .map(a => `#${a.bibNumber || '?'} ${getFullName(a)}`)
+                    .join(', ');
+                issues.push(`${stats.unparsedDoblajes.length} doblaje(s) no interpretado(s) (${names}) — use formato: Modalidad — Categoría`);
             }
 
-            banner.className = 'mb-4 rounded-2xl p-4 border text-sm border-amber-500/40 bg-amber-500/10 text-amber-200';
-            banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i><strong>Participantes faltantes detectados:</strong> ${issues.join(' • ')}. `
+            const coverageOk = stats.shownAppearances === stats.totalExpectedAppearances && !stats.missingAthletes.length;
+            banner.className = coverageOk
+                ? 'mb-4 rounded-2xl p-4 border text-sm border-amber-500/40 bg-amber-500/10 text-amber-200'
+                : 'mb-4 rounded-2xl p-4 border text-sm border-amber-500/40 bg-amber-500/10 text-amber-200';
+            const lead = coverageOk
+                ? '<strong>Revisar doblajes pendientes de interpretar:</strong>'
+                : '<strong>Participantes faltantes detectados:</strong>';
+            banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i>${lead} ${issues.join(' • ')}. `
                 + `Mostrados: ${stats.shownAppearances}/${stats.totalExpectedAppearances} inscripciones.`;
             banner.classList.remove('hidden');
         }
@@ -5882,10 +6203,11 @@
             saveScheduleLocal();
             markSocketOp('edit', SCHEDULE_ID);
             showScheduleSyncStatus(true);
-            if (socket.connected) {
+            if (socket?.connected && isDiscordFullyReady()) {
                 socket.emit('guardarCronogramaDesdeWeb', eventSchedule);
             } else {
-                showToast('Sin conexión con Discord. Orden guardado solo en este navegador.', 'error');
+                showToast('Sin conexión al servidor o Discord no listo. Cronograma guardado solo en este navegador.', 'error');
+                reconnectDiscord();
             }
             renderScheduleSection();
             showScheduleSyncStatus(false);
@@ -5897,9 +6219,11 @@
             if (data) eventSchedule = normalizeSchedule(data);
             else if (!eventSchedule) eventSchedule = createDefaultSchedule();
             saveScheduleLocal();
+            refreshScheduleFromAthletes();
             syncScheduleSettingsInputs();
-            renderScheduleSection();
             renderScheduleLiveWidget();
+            if (currentSection === 7) renderScheduleSection();
+            else refreshEntireAppFromDiscord();
             if (notify) {
                 showScheduleSyncStatus(false);
                 showToast('Cronograma actualizado desde Discord', 'info');
@@ -6303,6 +6627,7 @@
         function initializeApp() {
             initTailwind();
             loadData();
+            initSocketConnection(0);
 
             const session = getValidSession();
             if (session) {
