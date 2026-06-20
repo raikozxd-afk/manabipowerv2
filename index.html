@@ -1947,6 +1947,8 @@
         let activeSocketUrl = SOCKET_CANDIDATES[0] || 'https://manabipower.com';
         let socket = null;
         let isSocketConnected = false;
+        let serverHttpOk = false;
+        let serverHealthTimer = null;
         let discordBotReady = false;
         let discordDbChannelReady = false;
         let socketConnectFailures = 0;
@@ -1975,16 +1977,79 @@
             return isSocketConnected && discordBotReady && discordDbChannelReady;
         }
 
+        function getApiBaseCandidates() {
+            const seen = new Set();
+            const list = [];
+            const add = (url) => {
+                const normalized = String(url || '').replace(/\/$/, '');
+                if (!normalized || !/^https?:\/\//.test(normalized) || seen.has(normalized)) return;
+                seen.add(normalized);
+                list.push(normalized);
+            };
+            if (/^https?:\/\//.test(window.location.origin)) add(window.location.origin);
+            add('https://manabipower.com');
+            add('http://localhost:3000');
+            add('http://127.0.0.1:3000');
+            return list;
+        }
+
+        async function checkServerHealth() {
+            if (window.location.protocol === 'file:') {
+                serverHttpOk = false;
+                updateLoginServerStatus();
+                return false;
+            }
+            for (const base of getApiBaseCandidates()) {
+                try {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), 8000);
+                    const resp = await fetch(`${base}/api/status`, { cache: 'no-store', signal: controller.signal });
+                    clearTimeout(timer);
+                    if (!resp.ok) continue;
+                    const status = await resp.json();
+                    serverHttpOk = true;
+                    if (status.discordReady !== undefined) discordBotReady = !!status.discordReady;
+                    if (status.dbChannel !== undefined) discordDbChannelReady = !!status.dbChannel;
+                    updateLoginServerStatus();
+                    updateConnectionStatus(isSocketConnected);
+                    return true;
+                } catch (e) {
+                    console.warn('Health check falló para', base, e.message);
+                }
+            }
+            serverHttpOk = false;
+            updateLoginServerStatus();
+            return false;
+        }
+
+        function startLoginHealthPolling() {
+            if (serverHealthTimer) clearInterval(serverHealthTimer);
+            checkServerHealth();
+            serverHealthTimer = setInterval(() => {
+                if (!document.getElementById('login-screen')?.classList.contains('hidden')) {
+                    checkServerHealth();
+                }
+            }, 5000);
+        }
+
         function updateLoginServerStatus() {
             const el = document.getElementById('login-server-status');
             if (!el || document.getElementById('login-screen')?.classList.contains('hidden')) return;
-            if (socket?.connected) {
-                el.textContent = 'Servidor conectado — puede ingresar';
-                el.className = 'text-[11px] text-[#FFEA8D] font-semibold text-center';
-            } else {
-                el.textContent = 'Conectando al servidor... espere unos segundos';
-                el.className = 'text-[11px] text-amber-300 font-semibold text-center';
+            if (window.location.protocol === 'file:') {
+                el.textContent = 'Abra https://manabipower.com — no use el archivo HTML directo';
+                el.className = 'text-[11px] text-red-300 font-semibold text-center';
+                return;
             }
+            if (socket?.connected || serverHttpOk) {
+                const syncHint = (discordBotReady && discordDbChannelReady)
+                    ? 'Discord listo'
+                    : (serverHttpOk ? 'servidor en línea' : 'conectando Discord');
+                el.textContent = `Servidor en línea — puede ingresar (${syncHint})`;
+                el.className = 'text-[11px] text-[#FFEA8D] font-semibold text-center';
+                return;
+            }
+            el.textContent = 'Conectando al servidor... espere unos segundos';
+            el.className = 'text-[11px] text-amber-300 font-semibold text-center';
         }
 
         function updateConnectionStatus(connected) {
@@ -2364,12 +2429,18 @@
                 socket.removeAllListeners();
                 socket.disconnect();
             }
+            if (typeof io !== 'function') {
+                console.error('Socket.IO no cargó desde el CDN.');
+                updateLoginServerStatus();
+                return;
+            }
             socket = io(activeSocketUrl, {
-                transports: ['websocket', 'polling'],
+                transports: ['polling', 'websocket'],
                 reconnection: true,
-                reconnectionAttempts: 8,
-                reconnectionDelay: 1500,
-                timeout: 12000
+                reconnectionAttempts: 20,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                timeout: 20000
             });
             bindSocketHandlers(socket);
             updateConnectionStatus(false);
@@ -2490,6 +2561,7 @@
             document.getElementById('login-screen').classList.remove('hidden');
             resetLoginForm();
             updateLoginServerStatus();
+            startLoginHealthPolling();
         }
 
         function clearAllAthletes() {
@@ -2795,31 +2867,38 @@
 
             if (loginBtn) loginBtn.disabled = true;
 
-            try {
-                const resp = await fetch(`${window.location.origin}/api/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user, pass })
-                });
-                const res = await resp.json().catch(() => null);
-                if (res?.ok) {
-                    if (loginBtn) loginBtn.disabled = false;
-                    finishLogin(res);
-                    return;
+            for (const base of getApiBaseCandidates()) {
+                try {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), 10000);
+                    const resp = await fetch(`${base}/api/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user, pass }),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timer);
+                    const res = await resp.json().catch(() => null);
+                    if (res?.ok) {
+                        if (loginBtn) loginBtn.disabled = false;
+                        finishLogin(res);
+                        return;
+                    }
+                    if (res?.error) {
+                        if (loginBtn) loginBtn.disabled = false;
+                        showLoginError(res.error);
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('Login HTTP falló en', base, err.message);
                 }
-                if (res?.error) {
-                    if (loginBtn) loginBtn.disabled = false;
-                    showLoginError(res.error);
-                    return;
-                }
-            } catch (err) {
-                console.warn('Login HTTP falló, intentando por socket:', err.message);
             }
 
-            if (!socket?.connected) {
+            if (!socket?.connected && !serverHttpOk) {
                 if (loginBtn) loginBtn.disabled = false;
-                showLoginError('Sin conexión con el servidor. Abra https://manabipower.com o http://localhost:3000');
+                showLoginError('Sin conexión con el servidor. Abra https://manabipower.com (no el archivo HTML).');
                 reconnectDiscord();
+                startLoginHealthPolling();
                 return;
             }
 
@@ -6684,6 +6763,7 @@
             initTailwind();
             loadData();
             initSocketConnection(0);
+            startLoginHealthPolling();
 
             const session = getValidSession();
             if (session) {
