@@ -25,6 +25,7 @@ const client = new Client({
 
 const DB_CHANNEL_ID = process.env.DB_CHANNEL_ID;
 const FETCH_LIMIT = 100;
+const FETCH_MAX_MESSAGES = 5000;
 const SESSION_MAX_MS = 8 * 60 * 60 * 1000;
 const JUDGE_PASS = process.env.AUTH_JUDGE_PASS || 'juez2026';
 
@@ -133,23 +134,47 @@ function getDbChannel() {
     return client.channels.cache.get(DB_CHANNEL_ID) || null;
 }
 
+async function fetchAllBotMessages(dbChannel, maxMessages = FETCH_MAX_MESSAGES) {
+    const all = [];
+    let before;
+
+    while (all.length < maxMessages) {
+        const opts = { limit: FETCH_LIMIT };
+        if (before) opts.before = before;
+        const batch = await dbChannel.messages.fetch(opts);
+        if (!batch.size) break;
+
+        for (const msg of batch.values()) {
+            if (msg.author.id === client.user.id) all.push(msg);
+        }
+
+        const oldest = batch.last();
+        if (!oldest || batch.size < FETCH_LIMIT) break;
+        before = oldest.id;
+    }
+
+    return all;
+}
+
 async function fetchRecordsFromDiscord(filterFn) {
     const dbChannel = getDbChannel();
-    if (!dbChannel) return [];
+    if (!dbChannel) {
+        console.warn('Discord: canal de BD no disponible (revisar DB_CHANNEL_ID y conexión del bot).');
+        return [];
+    }
 
-    const messages = await dbChannel.messages.fetch({ limit: FETCH_LIMIT });
+    const messages = await fetchAllBotMessages(dbChannel);
     const list = [];
     const seenIds = new Set();
 
-    messages.forEach((msg) => {
-        if (msg.author.id !== client.user.id) return;
+    [...messages].reverse().forEach((msg) => {
         const record = parseRecordMessage(msg.content);
         if (!record?.id || !filterFn(record) || seenIds.has(String(record.id))) return;
         seenIds.add(String(record.id));
         list.push(record);
     });
 
-    return list.reverse();
+    return list;
 }
 
 async function fetchAthletesFromDiscord() {
@@ -172,15 +197,14 @@ async function fetchScoringRoundsFromDiscord() {
     return fetchRecordsFromDiscord(isScoringRecord);
 }
 
-async function findRecordMessage(athleteId, filterFn) {
+async function findRecordMessage(recordId, filterFn) {
     const dbChannel = getDbChannel();
     if (!dbChannel) return null;
 
-    const messages = await dbChannel.messages.fetch({ limit: FETCH_LIMIT });
-    for (const msg of messages.values()) {
-        if (msg.author.id !== client.user.id) continue;
+    const messages = await fetchAllBotMessages(dbChannel);
+    for (const msg of messages) {
         const record = parseRecordMessage(msg.content);
-        if (record && String(record.id) === String(athleteId) && filterFn(record)) {
+        if (record && String(record.id) === String(recordId) && filterFn(record)) {
             return { message: msg, record };
         }
     }
@@ -210,6 +234,7 @@ async function fetchScheduleFromDiscord() {
 
 async function emitAthletesList(targetSocket) {
     const list = await fetchAthletesFromDiscord();
+    console.log(`Discord sync: ${list.length} atleta(s) cargado(s)`);
     if (targetSocket) targetSocket.emit('cargarAtletas', list);
     else io.emit('cargarAtletas', list);
     return list;
@@ -217,6 +242,7 @@ async function emitAthletesList(targetSocket) {
 
 async function emitJudgesList(targetSocket) {
     const list = await fetchJudgesFromDiscord();
+    console.log(`Discord sync: ${list.length} juez(es) cargado(s)`);
     if (targetSocket) targetSocket.emit('cargarJueces', list);
     else io.emit('cargarJueces', list);
     return list;
@@ -484,15 +510,62 @@ io.on('connection', async (socket) => {
         const dbChannel = getDbChannel();
         if (!dbChannel) return;
 
-        const messages = await dbChannel.messages.fetch({ limit: FETCH_LIMIT });
-        for (const msg of messages.values()) {
-            if (msg.author.id !== client.user.id) continue;
+        const messages = await fetchAllBotMessages(dbChannel);
+        for (const msg of messages) {
             const record = parseRecordMessage(msg.content);
             if (!record || !isAthleteRecord(record)) continue;
             await msg.delete().catch(() => {});
         }
 
         io.emit('cargarAtletas', []);
+    });
+
+    socket.on('subirRespaldoDesdeWeb', async (payload, callback) => {
+        const dbChannel = getDbChannel();
+        if (!dbChannel) {
+            callback?.({ ok: false, error: 'Sin conexión con el canal de Discord.' });
+            return;
+        }
+
+        let athletesOk = 0;
+        let judgesOk = 0;
+        let failed = 0;
+
+        for (const athlete of payload?.athletes || []) {
+            if (!athlete?.id) continue;
+            try {
+                const existing = await findAthleteMessage(athlete.id);
+                if (existing) await existing.message.edit(formatAthleteMessage(athlete));
+                else await dbChannel.send(formatAthleteMessage(athlete));
+                athletesOk++;
+            } catch (err) {
+                console.error('Error al subir atleta desde respaldo:', athlete.id, err);
+                failed++;
+            }
+        }
+
+        for (const judge of payload?.judges || []) {
+            if (!judge?.id) continue;
+            try {
+                const existing = await findJudgeMessage(judge.id);
+                if (existing) await existing.message.edit(formatJudgeMessage(judge));
+                else await dbChannel.send(formatJudgeMessage(judge));
+                judgesOk++;
+            } catch (err) {
+                console.error('Error al subir juez desde respaldo:', judge.id, err);
+                failed++;
+            }
+        }
+
+        await emitAthletesList();
+        await emitJudgesList();
+        callback?.({
+            ok: failed === 0,
+            athletesOk,
+            judgesOk,
+            failed,
+            error: failed ? `${failed} registro(s) no se pudieron subir a Discord` : null
+        });
     });
 
     socket.on('registrarJuezDesdeWeb', async (judgeData) => {

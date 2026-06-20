@@ -1585,12 +1585,18 @@
                                 <i class="fa-solid fa-arrows-rotate text-[#C5A85C]"></i>
                                 <span>SINCRONIZACIÓN DISCORD</span>
                             </div>
-                            <button onclick="requestDiscordSync()" class="text-xs font-bold px-4 py-2 bg-[#C5A85C] text-[#0A1931] rounded-2xl flex items-center gap-x-2">
-                                <i class="fa-brands fa-discord"></i>
-                                <span>SINCRONIZAR AHORA</span>
-                            </button>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="requestDiscordSync()" class="text-xs font-bold px-4 py-2 bg-[#C5A85C] text-[#0A1931] rounded-2xl flex items-center gap-x-2">
+                                    <i class="fa-brands fa-discord"></i>
+                                    <span>SINCRONIZAR AHORA</span>
+                                </button>
+                                <button onclick="pushLocalDataToDiscord()" class="text-xs font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/50 rounded-2xl flex items-center gap-x-2">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    <span>SUBIR A DISCORD</span>
+                                </button>
+                            </div>
                         </div>
-                        <p class="text-xs text-[#C5A85C]/70">Las listas de atletas y jueces se actualizan en tiempo real al registrar, editar o eliminar. También responde a cambios hechos en Discord con <code class="text-[#FFEA8D]">!registrar</code> y <code class="text-[#FFEA8D]">!eliminar ID</code>.</p>
+                        <p class="text-xs text-[#C5A85C]/70">Las listas de atletas y jueces se actualizan en tiempo real al registrar, editar o eliminar. Si Discord aparece vacío pero tiene datos locales, use <strong>Subir a Discord</strong>. También responde a cambios hechos en Discord con <code class="text-[#FFEA8D]">!registrar</code> y <code class="text-[#FFEA8D]">!eliminar ID</code>.</p>
                         <div class="mt-3 text-[11px] text-[#C5A85C]/60">Última sincronización: <span id="last-discord-sync" class="font-mono text-[#FFEA8D]">—</span></div>
                     </div>
 
@@ -1720,6 +1726,7 @@
         let scheduleExpandedCategories = new Set();
         let scheduleSyncTimer = null;
         let scheduleSearchQuery = '';
+        let localDataReady = false;
         const SCHEDULE_ID = 'mp-event-schedule';
         const AGE_CATEGORY_ORDER = ['Junior', 'Senior', 'Master +35', 'Master +40', 'Master +45', 'Master +50', 'Master +55', 'Master +60', 'Sin edad'];
         let currentSection = 0;
@@ -2044,16 +2051,20 @@
 
         socket.on('connect', () => {
             updateConnectionStatus(true);
-            requestDiscordSync(true);
+            if (localDataReady) requestDiscordSync(true);
         });
         socket.on('disconnect', () => updateConnectionStatus(false));
         socket.on('connect_error', () => updateConnectionStatus(false));
         socket.on('reconnect', () => requestDiscordSync(true));
 
         socket.on('cargarAtletas', (datosDeDiscord) => {
+            if (!localDataReady) return;
             const count = (datosDeDiscord || []).length;
             applyRemoteAthletesList(datosDeDiscord);
-            if (currentUser) showToast(`Lista sincronizada: ${count} atletas`, 'success');
+            if (currentUser) {
+                if (count > 0) showToast(`Lista sincronizada: ${count} atletas`, 'success');
+                else if (athletes.length === 0) showToast('Discord no devolvió atletas. Revise el canal o restaure un respaldo JSON.', 'error');
+            }
         });
 
         socket.on('nuevoAtleta', (nuevoAtleta) => {
@@ -2076,9 +2087,13 @@
         });
 
         socket.on('cargarJueces', (datosDeDiscord) => {
+            if (!localDataReady) return;
             const count = (datosDeDiscord || []).length;
             applyRemoteJudgesList(datosDeDiscord);
-            if (currentUser) showToast(`Jueces sincronizados: ${count}`, 'success');
+            if (currentUser) {
+                if (count > 0) showToast(`Jueces sincronizados: ${count}`, 'success');
+                else if (judges.length === 0) showToast('Discord no devolvió jueces. Revise el canal o restaure un respaldo JSON.', 'error');
+            }
         });
 
         socket.on('nuevoJuez', (nuevoJuez) => {
@@ -2273,6 +2288,9 @@
             loadJudgesFromCache();
             loadScoringFromCache();
             loadScheduleFromCache();
+
+            localDataReady = true;
+            if (socket.connected) requestDiscordSync(true);
         }
 
         function loadScheduleFromCache() {
@@ -2332,7 +2350,7 @@
                 const cached = localStorage.getItem('mp_athletes_cache');
                 if (cached) {
                     const list = JSON.parse(cached);
-                    if (Array.isArray(list) && list.length > 0) {
+                    if (Array.isArray(list)) {
                         athletes = filterDeletedAthletes(list).map(normalizeAthlete);
                     }
                 }
@@ -4363,6 +4381,27 @@
             showToast('Respaldo descargado correctamente', 'success');
         }
 
+        function pushLocalDataToDiscord(notify = true) {
+            if (!socket.connected) {
+                showToast('Sin conexión con Discord. Datos guardados solo en este navegador.', 'error');
+                return;
+            }
+            if (!athletes.length && !judges.length) {
+                showToast('No hay atletas ni jueces para subir a Discord.', 'error');
+                return;
+            }
+            socket.emit('subirRespaldoDesdeWeb', { athletes, judges }, (res) => {
+                if (res?.ok === false) {
+                    showToast(res.error || 'Error al subir datos a Discord', 'error');
+                    return;
+                }
+                if (notify) {
+                    showToast(`Subido a Discord: ${res?.athletesOk || 0} atletas, ${res?.judgesOk || 0} jueces`, 'success');
+                    addLog('Sincronización', `Subió respaldo a Discord (${res?.athletesOk || 0} atletas, ${res?.judgesOk || 0} jueces)`);
+                }
+            });
+        }
+
         function restoreFromBackup(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -4372,9 +4411,10 @@
                 try {
                     const backup = JSON.parse(e.target.result);
                     
-                    if (confirm(`¿Restaurar ${backup.athletes ? backup.athletes.length : 0} atletas y ${backup.judges ? backup.judges.length : 0} jueces del respaldo del ${new Date(backup.timestamp).toLocaleDateString()}? Esto reemplazará los datos actuales.`)) {
-                        athletes = backup.athletes || [];
-                        judges = backup.judges || [];
+                    if (confirm(`¿Restaurar ${backup.athletes ? backup.athletes.length : 0} atletas y ${backup.judges ? backup.judges.length : 0} jueces del respaldo del ${new Date(backup.timestamp).toLocaleDateString()}? Esto reemplazará los datos actuales y los subirá a Discord.`)) {
+                        athletes = (backup.athletes || []).map(normalizeAthlete);
+                        judges = (backup.judges || []).map(normalizeJudge);
+                        ensureJudgeSortOrder();
                         deletedAthleteIds = new Set();
                         saveDeletedAthletes();
                         saveAthletes();
@@ -4382,8 +4422,8 @@
                         
                         addLog("Restauración", `Restauró respaldo (${backup.athletes?.length || 0} atletas, ${backup.judges?.length || 0} jueces)`);
                         
-                        showToast('Datos restaurados exitosamente', 'success');
                         refreshAllViews();
+                        pushLocalDataToDiscord(true);
                     }
                 } catch (err) {
                     alert('Archivo de respaldo inválido o corrupto.');
