@@ -1,14 +1,17 @@
 require('dotenv').config();
 const crypto = require('crypto');
-const { Client, GatewayIntentBits } = require('discord.js');
+const path = require('path');
+const { Client, GatewayIntentBits, PermissionFlagsBits } = require('discord.js');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: true, credentials: false }));
+app.options('*', cors({ origin: true }));
 app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname, {
     setHeaders(res, filePath) {
         if (filePath.endsWith('.html')) {
@@ -20,19 +23,34 @@ app.use(express.static(__dirname, {
 }));
 
 let resolvedDbChannel = null;
+let lastSyncCounts = { athletes: 0, judges: 0, scoring: 0, hasSchedule: false };
+const DB_GUIDE_MARKER = 'MANABI_POWER_DB_GUIDE_V1';
 
 function getServerStatus() {
+    const dbChannel = getDbChannelSync();
     return {
         discordReady: client.isReady(),
-        dbChannel: !!getDbChannelSync(),
+        dbChannel: !!dbChannel,
+        dbChannelName: dbChannel?.name || null,
+        dbChannelId: DB_CHANNEL_ID || null,
         botTag: client.user?.tag || null,
-        uptime: Math.floor(process.uptime())
+        uptime: Math.floor(process.uptime()),
+        counts: { ...lastSyncCounts }
     };
 }
+
+app.get('/', (_req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 app.get('/api/status', (_req, res) => {
     res.json({ ok: true, ...getServerStatus() });
 });
+
+function envPass(key, fallback) {
+    const value = process.env[key];
+    return (value != null && String(value).trim() !== '' ? String(value) : fallback).trim();
+}
 
 function authenticateUser(user, pass) {
     const normalizedUser = String(user || '').trim().toLowerCase();
@@ -42,8 +60,11 @@ function authenticateUser(user, pass) {
     if (!normalizedUser || !normalizedPass) {
         return { ok: false, error: 'Por favor complete usuario y contraseña.' };
     }
-    if (!account || normalizedPass !== account.password) {
-        return { ok: false, error: 'Usuario o contraseña incorrectos.' };
+    if (!account) {
+        return { ok: false, error: 'Usuario no reconocido. Use admin, escrutador o juez1–juez9.' };
+    }
+    if (normalizedPass !== account.password) {
+        return { ok: false, error: 'Contraseña incorrecta.' };
     }
 
     const token = createAuthToken();
@@ -66,7 +87,9 @@ function authenticateUser(user, pass) {
 }
 
 app.post('/api/login', (req, res) => {
-    const result = authenticateUser(req.body?.user, req.body?.pass);
+    const user = req.body?.user ?? req.body?.username ?? req.query?.user;
+    const pass = req.body?.pass ?? req.body?.password ?? req.query?.pass;
+    const result = authenticateUser(user, pass);
     if (!result.ok) {
         res.status(result.error?.includes('complete') ? 400 : 401).json(result);
         return;
@@ -88,14 +111,15 @@ const client = new Client({
 });
 
 const DB_CHANNEL_ID = process.env.DB_CHANNEL_ID;
+const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID;
 const FETCH_LIMIT = 100;
 const FETCH_MAX_MESSAGES = 5000;
 const SESSION_MAX_MS = 8 * 60 * 60 * 1000;
-const JUDGE_PASS = process.env.AUTH_JUDGE_PASS || 'juez2026';
+const JUDGE_PASS = envPass('AUTH_JUDGE_PASS', 'juez2026');
 
 const AUTH_USERS = {
-    admin: { password: process.env.AUTH_ADMIN_PASS || 'raikoz7841', role: 'admin', label: 'Administrador' },
-    escrutador: { password: process.env.AUTH_SCRUT_PASS || 'scrut2026', role: 'scrutineer', label: 'Escrutador' },
+    admin: { password: envPass('AUTH_ADMIN_PASS', 'raikoz7841'), role: 'admin', label: 'Administrador' },
+    escrutador: { password: envPass('AUTH_SCRUT_PASS', 'scrut2026'), role: 'scrutineer', label: 'Escrutador' },
     juez1: { password: JUDGE_PASS, role: 'judge', judgeSlot: 0, label: 'Juez 1' },
     juez2: { password: JUDGE_PASS, role: 'judge', judgeSlot: 1, label: 'Juez 2' },
     juez3: { password: JUDGE_PASS, role: 'judge', judgeSlot: 2, label: 'Juez 3' },
@@ -148,13 +172,87 @@ async function validateAthleteDuplicates(athleteData) {
 }
 
 function parseRecordMessage(content) {
-    if (!content || !content.startsWith('```json')) return null;
-    const jsonString = content.replace('```json\n', '').replace('\n```', '').trim();
+    if (!content || typeof content !== 'string') return null;
+    const trimmed = content.trim();
+    const fenceMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+    const jsonString = fenceMatch ? fenceMatch[1].trim() : trimmed;
+    if (!jsonString.startsWith('{') && !jsonString.startsWith('[')) return null;
     try {
         return JSON.parse(jsonString);
     } catch {
         return null;
     }
+}
+
+function getRequiredBotPermissions() {
+    return [
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.ReadMessageHistory,
+        PermissionFlagsBits.ManageMessages,
+        PermissionFlagsBits.EmbedLinks
+    ];
+}
+
+function checkBotChannelPermissions(channel) {
+    if (!channel?.guild || !client.user) {
+        return { ok: false, missing: ['Canal o bot no disponible'] };
+    }
+    const perms = channel.permissionsFor(client.user);
+    if (!perms) return { ok: false, missing: ['No se pudieron leer permisos'] };
+    const missing = [];
+    for (const flag of getRequiredBotPermissions()) {
+        if (!perms.has(flag)) missing.push(flag);
+    }
+    return { ok: missing.length === 0, missing };
+}
+
+async function ensureDiscordChannelSetup() {
+    const dbChannel = await getDbChannel();
+    if (!dbChannel) return false;
+
+    const permCheck = checkBotChannelPermissions(dbChannel);
+    if (!permCheck.ok) {
+        console.warn('Discord: permisos insuficientes en el canal BD:', permCheck.missing.join(', '));
+        return false;
+    }
+
+    const pinsRaw = await (dbChannel.messages.fetchPins?.() || dbChannel.messages.fetchPinned()).catch(() => null);
+    const pinList = !pinsRaw ? [] : Array.isArray(pinsRaw)
+        ? pinsRaw
+        : typeof pinsRaw.values === 'function'
+            ? [...pinsRaw.values()]
+            : Array.isArray(pinsRaw.items)
+                ? pinsRaw.items.map((i) => i.message || i)
+                : [];
+    const hasGuide = pinList.some((msg) => msg?.content?.includes(DB_GUIDE_MARKER));
+
+    if (!hasGuide) {
+        const guide = [
+            DB_GUIDE_MARKER,
+            '📊 **Canal Base de Datos — Manabí Power**',
+            '',
+            'Este canal guarda los registros de la Mesa de Control Web (**https://manabipower.com**).',
+            '**No borre mensajes del bot** salvo con la web o con `!eliminar ID`.',
+            '',
+            '**Tipos de registro (JSON en mensajes del bot):**',
+            '• Atletas — inscripciones y planillas',
+            '• `recordType: "judge"` — jueces',
+            '• `recordType: "scoringRound"` — calificación',
+            '• `recordType: "schedule"` — cronograma',
+            '',
+            '**Comandos útiles:**',
+            '`!ayuda` · `!estado` · `!sincronizar`',
+            '`!registrar Nombre | Cédula | Modalidad | Categoría`',
+            '`!eliminar ID_DEL_REGISTRO`'
+        ].join('\n');
+
+        const sent = await dbChannel.send(guide);
+        await sent.pin().catch(() => {});
+        console.log(`Discord: guía de canal publicada y fijada en #${dbChannel.name}`);
+    }
+
+    return true;
 }
 
 function isJudgeRecord(record) {
@@ -355,6 +453,13 @@ async function fetchFullSyncPayload() {
         fetchScoringRoundsFromDiscord(),
         fetchScheduleFromDiscord()
     ]);
+    lastSyncCounts = {
+        athletes: athletes.length,
+        judges: judges.length,
+        scoring: scoring.length,
+        hasSchedule: !!schedule
+    };
+
     return {
         athletes,
         judges,
@@ -362,13 +467,33 @@ async function fetchFullSyncPayload() {
         schedule,
         syncedAt: Date.now(),
         discordReady: client.isReady(),
-        dbChannel: !!dbChannel
+        dbChannel: !!dbChannel,
+        counts: { ...lastSyncCounts }
     };
 }
 
-async function emitFullSync(targetSocket) {
+async function postSyncLog(summary) {
+    if (!LOG_CHANNEL_ID || !client.isReady()) return;
+    try {
+        const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
+        if (!logChannel?.isTextBased?.()) return;
+        await logChannel.send(summary);
+    } catch (err) {
+        console.warn('Discord: no se pudo publicar en canal de logs:', err.message);
+    }
+}
+
+let lastDiscordLogAt = 0;
+
+async function emitFullSync(targetSocket, options = {}) {
+    const { logToDiscord = false } = options;
     const payload = await fetchFullSyncPayload();
-    console.log(`Discord sync completa: ${payload.athletes.length} atletas, ${payload.judges.length} jueces, ${payload.scoring.length} rondas, cronograma ${payload.schedule ? 'sí' : 'no'}`);
+    const summary = `Discord sync: ${payload.athletes.length} atletas, ${payload.judges.length} jueces, ${payload.scoring.length} rondas, cronograma ${payload.schedule ? 'sí' : 'no'}`;
+    console.log(summary);
+    if (logToDiscord && Date.now() - lastDiscordLogAt > 15000) {
+        lastDiscordLogAt = Date.now();
+        await postSyncLog(`📡 **Sincronización** — ${new Date().toLocaleString('es-ES')}\n${summary.replace('Discord sync: ', '')}`);
+    }
     if (targetSocket) {
         targetSocket.emit('sincronizacionCompleta', payload);
         targetSocket.emit('estadoServidor', getServerStatus());
@@ -379,22 +504,76 @@ async function emitFullSync(targetSocket) {
     return payload;
 }
 
-client.on('ready', async () => {
+let discordStartupDone = false;
+
+async function onDiscordClientReady() {
+    if (discordStartupDone) return;
+    discordStartupDone = true;
     console.log(`Bot encendido: ${client.user.tag}`);
-    console.log(`Servidor Web escuchando en el puerto ${process.env.PORT || 3000}`);
     await getDbChannel();
+    const setupOk = await ensureDiscordChannelSetup();
     const status = getServerStatus();
     if (!status.dbChannel) {
         console.warn('Discord: DB_CHANNEL_ID no válido o canal no accesible. Revise .env');
+    } else if (!setupOk) {
+        console.warn('Discord: revise permisos del bot en el canal de base de datos.');
     }
     io.emit('estadoServidor', status);
-    emitFullSync().catch((err) => console.error('Error en sincronización inicial:', err.message));
+    emitFullSync(null, { logToDiscord: true }).catch((err) => console.error('Error en sincronización inicial:', err.message));
+}
+
+client.once('clientReady', onDiscordClientReady);
+client.once('ready', onDiscordClientReady);
+
+client.on('channelDelete', (channel) => {
+    if (String(channel.id) === String(DB_CHANNEL_ID)) {
+        resolvedDbChannel = null;
+        io.emit('estadoServidor', getServerStatus());
+    }
 });
 
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
 
-    if (message.content.startsWith('!registrar')) {
+    const content = message.content.trim();
+    const inDbChannel = String(message.channelId) === String(DB_CHANNEL_ID);
+
+    if (content === '!ayuda' || content === '!help') {
+        return message.reply([
+            '**Manabí Power — Comandos Discord**',
+            '`!estado` — resumen de la base de datos',
+            '`!sincronizar` — fuerza lectura desde Discord a la web',
+            '`!registrar Nombre | Cédula | Modalidad | Categoría`',
+            '`!eliminar ID_DEL_REGISTRO`',
+            '',
+            'Mesa de control: **https://manabipower.com**'
+        ].join('\n'));
+    }
+
+    if (content === '!estado') {
+        const payload = await fetchFullSyncPayload();
+        const ch = getDbChannelSync();
+        return message.reply([
+            '**Estado Manabí Power**',
+            `Bot: ${client.user?.tag || '—'}`,
+            `Canal BD: ${ch ? `#${ch.name}` : 'no disponible'}`,
+            `Atletas: **${payload.athletes.length}**`,
+            `Jueces: **${payload.judges.length}**`,
+            `Rondas: **${payload.scoring.length}**`,
+            `Cronograma: **${payload.schedule ? 'sí' : 'no'}**`
+        ].join('\n'));
+    }
+
+    if (content === '!sincronizar' || content === '!sync') {
+        if (!inDbChannel) {
+            return message.reply('Use este comando en el canal de base de datos o desde la web.');
+        }
+        await emitFullSync(null, { logToDiscord: true });
+        const c = lastSyncCounts;
+        return message.reply(`Sincronización enviada a la web: ${c.athletes} atletas, ${c.judges} jueces, ${c.scoring} rondas.`);
+    }
+
+    if (content.startsWith('!registrar')) {
         const args = message.content.replace('!registrar', '').split('|').map((s) => s.trim());
         if (args.length < 4) {
             return message.reply('Formato: `!registrar Nombre Completo | Cédula | Modalidad | Categoría`');
@@ -418,7 +597,7 @@ client.on('messageCreate', async (message) => {
         await dbChannel.send(formatAthleteMessage(newAthlete));
         message.reply(`Atleta **${args[0]}** guardado correctamente.`);
         io.emit('nuevoAtleta', newAthlete);
-        emitFullSync().catch(() => {});
+        emitFullSync(null, { logToDiscord: false }).catch(() => {});
         return;
     }
 
@@ -698,7 +877,7 @@ io.on('connection', (socket) => {
             }
         }
 
-        await emitFullSync();
+        await emitFullSync(socket, { logToDiscord: false });
         callback?.({
             ok: failed === 0,
             athletesOk,
@@ -843,7 +1022,13 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Servidor Web escuchando en el puerto ${PORT}`);
+    console.log(`Mesa de control: http://localhost:${PORT}`);
 });
+
+setInterval(() => {
+    if (!client.isReady()) return;
+    io.emit('estadoServidor', getServerStatus());
+}, 60000);
 
 const discordToken = process.env.DISCORD_TOKEN;
 if (!discordToken || discordToken === 'tu_token_del_bot_de_discord') {

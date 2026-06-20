@@ -684,12 +684,12 @@
                     <div class="text-[#FFEA8D] text-xl font-bold">Mesa de Control IFBB</div>
                 </div>
 
-                <div class="space-y-4">
+                <form id="login-form" class="space-y-4" autocomplete="off" novalidate>
                     <!-- USUARIO -->
                     <div>
-                        <label class="text-[#C5A85C] text-xs font-extrabold tracking-widest block mb-1.5">USUARIO</label>
+                        <label class="text-[#C5A85C] text-xs font-extrabold tracking-widest block mb-1.5" for="login-user">USUARIO</label>
                         <div class="relative">
-                            <input id="login-user" type="text" value="" autocomplete="off" autocapitalize="off" spellcheck="false"
+                            <input id="login-user" name="user" type="text" value="" autocomplete="username" autocapitalize="off" spellcheck="false" required
                                    class="w-full bg-[#0A1931] border border-[#C5A85C]/40 text-[#FFEA8D] rounded-2xl px-5 py-3.5 text-sm font-medium focus:outline-none focus:border-[#C5A85C]">
                             <i class="fa-solid fa-user absolute right-5 top-4 text-[#C5A85C]/70"></i>
                         </div>
@@ -697,9 +697,9 @@
 
                     <!-- CONTRASEÑA -->
                     <div>
-                        <label class="text-[#C5A85C] text-xs font-extrabold tracking-widest block mb-1.5">CONTRASEÑA</label>
+                        <label class="text-[#C5A85C] text-xs font-extrabold tracking-widest block mb-1.5" for="login-pass">CONTRASEÑA</label>
                         <div class="relative">
-                            <input id="login-pass" type="password" value="" autocomplete="new-password"
+                            <input id="login-pass" name="pass" type="password" value="" autocomplete="current-password" required
                                    class="w-full bg-[#0A1931] border border-[#C5A85C]/40 text-[#FFEA8D] rounded-2xl px-5 py-3.5 text-sm font-medium focus:outline-none focus:border-[#C5A85C]">
                             <i class="fa-solid fa-lock absolute right-5 top-4 text-[#C5A85C]/70"></i>
                         </div>
@@ -710,12 +710,13 @@
                     <p class="text-[10px] text-[#C5A85C]/55 text-center leading-relaxed">Usuarios: <span class="text-[#FFEA8D]/80">admin</span>, <span class="text-[#FFEA8D]/80">escrutador</span>, <span class="text-[#FFEA8D]/80">juez1</span>–<span class="text-[#FFEA8D]/80">juez9</span></p>
 
                     <!-- Botón -->
-                    <button id="login-submit-btn" type="button"
+                    <button id="login-submit-btn" type="submit"
                             class="w-full bg-gradient-to-r from-[#FFEA8D] via-[#C5A85C] to-[#8A641B] hover:brightness-110 transition-all text-[#0F2238] font-extrabold py-4 rounded-2xl text-sm tracking-wider shadow-lg active:scale-[0.985] mt-2">
                         INGRESAR AL PANEL DE CONTROL
                     </button>
 
                     <div class="gold-divider my-5"></div>
+                </form>
 
                     <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer" class="instagram-cta" aria-label="Síguenos en Instagram @manabi_power">
                         <span class="instagram-cta__icon"><i class="fa-brands fa-instagram"></i></span>
@@ -729,7 +730,7 @@
 
             <div class="text-center mt-8">
                 <div class="text-[#C5A85C]/50 text-[10px]">© 2026 Manabí Power Oficial</div>
-                <div id="app-version-tag" class="text-[#C5A85C]/40 text-[9px] mt-1 font-mono">v2.2.1 · build 2026-06-20</div>
+                <div id="app-version-tag" class="text-[#C5A85C]/40 text-[9px] mt-1 font-mono">v2.3.0 · build 2026-06-20</div>
             </div>
         </div>
     </div>
@@ -1607,6 +1608,8 @@
                         <div class="mt-3 text-[11px] text-[#C5A85C]/60 space-y-1">
                             <div>Servidor: <span id="sync-server-url" class="font-mono text-[#FFEA8D]">—</span></div>
                             <div>Estado Discord: <span id="sync-discord-status" class="font-mono text-[#FFEA8D]">—</span></div>
+                            <div>Canal BD: <span id="sync-discord-channel" class="font-mono text-[#FFEA8D]">—</span></div>
+                            <div>Registros en Discord: <span id="sync-discord-counts" class="font-mono text-[#FFEA8D]">—</span></div>
                             <div>Última sincronización: <span id="last-discord-sync" class="font-mono text-[#FFEA8D]">—</span></div>
                         </div>
                     </div>
@@ -1956,6 +1959,7 @@
         let pendingFullSync = null;
         let autoSyncIntervalId = null;
         let syncState = { syncing: false, lastSync: null };
+        let serverStatusCache = null;
         const pendingSocketOps = new Set();
 
         function socketOpKey(type, id) {
@@ -1981,15 +1985,31 @@
         function getApiBaseCandidates() {
             const seen = new Set();
             const list = [];
-            const add = (url) => {
-                const normalized = String(url || '').replace(/\/$/, '');
-                if (!normalized || seen.has(normalized)) return;
-                seen.add(normalized);
-                list.push(normalized);
+            const add = (base) => {
+                const key = base === '' ? '__relative__' : base;
+                if (seen.has(key)) return;
+                seen.add(key);
+                list.push(base);
             };
-            add('');
-            if (/^https?:\/\//.test(window.location.origin)) add(window.location.origin);
-            add('https://manabipower.com');
+
+            const paramServer = new URLSearchParams(window.location.search).get('server');
+            if (paramServer) add(String(paramServer).replace(/\/$/, ''));
+
+            if (window.location.protocol === 'file:') {
+                add('https://manabipower.com');
+                add('http://localhost:3000');
+                add('http://127.0.0.1:3000');
+                return list;
+            }
+
+            if (/^https?:\/\//i.test(window.location.origin)) {
+                add('');
+                add(window.location.origin);
+            }
+
+            if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(window.location.origin)) {
+                add('https://manabipower.com');
+            }
             add('http://localhost:3000');
             add('http://127.0.0.1:3000');
             return list;
@@ -1997,47 +2017,70 @@
 
         function apiUrl(base, path) {
             const route = String(path || '').startsWith('/') ? path : `/${path}`;
-            if (!base) return route;
-            return `${base}${route}`;
+            if (base === '' || base == null) return route;
+            return `${String(base).replace(/\/$/, '')}${route}`;
         }
 
-        function httpJsonRequest(method, path, body, timeoutMs = 10000) {
+        async function httpJsonRequest(method, path, body, timeoutMs = 8000) {
             const bases = getApiBaseCandidates();
-            return new Promise((resolve, reject) => {
-                let index = 0;
-                const tryNext = () => {
-                    if (index >= bases.length) {
-                        reject(new Error('Sin conexión con el servidor'));
-                        return;
+            let lastError = null;
+
+            for (const base of bases) {
+                const url = apiUrl(base, path);
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), timeoutMs);
+                try {
+                    const response = await fetch(url, {
+                        method,
+                        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                        body: body != null ? JSON.stringify(body) : undefined,
+                        signal: controller.signal,
+                        credentials: 'omit',
+                        mode: 'cors',
+                        cache: 'no-store',
+                    });
+                    clearTimeout(timer);
+
+                    let data = null;
+                    try {
+                        data = await response.json();
+                    } catch (_) {
+                        data = null;
                     }
-                    const base = bases[index++];
-                    const url = apiUrl(base, path);
-                    const xhr = new XMLHttpRequest();
-                    const timer = setTimeout(() => {
-                        xhr.abort();
-                        tryNext();
-                    }, timeoutMs);
-                    xhr.open(method, url, true);
-                    xhr.setRequestHeader('Content-Type', 'application/json');
-                    xhr.onload = () => {
-                        clearTimeout(timer);
-                        let data = null;
-                        try { data = JSON.parse(xhr.responseText || 'null'); } catch (e) { data = null; }
-                        if (xhr.status >= 200 && xhr.status < 300) {
-                            resolve(data);
-                            return;
-                        }
-                        if (xhr.status === 400 || xhr.status === 401) {
-                            resolve(data || { ok: false, error: 'Usuario o contraseña incorrectos.' });
-                            return;
-                        }
-                        tryNext();
-                    };
-                    xhr.onerror = () => { clearTimeout(timer); tryNext(); };
-                    xhr.onabort = () => { clearTimeout(timer); tryNext(); };
-                    xhr.send(body ? JSON.stringify(body) : null);
-                };
-                tryNext();
+
+                    if (response.ok) return data;
+                    if (response.status === 400 || response.status === 401) {
+                        return data || { ok: false, error: 'Usuario o contraseña incorrectos.' };
+                    }
+                    lastError = new Error(`HTTP ${response.status} en ${url}`);
+                } catch (err) {
+                    clearTimeout(timer);
+                    lastError = err;
+                }
+            }
+
+            throw lastError || new Error('Sin conexión con el servidor');
+        }
+
+        function attemptLoginViaSocket(user, pass) {
+            return new Promise((resolve) => {
+                if (!socket?.connected) {
+                    resolve(null);
+                    return;
+                }
+                let settled = false;
+                const timer = setTimeout(() => {
+                    if (!settled) {
+                        settled = true;
+                        resolve(null);
+                    }
+                }, 8000);
+                socket.emit('intentarLogin', { user, pass }, (res) => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve(res || null);
+                });
             });
         }
 
@@ -2051,6 +2094,7 @@
                 const status = await httpJsonRequest('GET', '/api/status', null, 8000);
                 if (status?.ok) {
                     serverHttpOk = true;
+                    serverStatusCache = status;
                     if (status.discordReady !== undefined) discordBotReady = !!status.discordReady;
                     if (status.dbChannel !== undefined) discordDbChannelReady = !!status.dbChannel;
                     updateLoginServerStatus();
@@ -2087,7 +2131,11 @@
                 const syncHint = (discordBotReady && discordDbChannelReady)
                     ? 'Discord listo'
                     : (serverHttpOk ? 'servidor en línea' : 'conectando Discord');
-                el.textContent = `Servidor en línea — puede ingresar (${syncHint})`;
+                const counts = serverStatusCache?.counts;
+                const countHint = counts
+                    ? ` · ${counts.athletes} atletas, ${counts.judges} jueces`
+                    : '';
+                el.textContent = `Servidor en línea — puede ingresar (${syncHint}${countHint})`;
                 el.className = 'text-[11px] text-[#FFEA8D] font-semibold text-center';
                 return;
             }
@@ -2102,11 +2150,28 @@
             const text = document.getElementById('connection-text');
             const syncServerEl = document.getElementById('sync-server-url');
             const syncDiscordEl = document.getElementById('sync-discord-status');
+            const syncChannelEl = document.getElementById('sync-discord-channel');
+            const syncCountsEl = document.getElementById('sync-discord-counts');
+            const lastSyncEl = document.getElementById('last-discord-sync');
             if (syncServerEl) syncServerEl.textContent = activeSocketUrl;
             if (syncDiscordEl) {
                 syncDiscordEl.textContent = isDiscordFullyReady()
-                    ? 'Discord conectado'
+                    ? `Conectado (${serverStatusCache?.botTag || 'bot'})`
                     : (connected ? 'Servidor en línea — Discord no disponible' : 'Sin conexión al servidor');
+            }
+            if (syncChannelEl) {
+                syncChannelEl.textContent = serverStatusCache?.dbChannelName
+                    ? `#${serverStatusCache.dbChannelName}`
+                    : (discordDbChannelReady ? 'configurado' : 'no disponible');
+            }
+            if (syncCountsEl) {
+                const c = serverStatusCache?.counts;
+                syncCountsEl.textContent = c
+                    ? `${c.athletes} atletas · ${c.judges} jueces · ${c.scoring} rondas · cronograma ${c.hasSchedule ? 'sí' : 'no'}`
+                    : `${athletes.length} atletas · ${judges.length} jueces (local)`;
+            }
+            if (lastSyncEl && syncState.lastSync) {
+                lastSyncEl.textContent = new Date(syncState.lastSync).toLocaleString('es-ES');
             }
             if (!dot || !text) return;
             const fullyReady = isDiscordFullyReady();
@@ -2187,6 +2252,9 @@
 
             if (payload.discordReady !== undefined) discordBotReady = !!payload.discordReady;
             if (payload.dbChannel !== undefined) discordDbChannelReady = !!payload.dbChannel;
+            if (payload.counts) {
+                serverStatusCache = { ...(serverStatusCache || {}), counts: payload.counts };
+            }
 
             syncState.syncing = false;
             syncState.lastSync = payload.syncedAt || Date.now();
@@ -2356,6 +2424,7 @@
             sock.on('reconnect', () => requestDiscordSync(true));
 
             sock.on('estadoServidor', (status) => {
+                serverStatusCache = { ...(serverStatusCache || {}), ...status };
                 discordBotReady = !!status?.discordReady;
                 discordDbChannelReady = !!status?.dbChannel;
                 updateConnectionStatus(sock.connected);
@@ -2891,14 +2960,20 @@
 
         // ==================== LOGIN ====================
         function finishLogin(res) {
-            const errorEl = document.getElementById('login-error');
-            createSession(res.user, res.role, res.judgeSlot ?? null, res.token, res.label);
-            errorEl.classList.add('hidden');
-            document.getElementById('login-pass').value = '';
-            showMainApp();
-            requestDiscordSync(true);
-            showToast(`Bienvenido, ${res.label || res.user}. Sincronizando con Discord...`, 'success');
-            addLog('Inicio de Sesión', `${res.label || res.user} ingresó al sistema`);
+            try {
+                const errorEl = document.getElementById('login-error');
+                createSession(res.user, res.role, res.judgeSlot ?? null, res.token, res.label);
+                if (errorEl) errorEl.classList.add('hidden');
+                const passEl = document.getElementById('login-pass');
+                if (passEl) passEl.value = '';
+                showMainApp();
+                requestDiscordSync(true);
+                showToast(`Bienvenido, ${res.label || res.user}`, 'success');
+                addLog('Inicio de Sesión', `${res.label || res.user} ingresó al sistema`);
+            } catch (err) {
+                console.error('Error al abrir panel tras login:', err);
+                showLoginError('Sesión iniciada pero hubo un error al cargar el panel. Recargue la página.');
+            }
         }
 
         async function attemptLogin() {
@@ -2918,15 +2993,30 @@
             showLoginError('');
 
             try {
-                const res = await httpJsonRequest('POST', '/api/login', { user, pass }, 12000);
+                let res = null;
+                try {
+                    res = await httpJsonRequest('POST', '/api/login', { user, pass }, 10000);
+                } catch (httpErr) {
+                    console.warn('Login HTTP falló, probando socket:', httpErr.message);
+                }
+
+                if (!res?.ok) {
+                    const socketRes = await attemptLoginViaSocket(user, pass);
+                    if (socketRes?.ok) res = socketRes;
+                }
+
                 if (res?.ok) {
                     finishLogin(res);
                     return;
                 }
+
                 showLoginError(res?.error || 'Usuario o contraseña incorrectos.');
             } catch (err) {
                 console.error('Login falló:', err);
-                showLoginError('No se pudo conectar. Use https://manabipower.com e intente de nuevo.');
+                const hint = window.location.protocol === 'file:'
+                    ? 'Abra https://manabipower.com o ejecute start.bat (no abra el HTML directo).'
+                    : 'No se pudo conectar al servidor. Verifique que npm start esté activo o use https://manabipower.com';
+                showLoginError(hint);
                 startLoginHealthPolling();
             } finally {
                 if (loginBtn) {
@@ -2949,10 +3039,10 @@
         }
 
         function bindLoginForm() {
-            const btn = document.getElementById('login-submit-btn');
-            if (!btn || btn.dataset.bound === '1') return;
-            btn.dataset.bound = '1';
-            btn.addEventListener('click', (e) => {
+            const form = document.getElementById('login-form');
+            if (!form || form.dataset.bound === '1') return;
+            form.dataset.bound = '1';
+            form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 attemptLogin();
             });
@@ -6789,15 +6879,28 @@
 
         // ==================== INITIALIZATION ====================
         function initializeApp() {
+            bindLoginForm();
             initTailwind();
-            loadData();
+
+            try {
+                loadData();
+            } catch (err) {
+                console.error('Error cargando datos locales:', err);
+            }
+
             initSocketConnection(0);
             startLoginHealthPolling();
 
             const session = getValidSession();
             if (session) {
                 currentUser = session.user;
-                showMainApp();
+                try {
+                    showMainApp();
+                } catch (err) {
+                    console.error('Sesión guardada inválida:', err);
+                    clearSession();
+                    showLoginScreen();
+                }
             } else {
                 clearSession();
                 showLoginScreen();
@@ -6824,7 +6927,6 @@
             
             initRegistrationForm();
             updateConnectionStatus(!!socket?.connected);
-            bindLoginForm();
             updateRegClosedUI();
 
             if (currentUser) {

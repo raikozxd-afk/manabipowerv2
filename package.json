@@ -4,7 +4,9 @@
   "description": "Bot y Base de Datos para Manabí Power",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "organize-discord": "node scripts/organize-discord.js",
+    "setup-discord-channels": "node scripts/setup-discord-channels.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
