@@ -27,6 +27,14 @@
         })();
     </script>
     <style>
+        /* Crítico: no depender de Tailwind CDN para login */
+        .hidden { display: none !important; }
+        #login-error { display: none; }
+        #login-error.is-visible { display: block !important; }
+        #main-app { display: none; }
+        #main-app.is-visible { display: block !important; }
+        #login-screen.is-hidden { display: none !important; }
+
         :root {
             --gold: #C5A85C;
             --gold-light: #FFEA8D;
@@ -705,7 +713,7 @@
                         </div>
                     </div>
 
-                    <div id="login-error" class="hidden text-[#FFEA8D] text-xs font-bold bg-[#0F3057] border border-[#C5A85C]/40 px-3 py-2 rounded-xl"></div>
+                    <div id="login-error" class="text-[#FFEA8D] text-xs font-bold bg-[#0F3057] border border-[#C5A85C]/40 px-3 py-2 rounded-xl" role="alert"></div>
                     <div id="login-server-status" class="text-[11px] text-amber-300 font-semibold text-center">Cargando aplicación...</div>
                     <p class="text-[10px] text-[#C5A85C]/55 text-center leading-relaxed">Usuarios: <span class="text-[#FFEA8D]/80">admin</span>, <span class="text-[#FFEA8D]/80">escrutador</span>, <span class="text-[#FFEA8D]/80">juez1</span>–<span class="text-[#FFEA8D]/80">juez9</span></p>
 
@@ -717,6 +725,37 @@
 
                     <div class="gold-divider my-5"></div>
                 </form>
+
+                <script>
+                (function () {
+                    function earlyLoginStatus(msg) {
+                        var el = document.getElementById('login-server-status');
+                        if (el) el.textContent = msg;
+                    }
+                    function earlyBindLogin() {
+                        var form = document.getElementById('login-form');
+                        if (!form || form.dataset.earlyBound === '1') return;
+                        form.dataset.earlyBound = '1';
+                        earlyLoginStatus('Listo — ingrese usuario y contraseña');
+                        form.addEventListener('submit', function (e) {
+                            e.preventDefault();
+                            if (typeof window.attemptLogin === 'function') {
+                                window.attemptLogin();
+                            } else {
+                                earlyLoginStatus('Cargando… intente de nuevo en 2 segundos');
+                                setTimeout(function () {
+                                    if (typeof window.attemptLogin === 'function') window.attemptLogin();
+                                }, 2000);
+                            }
+                        });
+                    }
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', earlyBindLogin);
+                    } else {
+                        earlyBindLogin();
+                    }
+                })();
+                </script>
 
                     <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer" class="instagram-cta" aria-label="Síguenos en Instagram @manabi_power">
                         <span class="instagram-cta__icon"><i class="fa-brands fa-instagram"></i></span>
@@ -730,12 +769,12 @@
 
             <div class="text-center mt-8">
                 <div class="text-[#C5A85C]/50 text-[10px]">© 2026 Manabí Power Oficial</div>
-                <div id="app-version-tag" class="text-[#C5A85C]/40 text-[9px] mt-1 font-mono">v2.3.1 · build 2026-06-20</div>
+                <div id="app-version-tag" class="text-[#C5A85C]/40 text-[9px] mt-1 font-mono">v2.3.2 · build 2026-06-20</div>
             </div>
         </div>
     </div>
 
-    <div id="main-app" class="hidden min-h-screen bg-[#0A1931] text-[#FFEA8D]">
+    <div id="main-app" class="min-h-screen bg-[#0A1931] text-[#FFEA8D]">
         <div class="app-header sticky top-0 z-50">
             <div class="max-w-screen-2xl mx-auto">
                 <div class="px-5 md:px-6 py-3 flex items-center justify-between gap-4">
@@ -2684,8 +2723,16 @@
         }
 
         function showLoginScreen() {
-            document.getElementById('main-app').classList.add('hidden');
-            document.getElementById('login-screen').classList.remove('hidden');
+            const loginScreen = document.getElementById('login-screen');
+            const mainApp = document.getElementById('main-app');
+            if (mainApp) {
+                mainApp.classList.remove('is-visible', 'hidden');
+                mainApp.style.display = 'none';
+            }
+            if (loginScreen) {
+                loginScreen.classList.remove('is-hidden', 'hidden');
+                loginScreen.style.display = '';
+            }
             resetLoginForm();
             bindLoginForm();
             updateLoginServerStatus();
@@ -2972,20 +3019,39 @@
         }
 
         // ==================== LOGIN ====================
+        async function loginDirect(user, pass) {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({ user, pass }),
+                cache: 'no-store',
+            });
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (_) {
+                data = null;
+            }
+            if (response.ok && data?.ok) return data;
+            if (response.status === 401 || response.status === 400) {
+                return data || { ok: false, error: 'Usuario o contraseña incorrectos.' };
+            }
+            throw new Error(data?.error || `Error del servidor (${response.status})`);
+        }
+
         function finishLogin(res) {
             try {
-                const errorEl = document.getElementById('login-error');
                 createSession(res.user, res.role, res.judgeSlot ?? null, res.token, res.label);
-                if (errorEl) errorEl.classList.add('hidden');
+                showLoginError('');
                 const passEl = document.getElementById('login-pass');
                 if (passEl) passEl.value = '';
                 showMainApp();
-                requestDiscordSync(true);
-                showToast(`Bienvenido, ${res.label || res.user}`, 'success');
-                addLog('Inicio de Sesión', `${res.label || res.user} ingresó al sistema`);
+                if (typeof requestDiscordSync === 'function') requestDiscordSync(true);
+                if (typeof showToast === 'function') showToast(`Bienvenido, ${res.label || res.user}`, 'success');
+                if (typeof addLog === 'function') addLog('Inicio de Sesión', `${res.label || res.user} ingresó al sistema`);
             } catch (err) {
                 console.error('Error al abrir panel tras login:', err);
-                showLoginError('Sesión iniciada pero hubo un error al cargar el panel. Recargue la página.');
+                showLoginError('Error al abrir el panel: ' + (err.message || 'recargue la página'));
             }
         }
 
@@ -2993,6 +3059,7 @@
             const user = document.getElementById('login-user')?.value?.trim().toLowerCase() || '';
             const pass = document.getElementById('login-pass')?.value?.trim() || '';
             const loginBtn = document.getElementById('login-submit-btn');
+            const statusEl = document.getElementById('login-server-status');
 
             if (!user || !pass) {
                 showLoginError('Por favor complete usuario y contraseña.');
@@ -3003,14 +3070,20 @@
                 loginBtn.disabled = true;
                 loginBtn.textContent = 'INGRESANDO...';
             }
+            if (statusEl) statusEl.textContent = 'Verificando credenciales...';
             showLoginError('');
 
             try {
                 let res = null;
                 try {
-                    res = await httpJsonRequest('POST', '/api/login', { user, pass }, 10000);
-                } catch (httpErr) {
-                    console.warn('Login HTTP falló, probando socket:', httpErr.message);
+                    res = await loginDirect(user, pass);
+                } catch (directErr) {
+                    console.warn('Login directo falló:', directErr.message);
+                    try {
+                        res = await httpJsonRequest('POST', '/api/login', { user, pass }, 6000);
+                    } catch (httpErr) {
+                        console.warn('Login HTTP alternativo falló:', httpErr.message);
+                    }
                 }
 
                 if (!res?.ok) {
@@ -3024,12 +3097,14 @@
                 }
 
                 showLoginError(res?.error || 'Usuario o contraseña incorrectos.');
+                if (statusEl) statusEl.textContent = 'Credenciales incorrectas — intente de nuevo';
             } catch (err) {
                 console.error('Login falló:', err);
                 const hint = window.location.protocol === 'file:'
-                    ? 'Abra https://manabipower.com o ejecute start.bat (no abra el HTML directo).'
-                    : 'No se pudo conectar al servidor. Verifique que npm start esté activo o use https://manabipower.com';
+                    ? 'Abra https://manabipower.com (no use el archivo HTML directo).'
+                    : (err.message || 'No se pudo conectar al servidor.');
                 showLoginError(hint);
+                if (statusEl) statusEl.textContent = 'Error de conexión';
                 startLoginHealthPolling();
             } finally {
                 if (loginBtn) {
@@ -3044,11 +3119,11 @@
             if (!errorEl) return;
             if (!msg) {
                 errorEl.textContent = '';
-                errorEl.classList.add('hidden');
+                errorEl.classList.remove('is-visible');
                 return;
             }
             errorEl.textContent = msg;
-            errorEl.classList.remove('hidden');
+            errorEl.classList.add('is-visible');
         }
 
         function bindLoginForm() {
@@ -3072,9 +3147,18 @@
         }
 
         function showMainApp() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            
+            const loginScreen = document.getElementById('login-screen');
+            const mainApp = document.getElementById('main-app');
+            if (loginScreen) {
+                loginScreen.classList.add('hidden', 'is-hidden');
+                loginScreen.style.display = 'none';
+            }
+            if (mainApp) {
+                mainApp.classList.remove('hidden');
+                mainApp.classList.add('is-visible');
+                mainApp.style.display = 'block';
+            }
+
             const session = getValidSession();
             const roleLabel = session?.label || USER_LABELS[currentUser] || currentUser;
             document.getElementById('header-user').innerHTML = `${roleLabel}<span class="block text-[9px] text-[#C5A85C]/60 font-normal">${currentUserRole === 'judge' ? 'Juez ' + (currentJudgeSlot + 1) : currentUserRole}</span>`;
