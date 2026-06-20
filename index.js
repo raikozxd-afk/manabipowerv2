@@ -157,7 +157,15 @@ async function fetchAthletesFromDiscord() {
 }
 
 async function fetchJudgesFromDiscord() {
-    return fetchRecordsFromDiscord(isJudgeRecord);
+    const list = await fetchRecordsFromDiscord(isJudgeRecord);
+    return list.sort((a, b) => {
+        const ao = Number(a.sortOrder);
+        const bo = Number(b.sortOrder);
+        const aOrder = Number.isFinite(ao) ? ao : 0;
+        const bOrder = Number.isFinite(bo) ? bo : 0;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return String(a.id || '').localeCompare(String(b.id || ''));
+    });
 }
 
 async function fetchScoringRoundsFromDiscord() {
@@ -532,20 +540,55 @@ io.on('connection', async (socket) => {
         io.emit('juezEliminado', { id: judgeId });
     });
 
-    socket.on('reordenarJuecesDesdeWeb', async (payload) => {
-        const items = payload?.judges || payload || [];
-        if (!Array.isArray(items) || items.length === 0) return;
+    socket.on('reordenarJuecesDesdeWeb', async (payload, callback) => {
+        const dbChannel = getDbChannel();
+        if (!dbChannel) {
+            callback?.({ ok: false, error: 'Sin conexión con el canal de Discord.' });
+            return;
+        }
 
-        for (const item of items) {
+        const items = payload?.judges || payload || [];
+        if (!Array.isArray(items) || items.length === 0) {
+            callback?.({ ok: false, error: 'Lista de jueces vacía.' });
+            return;
+        }
+
+        let updated = 0;
+        let failed = 0;
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
             if (!item?.id) continue;
+            const sortOrder = item.sortOrder != null ? item.sortOrder : i;
             const found = await findJudgeMessage(item.id);
-            if (!found) continue;
-            const updated = { ...found.record, sortOrder: item.sortOrder };
-            await found.message.edit(formatJudgeMessage(updated));
+
+            try {
+                if (found) {
+                    const { recordType, ...rest } = item;
+                    const merged = { ...found.record, ...rest, sortOrder };
+                    await found.message.edit(formatJudgeMessage(merged));
+                    updated++;
+                } else if (item.fullName || item.firstName || item.lastName) {
+                    const { recordType, ...rest } = item;
+                    await dbChannel.send(formatJudgeMessage({ ...rest, sortOrder }));
+                    updated++;
+                } else {
+                    failed++;
+                }
+            } catch (err) {
+                console.error('Error al guardar orden de juez en Discord:', item.id, err);
+                failed++;
+            }
         }
 
         const list = await fetchJudgesFromDiscord();
         io.emit('juecesReordenados', list);
+        callback?.({
+            ok: failed === 0,
+            updated,
+            failed,
+            error: failed ? `${failed} juez(es) no se pudieron guardar en Discord` : null
+        });
     });
 
     socket.on('guardarRondaDesdeWeb', async (roundData) => {

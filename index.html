@@ -85,6 +85,12 @@
         .sched-order-btn:disabled { opacity: 0.25; cursor: not-allowed; }
         .sched-drag-handle { cursor: grab; color: rgba(197,168,92,0.45); padding: 4px 6px; border-radius: 8px; }
         .sched-drag-handle:hover { color: #FFEA8D; background: rgba(197,168,92,0.1); }
+        .sched-drag-handle:active { cursor: grabbing; }
+        .sched-cat-card.dragging { opacity: 0.45; transform: scale(0.99); }
+        .sched-cat-card.drag-over { box-shadow: 0 0 0 2px rgba(197,168,92,0.45); }
+        .sched-cat-drag-handle { cursor: grab; color: rgba(197,168,92,0.45); padding: 4px 6px; border-radius: 8px; flex-shrink: 0; margin-top: 2px; }
+        .sched-cat-drag-handle:hover { color: #FFEA8D; background: rgba(197,168,92,0.1); }
+        .sched-cat-drag-handle:active { cursor: grabbing; }
         .sched-status-pill { font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em; }
         .sched-status-pill.pendiente { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
         .sched-status-pill.en_curso { background: rgba(234,179,8,0.2); color: #FFEA8D; border: 1px solid rgba(234,179,8,0.45); }
@@ -1293,7 +1299,8 @@
                                 <button onclick="exportJudgesRoster()" class="text-xs font-bold px-4 py-2 bg-[#C5A85C] text-[#0A1931] rounded-2xl"><i class="fa-solid fa-file-export mr-1"></i>Exportar nómina de jueces</button>
                             </div>
                         </div>
-                        <p class="text-xs text-[#C5A85C]/60 mb-3"><i class="fa-solid fa-arrows-up-down mr-1"></i>Arrastre o use las flechas para cambiar el orden de la nómina</p>
+                        <p class="text-xs text-[#C5A85C]/60 mb-2"><i class="fa-solid fa-arrows-up-down mr-1"></i>Arrastre o use las flechas para cambiar el orden. Se guarda automáticamente en Discord.</p>
+                        <div id="judges-sync-status" class="text-[10px] text-[#86efac]/80 mb-3 hidden"><i class="fa-solid fa-cloud-arrow-up mr-1"></i><span>Orden de jueces sincronizado con Discord</span></div>
                         <div id="judges-list" class="space-y-3"></div>
                     </div>
                 </div>
@@ -1496,15 +1503,19 @@
                                 <div><label class="lbl">Minutos por atleta</label><input id="sched-min-per-athlete" type="number" min="1" max="15" class="dark-input w-full rounded-xl px-4 py-3 text-sm" value="4" onchange="onScheduleSettingsChange()"></div>
                                 <div><label class="lbl">Minutos base por modalidad</label><input id="sched-base-minutes" type="number" min="5" max="60" class="dark-input w-full rounded-xl px-4 py-3 text-sm" value="12" onchange="onScheduleSettingsChange()"></div>
                             </div>
-                            <p class="text-[10px] text-[#C5A85C]/60 mt-3"><i class="fa-solid fa-arrows-up-down mr-1"></i>Arrastre o use las flechas para reordenar. Los horarios se recalculan automáticamente.</p>
+                            <p class="text-[10px] text-[#C5A85C]/60 mt-3"><i class="fa-solid fa-arrows-up-down mr-1"></i>Arrastre modalidades y categorías o use las flechas para reordenar. Se guarda automáticamente en Discord.</p>
+                            <div id="sched-sync-status" class="text-[10px] text-[#86efac]/80 mt-2 hidden"><i class="fa-solid fa-cloud-arrow-up mr-1"></i><span>Cronograma sincronizado con Discord</span></div>
                         </div>
                         <div class="navy-card rounded-3xl p-5">
                             <div class="text-[10px] text-[#C5A85C] font-bold">RESUMEN</div>
                             <div class="text-3xl font-black text-[#FFEA8D] mt-2" id="sched-total-athletes">0</div>
-                            <div class="text-xs text-[#C5A85C]/70">atletas en cronograma</div>
-                            <div class="text-sm font-bold text-[#C5A85C] mt-4" id="sched-total-duration">Duración: —</div>
+                            <div class="text-xs text-[#C5A85C]/70" id="sched-total-athletes-label">inscripciones en cronograma</div>
+                            <div class="text-sm font-bold text-[#C5A85C] mt-3" id="sched-total-modalities">0 modalidades</div>
+                            <div class="text-sm font-bold text-[#C5A85C] mt-1" id="sched-total-duration">Duración: —</div>
                         </div>
                     </div>
+
+                    <div id="sched-coverage-banner" class="hidden mb-4 rounded-2xl p-4 border text-sm"></div>
 
                     <div class="dark-panel rounded-2xl p-4 mb-4 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
                         <div class="flex-1 min-w-[200px] relative">
@@ -1706,7 +1717,9 @@
         let scoreSaveTimer = null;
         let eventSchedule = null;
         let draggedScheduleModality = null;
+        let draggedScheduleCategory = null;
         let scheduleExpandedCategories = new Set();
+        let scheduleSyncTimer = null;
         let scheduleSearchQuery = '';
         const SCHEDULE_ID = 'mp-event-schedule';
         const AGE_CATEGORY_ORDER = ['Junior', 'Senior', 'Master +35', 'Master +40', 'Master +45', 'Master +50', 'Master +55', 'Master +60', 'Sin edad'];
@@ -1746,6 +1759,10 @@
             "Games Classic Bodybuilding": "Games Classic",
             "Fitness Challenge": "Posing Art"
         };
+
+        const APP_TO_SCHEDULE_MODALITY = Object.fromEntries(
+            Object.entries(SCHEDULE_TO_APP_MODALITY).map(([k, v]) => [v, k])
+        );
 
         const HEIGHT_RULES = {
             "Men's Physique": [170,173,176,179,182],
@@ -2069,7 +2086,10 @@
         socket.on('juecesReordenados', (datosDeDiscord) => {
             const silent = consumeSocketOp('reorder', 'all-judges');
             applyRemoteJudgesList(datosDeDiscord);
-            if (!silent && currentUser) showToast('Orden de jueces sincronizado', 'info');
+            if (!silent) {
+                showJudgeSyncStatus(false);
+                if (currentUser) showToast('Orden de jueces actualizado desde Discord', 'info');
+            }
         });
 
         socket.on('cargarCalificacion', (list) => {
@@ -3545,15 +3565,51 @@
             });
         }
 
+        function showJudgeSyncStatus(syncing = false) {
+            const el = document.getElementById('judges-sync-status');
+            if (!el) return;
+            if (syncing) {
+                el.className = 'text-[10px] text-[#FFEA8D]/80 mb-3';
+                el.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i><span>Guardando orden de jueces en Discord...</span>';
+                el.classList.remove('hidden');
+                return;
+            }
+            el.className = 'text-[10px] text-[#86efac]/80 mb-3';
+            el.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-1"></i><span>Orden de jueces sincronizado con Discord</span>';
+            el.classList.remove('hidden');
+            clearTimeout(judgeSyncTimer);
+            judgeSyncTimer = setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+
         function persistJudgeOrder(notify = true) {
             ensureJudgeSortOrder();
+            const sorted = getSortedJudges().map((j, i) => ({ ...normalizeJudge({ ...j }), sortOrder: i }));
+            sorted.forEach(j => {
+                const idx = judges.findIndex(x => x.id === j.id);
+                if (idx !== -1) judges[idx].sortOrder = j.sortOrder;
+            });
             saveJudges();
             markSocketOp('reorder', 'all-judges');
-            emitToDiscord('reordenarJuecesDesdeWeb', {
-                judges: getSortedJudges().map(j => ({ id: j.id, sortOrder: j.sortOrder }))
-            });
             renderJudgesList();
-            if (notify) addLog('Orden jueces', 'Se actualizó el orden de la nómina');
+
+            if (!socket.connected) {
+                showToast('Sin conexión con Discord. Orden guardado solo en este navegador.', 'error');
+                return;
+            }
+
+            showJudgeSyncStatus(true);
+            socket.emit('reordenarJuecesDesdeWeb', { judges: sorted }, (res) => {
+                showJudgeSyncStatus(false);
+                if (res?.ok === false) {
+                    showToast(res.error || 'Error al guardar orden de jueces en Discord', 'error');
+                    requestDiscordSync(true);
+                    return;
+                }
+                if (notify) {
+                    showToast('Orden de jueces guardado en Discord', 'success');
+                    addLog('Orden jueces', 'Nómina reordenada y sincronizada con Discord');
+                }
+            });
         }
 
         function moveJudge(id, direction) {
@@ -3561,17 +3617,18 @@
             const idx = sorted.findIndex(j => j.id === id);
             const targetIdx = idx + direction;
             if (idx === -1 || targetIdx < 0 || targetIdx >= sorted.length) return;
-            const current = judges.find(j => j.id === sorted[idx].id);
-            const target = judges.find(j => j.id === sorted[targetIdx].id);
-            if (!current || !target) return;
-            const tempOrder = current.sortOrder;
-            current.sortOrder = target.sortOrder;
-            target.sortOrder = tempOrder;
-            persistJudgeOrder(false);
-            showToast('Orden de jueces actualizado', 'success');
+            const reordered = [...sorted];
+            const [moved] = reordered.splice(idx, 1);
+            reordered.splice(targetIdx, 0, moved);
+            reordered.forEach((j, i) => {
+                const judgeIdx = judges.findIndex(x => x.id === j.id);
+                if (judgeIdx !== -1) judges[judgeIdx].sortOrder = i;
+            });
+            persistJudgeOrder(true);
         }
 
         let draggedJudgeId = null;
+        let judgeSyncTimer = null;
 
         function onJudgeDragStart(e, id) {
             draggedJudgeId = id;
@@ -3617,8 +3674,7 @@
                 const idx = judges.findIndex(x => x.id === j.id);
                 if (idx !== -1) judges[idx].sortOrder = i;
             });
-            persistJudgeOrder(false);
-            showToast('Orden de jueces actualizado', 'success');
+            persistJudgeOrder(true);
         }
 
         function getJudgeFullName(j) {
@@ -3758,6 +3814,7 @@
             addLog('Eliminación juez', getJudgeFullName(j));
             renderJudgesList();
             showToast('Juez eliminado', 'success');
+            persistJudgeOrder(false);
         }
 
         function getAthletesForJudge(judge) {
@@ -5056,25 +5113,235 @@
         }
 
         // ==================== CRONOGRAMA ====================
+        function toCanonicalModality(name) {
+            if (!name) return null;
+            const t = String(name).trim();
+            if (MODALITIES.includes(t)) return t;
+            if (MODALITY_ALIASES[t]) return MODALITY_ALIASES[t];
+            if (SCHEDULE_TO_APP_MODALITY[t]) return SCHEDULE_TO_APP_MODALITY[t];
+            const ci = MODALITIES.find(m => m.toLowerCase() === t.toLowerCase());
+            if (ci) return ci;
+            for (const [sched, app] of Object.entries(SCHEDULE_TO_APP_MODALITY)) {
+                if (sched.toLowerCase() === t.toLowerCase()) return app;
+            }
+            return t;
+        }
+
+        function getScheduleDisplayModality(canonicalMod) {
+            return APP_TO_SCHEDULE_MODALITY[canonicalMod] || canonicalMod;
+        }
+
+        function parseDoblajesEntries(doblajesText) {
+            if (!doblajesText?.trim()) return [];
+            const raw = doblajesText.trim();
+            const parts = raw
+                .split(/\s*;\s*|\n+|\s*\|\s*|(?=\btambién\b)/i)
+                .map(p => p.replace(/^también\s*/i, '').trim())
+                .filter(Boolean);
+            const entries = [];
+            parts.forEach(part => {
+                const match = part.match(/^(.+?)\s*[—–\-:]+\s*(.+)$/);
+                if (match) {
+                    const mod = toCanonicalModality(match[1].trim());
+                    const cat = match[2].trim();
+                    if (mod) entries.push({ modality: mod, category: cat || 'Sin categoría' });
+                    return;
+                }
+                const modOnly = toCanonicalModality(part);
+                if (modOnly && MODALITIES.includes(modOnly)) {
+                    entries.push({ modality: modOnly, category: 'Sin categoría' });
+                }
+            });
+            return entries;
+        }
+
+        function getAthleteScheduleEntries(athlete) {
+            athlete = normalizeAthlete({ ...athlete });
+            const primaryMod = toCanonicalModality(athlete.modality);
+            const entries = [];
+            if (primaryMod) {
+                entries.push({
+                    athlete,
+                    modality: primaryMod,
+                    category: athlete.category || 'Sin categoría',
+                    isDoblaje: false,
+                    entryKey: `${athlete.id}::primary`
+                });
+            }
+            const primaryCat = athlete.category || 'Sin categoría';
+            parseDoblajesEntries(athlete.doblajes).forEach((d, i) => {
+                if (d.modality === primaryMod && d.category === primaryCat) return;
+                entries.push({
+                    athlete,
+                    modality: d.modality,
+                    category: d.category,
+                    isDoblaje: true,
+                    entryKey: `${athlete.id}::doblaje::${i}::${d.modality}::${d.category}`
+                });
+            });
+            return entries;
+        }
+
+        function getAllAthleteScheduleEntries() {
+            return athletes.flatMap(a => getAthleteScheduleEntries(a));
+        }
+
+        function getFullScheduleModalityOrder() {
+            if (!eventSchedule) eventSchedule = createDefaultSchedule();
+            const seen = new Set();
+            const order = [];
+            const add = (name) => {
+                const canonical = toCanonicalModality(name);
+                if (!canonical || seen.has(canonical)) return;
+                seen.add(canonical);
+                order.push(canonical);
+            };
+            (eventSchedule.order || []).forEach(add);
+            getAllAthleteScheduleEntries().forEach(e => add(e.modality));
+            MODALITIES.forEach(add);
+            return order.length ? order : [...MODALITIES];
+        }
+
+        function getScheduleCategoryOrder(modality) {
+            const canonical = toCanonicalModality(modality);
+            const entries = getScheduleEntriesForModality(canonical);
+            const categorySet = new Set();
+            entries.forEach(e => categorySet.add(e.category || 'Sin categoría'));
+
+            if (!eventSchedule.categoryOrder) eventSchedule.categoryOrder = {};
+            const stored = eventSchedule.categoryOrder[canonical]
+                || eventSchedule.categoryOrder[modality]
+                || [];
+            const ordered = stored.filter(c => categorySet.has(c));
+            const newCats = [...categorySet].filter(c => !ordered.includes(c));
+            newCats.sort(sortScheduleCategoryNames).forEach(c => ordered.push(c));
+            eventSchedule.categoryOrder[canonical] = ordered;
+            return ordered;
+        }
+
+        function getScheduleModalityStatus(modality) {
+            if (!eventSchedule?.statuses) return 'pendiente';
+            const canonical = toCanonicalModality(modality);
+            const display = getScheduleDisplayModality(canonical);
+            return eventSchedule.statuses[canonical]
+                || eventSchedule.statuses[display]
+                || eventSchedule.statuses[modality]
+                || 'pendiente';
+        }
+
+        function setScheduleModalityStatusKey(modality, status) {
+            if (!eventSchedule.statuses) eventSchedule.statuses = {};
+            eventSchedule.statuses[toCanonicalModality(modality)] = status;
+        }
+
+        function getScheduleCoverageStats() {
+            const allEntries = getAllAthleteScheduleEntries();
+            const uniqueIds = new Set(athletes.map(a => String(a.id)));
+            const order = getFullScheduleModalityOrder();
+            let shownAppearances = 0;
+
+            order.forEach(mod => {
+                getScheduleCategoriesForModality(mod, false).forEach(cat => {
+                    shownAppearances += cat.athletes.length;
+                });
+            });
+
+            const missingAthletes = athletes.filter(a => {
+                const entries = getAthleteScheduleEntries(a);
+                return !entries.length || !entries[0].modality;
+            });
+
+            const unparsedDoblajes = athletes.filter(a => {
+                if (!a.doblajes?.trim()) return false;
+                return parseDoblajesEntries(a.doblajes).length === 0;
+            });
+
+            return {
+                totalRegistered: uniqueIds.size,
+                totalExpectedAppearances: allEntries.length,
+                shownAppearances,
+                totalModalities: order.length,
+                missingAthletes,
+                unparsedDoblajes,
+                isComplete: shownAppearances === allEntries.length
+                    && missingAthletes.length === 0
+                    && unparsedDoblajes.length === 0,
+                searchActive: !!scheduleSearchQuery
+            };
+        }
+
+        function renderScheduleCoverageBanner() {
+            const banner = document.getElementById('sched-coverage-banner');
+            if (!banner) return;
+            const stats = getScheduleCoverageStats();
+
+            if (stats.searchActive) {
+                banner.className = 'mb-4 rounded-2xl p-4 border text-sm border-[#C5A85C]/30 bg-[#0F3057]/50 text-[#C5A85C]';
+                banner.innerHTML = `<i class="fa-solid fa-filter mr-2"></i>Vista filtrada por búsqueda. `
+                    + `Registrados: <strong class="text-[#FFEA8D]">${stats.totalRegistered}</strong> atletas • `
+                    + `<strong class="text-[#FFEA8D]">${stats.totalExpectedAppearances}</strong> inscripciones totales (incluye doblajes).`;
+                banner.classList.remove('hidden');
+                return;
+            }
+
+            if (stats.isComplete) {
+                banner.className = 'mb-4 rounded-2xl p-4 border text-sm border-green-500/40 bg-green-500/10 text-[#86efac]';
+                banner.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i>Cobertura completa: `
+                    + `<strong>${stats.shownAppearances}</strong> de <strong>${stats.totalExpectedAppearances}</strong> inscripciones visibles • `
+                    + `<strong>${stats.totalRegistered}</strong> atletas únicos • `
+                    + `<strong>${stats.totalModalities}</strong> modalidades.`;
+                banner.classList.remove('hidden');
+                return;
+            }
+
+            let issues = [];
+            if (stats.shownAppearances !== stats.totalExpectedAppearances) {
+                issues.push(`${stats.totalExpectedAppearances - stats.shownAppearances} inscripción(es) no visible(s) en el cronograma`);
+            }
+            if (stats.missingAthletes.length) {
+                issues.push(`${stats.missingAthletes.length} atleta(s) sin modalidad asignada`);
+            }
+            if (stats.unparsedDoblajes.length) {
+                issues.push(`${stats.unparsedDoblajes.length} doblaje(s) no interpretado(s) — use formato: Modalidad — Categoría`);
+            }
+
+            banner.className = 'mb-4 rounded-2xl p-4 border text-sm border-amber-500/40 bg-amber-500/10 text-amber-200';
+            banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i><strong>Participantes faltantes detectados:</strong> ${issues.join(' • ')}. `
+                + `Mostrados: ${stats.shownAppearances}/${stats.totalExpectedAppearances} inscripciones.`;
+            banner.classList.remove('hidden');
+        }
+
         function createDefaultSchedule() {
+            const order = [...MODALITIES];
             const statuses = {};
-            SCHEDULE_DEFAULT_ORDER.forEach(m => { statuses[m] = 'pendiente'; });
+            order.forEach(m => { statuses[m] = 'pendiente'; });
             return normalizeSchedule({
                 id: SCHEDULE_ID,
                 eventStart: '08:00',
                 minutesPerAthlete: 4,
                 baseMinutesPerModality: 12,
-                order: [...SCHEDULE_DEFAULT_ORDER],
+                order,
                 statuses,
                 updatedAt: Date.now()
             });
         }
 
         function normalizeSchedule(s) {
-            if (!s.order?.length) s.order = [...SCHEDULE_DEFAULT_ORDER];
+            const seen = new Set();
+            const merged = [];
+            const add = (name) => {
+                const c = toCanonicalModality(name);
+                if (c && !seen.has(c)) { merged.push(c); seen.add(c); }
+            };
+            (s.order || []).forEach(add);
+            MODALITIES.forEach(add);
+            s.order = merged.length ? merged : [...MODALITIES];
             s.statuses = s.statuses || {};
             s.categoryOrder = s.categoryOrder || {};
-            s.order.forEach(m => { if (!s.statuses[m]) s.statuses[m] = 'pendiente'; });
+            s.order.forEach(m => {
+                const c = toCanonicalModality(m);
+                if (!s.statuses[c]) s.statuses[c] = s.statuses[m] || 'pendiente';
+            });
             s.eventStart = s.eventStart || '08:00';
             s.minutesPerAthlete = parseInt(s.minutesPerAthlete, 10) || 4;
             s.baseMinutesPerModality = parseInt(s.baseMinutesPerModality, 10) || 12;
@@ -5136,9 +5403,8 @@
         }
 
         function expandAllScheduleCategories() {
-            if (!eventSchedule) return;
-            eventSchedule.order.forEach(mod => {
-                getScheduleCategoriesForModality(mod).forEach(cat => {
+            getFullScheduleModalityOrder().forEach(mod => {
+                getScheduleCategoriesForModality(mod, false).forEach(cat => {
                     scheduleExpandedCategories.add(getScheduleCategoryKey(mod, cat.category));
                 });
             });
@@ -5180,44 +5446,48 @@
             if (currentSection === 2) filterAthletes();
         }
 
-        function getAthletesForScheduleModality(scheduleMod) {
-            const appMod = getAppModalityForSchedule(scheduleMod);
-            return athletes.map(normalizeAthlete).filter(a => a.modality === appMod || a.modality === scheduleMod);
+        function getScheduleEntriesForModality(modality) {
+            const canonical = toCanonicalModality(modality);
+            return getAllAthleteScheduleEntries().filter(e => e.modality === canonical);
         }
 
-        function getScheduleCategoriesForModality(scheduleMod) {
-            const appMod = getAppModalityForSchedule(scheduleMod);
-            const athleteList = getAthletesForScheduleModality(scheduleMod);
-            const categorySet = new Set();
-            athleteList.forEach(a => categorySet.add(a.category || 'Sin categoría'));
-
-            if (!eventSchedule.categoryOrder) eventSchedule.categoryOrder = {};
-            const stored = eventSchedule.categoryOrder[scheduleMod] || [];
-            const ordered = stored.filter(c => categorySet.has(c));
-            [...categorySet].sort(sortScheduleCategoryNames).forEach(c => {
-                if (!ordered.includes(c)) ordered.push(c);
-            });
-            eventSchedule.categoryOrder[scheduleMod] = ordered;
-
-            const measureLabel = getCategoryMeasureLabel(appMod);
+        function getScheduleCategoriesForModality(scheduleMod, applySearch = true) {
+            const canonical = toCanonicalModality(scheduleMod);
+            const entries = getScheduleEntriesForModality(canonical);
+            const ordered = getScheduleCategoryOrder(canonical);
+            const measureLabel = getCategoryMeasureLabel(canonical);
             return ordered.map(cat => {
-                const catAthletes = sortAthletesList(
-                    athleteList.filter(a => (a.category || 'Sin categoría') === cat),
-                    'bib'
-                ).filter(matchesScheduleSearch);
+                const catEntries = entries.filter(e => (e.category || 'Sin categoría') === cat);
+                const seenKeys = new Set();
+                const displayList = catEntries
+                    .filter(e => {
+                        if (seenKeys.has(e.entryKey)) return false;
+                        seenKeys.add(e.entryKey);
+                        return true;
+                    })
+                    .map(e => ({
+                        ...normalizeAthlete({ ...e.athlete }),
+                        _scheduleIsDoblaje: e.isDoblaje,
+                        _scheduleEntryKey: e.entryKey
+                    }))
+                    .filter(a => !applySearch || matchesScheduleSearch(a))
+                    .sort((a, b) => (a.bibNumber || 0) - (b.bibNumber || 0));
+
                 return {
                     category: cat,
-                    athletes: catAthletes,
+                    athletes: displayList,
                     measureLabel,
                     physPart: getCategoryPhysPart(cat)
                 };
-            }).filter(cat => !scheduleSearchQuery || cat.athletes.length > 0);
+            }).filter(cat => !applySearch || !scheduleSearchQuery || cat.athletes.length > 0);
         }
 
-        function renderScheduleCategoriesHtml(scheduleMod, categories) {
-            const appMod = getAppModalityForSchedule(scheduleMod);
+        function renderScheduleCategoriesHtml(scheduleMod, categories, isAdmin = false) {
+            const canonical = toCanonicalModality(scheduleMod);
+            const displayMod = getScheduleDisplayModality(canonical);
             const canManage = canManageParticipationStatus();
-            categories = categories || getScheduleCategoriesForModality(scheduleMod);
+            categories = categories || getScheduleCategoriesForModality(scheduleMod, true);
+            const catList = getScheduleCategoryOrder(canonical);
             if (!categories.length) {
                 const emptyMsg = scheduleSearchQuery
                     ? 'Ningún competidor coincide con la búsqueda en esta modalidad'
@@ -5232,21 +5502,31 @@
                     const key = getScheduleCategoryKey(scheduleMod, cat.category);
                     const expanded = scheduleExpandedCategories.has(key) || !!scheduleSearchQuery;
                     const count = cat.athletes.length;
-                    return `<div class="sched-cat-card rounded-xl border border-[#C5A85C]/20 bg-[#0A1931]/50 overflow-hidden">
-                        <button type="button" class="sched-cat-header w-full flex flex-wrap items-center gap-2 p-3 text-left hover:bg-[#C5A85C]/5 transition-colors"
-                            data-sched-toggle-cat data-sched-mod="${escapeHtml(scheduleMod)}" data-sched-cat="${encodeURIComponent(cat.category)}">
-                            <i class="fa-solid fa-chevron-${expanded ? 'down' : 'right'} text-[10px] text-[#C5A85C]/60"></i>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span class="text-xs font-bold text-[#FFEA8D]">${escapeHtml(cat.category)}</span>
-                                    <span class="sched-cat-count text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#C5A85C]/15 text-[#FFEA8D]">${count} competidor${count !== 1 ? 'es' : ''}</span>
+                    const catIdx = catList.indexOf(cat.category);
+                    const adminCatControls = isAdmin ? `
+                        <div class="flex flex-col gap-0.5 flex-shrink-0">
+                            <button type="button" data-sched-cat-move="-1" data-sched-cat-mod="${escapeHtml(canonical)}" data-sched-cat="${encodeURIComponent(cat.category)}" class="sched-order-btn" ${catIdx <= 0 ? 'disabled' : ''}><i class="fa-solid fa-chevron-up text-[10px]"></i></button>
+                            <button type="button" data-sched-cat-move="1" data-sched-cat-mod="${escapeHtml(canonical)}" data-sched-cat="${encodeURIComponent(cat.category)}" class="sched-order-btn" ${catIdx === -1 || catIdx >= catList.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
+                        </div>` : '';
+                    return `<div class="sched-cat-card rounded-xl border border-[#C5A85C]/20 bg-[#0A1931]/50 overflow-hidden" data-sched-cat-mod="${escapeHtml(canonical)}" data-sched-cat="${encodeURIComponent(cat.category)}">
+                        <div class="flex flex-wrap items-start gap-2 p-3">
+                            ${isAdmin ? `<div class="sched-cat-drag-handle" title="Arrastrar categoría"><i class="fa-solid fa-grip-vertical"></i></div>` : ''}
+                            ${adminCatControls}
+                            <button type="button" class="sched-cat-header flex-1 min-w-0 flex flex-wrap items-center gap-2 text-left hover:bg-[#C5A85C]/5 transition-colors rounded-lg p-1 -m-1"
+                                data-sched-toggle-cat data-sched-mod="${escapeHtml(scheduleMod)}" data-sched-cat="${encodeURIComponent(cat.category)}">
+                                <i class="fa-solid fa-chevron-${expanded ? 'down' : 'right'} text-[10px] text-[#C5A85C]/60"></i>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="text-xs font-bold text-[#FFEA8D]">${escapeHtml(cat.category)}</span>
+                                        <span class="sched-cat-count text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#C5A85C]/15 text-[#FFEA8D]">${count} competidor${count !== 1 ? 'es' : ''}</span>
+                                    </div>
+                                    <div class="text-[10px] text-[#C5A85C]/60 mt-1">
+                                        <span class="mr-3"><i class="fa-solid fa-layer-group mr-1"></i>${escapeHtml(displayMod)}</span>
+                                        <span><i class="fa-solid fa-ruler-vertical mr-1"></i>${escapeHtml(cat.measureLabel)}: ${escapeHtml(cat.physPart)}</span>
+                                    </div>
                                 </div>
-                                <div class="text-[10px] text-[#C5A85C]/60 mt-1">
-                                    <span class="mr-3"><i class="fa-solid fa-layer-group mr-1"></i>${escapeHtml(appMod)}</span>
-                                    <span><i class="fa-solid fa-ruler-vertical mr-1"></i>${escapeHtml(cat.measureLabel)}: ${escapeHtml(cat.physPart)}</span>
-                                </div>
-                            </div>
-                        </button>
+                            </button>
+                        </div>
                         <div class="sched-cat-participants ${expanded ? '' : 'hidden'} border-t border-[#C5A85C]/10">
                             <div class="overflow-x-auto">
                                 <table class="sched-participants-table w-full text-xs">
@@ -5271,9 +5551,12 @@
                                                     <button type="button" data-sched-set-status data-athlete-id="${escapeHtml(a.id)}" data-status="Pendiente" class="sched-part-action" title="Marcar pendiente">Pend.</button>
                                                 </div>
                                             </td>` : '';
+                                            const doblajeBadge = a._scheduleIsDoblaje
+                                                ? '<span class="ml-1 text-[8px] px-1.5 py-0.5 rounded bg-[#C5A85C]/20 text-[#FFEA8D] font-bold">DOBLAJE</span>'
+                                                : '';
                                             return `<tr class="border-t border-[#C5A85C]/8 hover:bg-[#C5A85C]/5">
                                                 <td class="px-3 py-2 font-mono font-bold text-[#C5A85C]">#${a.bibNumber || '—'}</td>
-                                                <td class="px-3 py-2 font-semibold text-[#FFEA8D]">${escapeHtml(getFullName(a))}</td>
+                                                <td class="px-3 py-2 font-semibold text-[#FFEA8D]">${escapeHtml(getFullName(a))}${doblajeBadge}</td>
                                                 <td class="px-3 py-2 text-[#C5A85C]/80">${escapeHtml(provClub)}</td>
                                                 <td class="px-3 py-2 text-center"><span class="sched-part-status ${psCls}">${ps}</span></td>
                                                 ${actions}
@@ -5289,15 +5572,11 @@
         }
 
         function getAppModalityForSchedule(scheduleMod) {
-            return SCHEDULE_TO_APP_MODALITY[scheduleMod] || scheduleMod;
+            return toCanonicalModality(scheduleMod);
         }
 
         function countAthletesForScheduleModality(scheduleMod) {
-            const appMod = getAppModalityForSchedule(scheduleMod);
-            return athletes.filter(a => {
-                const norm = normalizeAthlete({ ...a });
-                return norm.modality === appMod || norm.modality === scheduleMod;
-            }).length;
+            return getScheduleEntriesForModality(scheduleMod).length;
         }
 
         function parseTimeToMinutes(timeStr) {
@@ -5317,21 +5596,23 @@
         }
 
         function buildScheduleTimeline(schedule) {
+            const order = getFullScheduleModalityOrder();
             let cursor = parseTimeToMinutes(schedule.eventStart);
-            return schedule.order.map((mod, index) => {
+            return order.map((mod, index) => {
                 const duration = getModalityDurationMinutes(schedule, mod);
                 const start = cursor;
                 const end = cursor + duration;
                 cursor = end;
                 return {
                     modality: mod,
+                    displayModality: getScheduleDisplayModality(mod),
                     index,
                     order: index + 1,
                     athleteCount: countAthletesForScheduleModality(mod),
                     duration,
                     startTime: formatMinutesToTime(start),
                     endTime: formatMinutesToTime(end),
-                    status: schedule.statuses[mod] || 'pendiente'
+                    status: getScheduleModalityStatus(mod)
                 };
             });
         }
@@ -5346,13 +5627,36 @@
             return { current, next, eventEnd, timeline };
         }
 
-        function persistSchedule(notify = false) {
+        function showScheduleSyncStatus(syncing = false) {
+            const el = document.getElementById('sched-sync-status');
+            if (!el) return;
+            if (syncing) {
+                el.className = 'text-[10px] text-[#FFEA8D]/80 mt-2';
+                el.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i><span>Sincronizando cronograma con Discord...</span>';
+                el.classList.remove('hidden');
+                return;
+            }
+            el.className = 'text-[10px] text-[#86efac]/80 mt-2';
+            el.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-1"></i><span>Cronograma sincronizado con Discord</span>';
+            el.classList.remove('hidden');
+            clearTimeout(scheduleSyncTimer);
+            scheduleSyncTimer = setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+
+        function persistSchedule(notify = false, logAction = '') {
             if (!eventSchedule) return;
             eventSchedule.updatedAt = Date.now();
             saveScheduleLocal();
             markSocketOp('edit', SCHEDULE_ID);
-            emitToDiscord('guardarCronogramaDesdeWeb', eventSchedule);
+            showScheduleSyncStatus(true);
+            if (socket.connected) {
+                socket.emit('guardarCronogramaDesdeWeb', eventSchedule);
+            } else {
+                showToast('Sin conexión con Discord. Orden guardado solo en este navegador.', 'error');
+            }
             renderScheduleSection();
+            showScheduleSyncStatus(false);
+            if (logAction) addLog('Cronograma', logAction);
             if (notify) showToast('Cronograma guardado y sincronizado', 'success');
         }
 
@@ -5363,7 +5667,10 @@
             syncScheduleSettingsInputs();
             renderScheduleSection();
             renderScheduleLiveWidget();
-            if (notify) showToast('Cronograma actualizado desde la nube', 'info');
+            if (notify) {
+                showScheduleSyncStatus(false);
+                showToast('Cronograma actualizado desde Discord', 'info');
+            }
         }
 
         function syncScheduleSettingsInputs() {
@@ -5386,49 +5693,124 @@
 
         function moveScheduleModality(mod, direction) {
             if (!eventSchedule || currentUserRole !== 'admin') return;
-            const order = [...eventSchedule.order];
-            const idx = order.indexOf(mod);
+            const order = getFullScheduleModalityOrder();
+            const canonical = toCanonicalModality(mod);
+            const idx = order.indexOf(canonical);
             const target = idx + direction;
             if (idx === -1 || target < 0 || target >= order.length) return;
             [order[idx], order[target]] = [order[target], order[idx]];
             eventSchedule.order = order;
-            persistSchedule(true);
+            persistSchedule(true, `Modalidad ${getScheduleDisplayModality(canonical)} movida`);
         }
 
         function reorderScheduleModality(sourceMod, targetMod) {
             if (!eventSchedule || currentUserRole !== 'admin' || sourceMod === targetMod) return;
-            const order = [...eventSchedule.order];
-            const from = order.indexOf(sourceMod);
-            const to = order.indexOf(targetMod);
+            const order = getFullScheduleModalityOrder();
+            const source = toCanonicalModality(sourceMod);
+            const target = toCanonicalModality(targetMod);
+            const from = order.indexOf(source);
+            const to = order.indexOf(target);
             if (from === -1 || to === -1) return;
             order.splice(from, 1);
-            order.splice(to, 0, sourceMod);
+            order.splice(to, 0, source);
             eventSchedule.order = order;
-            persistSchedule(true);
+            persistSchedule(true, `Orden modalidades: ${getScheduleDisplayModality(source)} → posición de ${getScheduleDisplayModality(target)}`);
+        }
+
+        function moveScheduleCategory(mod, category, direction) {
+            if (!eventSchedule || currentUserRole !== 'admin') return;
+            const canonical = toCanonicalModality(mod);
+            const list = getScheduleCategoryOrder(canonical);
+            const idx = list.indexOf(category);
+            const target = idx + direction;
+            if (idx === -1 || target < 0 || target >= list.length) return;
+            [list[idx], list[target]] = [list[target], list[idx]];
+            if (!eventSchedule.categoryOrder) eventSchedule.categoryOrder = {};
+            eventSchedule.categoryOrder[canonical] = list;
+            persistSchedule(true, `Orden categorías (${getScheduleDisplayModality(canonical)}): ${category}`);
+        }
+
+        function reorderScheduleCategory(mod, sourceCat, targetCat) {
+            if (!eventSchedule || currentUserRole !== 'admin' || sourceCat === targetCat) return;
+            const canonical = toCanonicalModality(mod);
+            const list = getScheduleCategoryOrder(canonical);
+            const from = list.indexOf(sourceCat);
+            const to = list.indexOf(targetCat);
+            if (from === -1 || to === -1) return;
+            list.splice(from, 1);
+            list.splice(to, 0, sourceCat);
+            if (!eventSchedule.categoryOrder) eventSchedule.categoryOrder = {};
+            eventSchedule.categoryOrder[canonical] = list;
+            persistSchedule(true, `Categoría ${sourceCat} reordenada en ${getScheduleDisplayModality(canonical)}`);
+        }
+
+        function onScheduleCatDragStart(e, mod, cat) {
+            if (currentUserRole !== 'admin') { e.preventDefault(); return; }
+            draggedScheduleCategory = { mod: toCanonicalModality(mod), cat };
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', `${draggedScheduleCategory.mod}|||${draggedScheduleCategory.cat}`);
+            const card = e.currentTarget.closest('.sched-cat-card');
+            if (card) card.classList.add('dragging');
+        }
+
+        function onScheduleCatDragEnd(e) {
+            const card = e.currentTarget.closest('.sched-cat-card');
+            if (card) card.classList.remove('dragging');
+            document.querySelectorAll('.sched-cat-card.drag-over').forEach(el => el.classList.remove('drag-over'));
+            draggedScheduleCategory = null;
+        }
+
+        function onScheduleCatDragOver(e) {
+            e.preventDefault();
+            if (currentUserRole !== 'admin') return;
+            const card = e.currentTarget.closest('.sched-cat-card');
+            if (card) card.classList.add('drag-over');
+        }
+
+        function onScheduleCatDragLeave(e) {
+            const card = e.currentTarget.closest('.sched-cat-card');
+            if (card) card.classList.remove('drag-over');
+        }
+
+        function onScheduleCatDrop(e, targetMod, targetCat) {
+            e.preventDefault();
+            e.stopPropagation();
+            const card = e.currentTarget.closest('.sched-cat-card');
+            if (card) card.classList.remove('drag-over');
+            const source = draggedScheduleCategory
+                || (() => {
+                    const raw = e.dataTransfer.getData('text/plain');
+                    const [mod, cat] = raw.split('|||');
+                    return mod && cat ? { mod, cat } : null;
+                })();
+            if (!source) return;
+            reorderScheduleCategory(targetMod, source.cat, targetCat);
         }
 
         function setScheduleModalityStatus(mod, status) {
             if (!eventSchedule || currentUserRole !== 'admin') return;
+            const order = getFullScheduleModalityOrder();
             if (status === 'en_curso') {
-                eventSchedule.order.forEach(m => {
-                    if (eventSchedule.statuses[m] === 'en_curso') eventSchedule.statuses[m] = 'finalizada';
+                order.forEach(m => {
+                    if (getScheduleModalityStatus(m) === 'en_curso') setScheduleModalityStatusKey(m, 'finalizada');
                 });
             }
-            eventSchedule.statuses[mod] = status;
+            setScheduleModalityStatusKey(mod, status);
             persistSchedule();
-            addLog('Cronograma', `${mod} → ${status}`);
+            addLog('Cronograma', `${getScheduleDisplayModality(mod)} → ${status}`);
         }
 
         function advanceScheduleNext() {
             if (!eventSchedule || currentUserRole !== 'admin') return;
+            const order = getFullScheduleModalityOrder();
             const { current } = getCurrentAndNextModality(eventSchedule);
             if (current) {
-                eventSchedule.statuses[current.modality] = 'finalizada';
-                const next = eventSchedule.order.find((m, i) => i > current.index && eventSchedule.statuses[m] === 'pendiente');
-                if (next) eventSchedule.statuses[next] = 'en_curso';
+                setScheduleModalityStatusKey(current.modality, 'finalizada');
+                const next = order.find((m, i) => i > current.index && getScheduleModalityStatus(m) === 'pendiente');
+                if (next) setScheduleModalityStatusKey(next, 'en_curso');
             } else {
-                const first = eventSchedule.order.find(m => eventSchedule.statuses[m] === 'pendiente');
-                if (first) eventSchedule.statuses[first] = 'en_curso';
+                const first = order.find(m => getScheduleModalityStatus(m) === 'pendiente');
+                if (first) setScheduleModalityStatusKey(first, 'en_curso');
             }
             persistSchedule(true);
         }
@@ -5477,11 +5859,13 @@
             const { current, next, eventEnd } = getCurrentAndNextModality(eventSchedule);
             const onStage = athletes.map(normalizeAthlete).filter(a => getParticipationStatus(a) === 'En Tarima');
             const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-            set('sched-live-current', current ? `${current.modality} (${current.startTime})` : 'Sin modalidad activa');
+            const curLabel = current ? (current.displayModality || current.modality) : null;
+            const nextLabel = next ? (next.displayModality || next.modality) : null;
+            set('sched-live-current', curLabel ? `${curLabel} (${current.startTime})` : 'Sin modalidad activa');
             set('sched-live-on-stage', onStage.length
                 ? onStage.map(a => `#${a.bibNumber} ${getFullName(a)}`).join(' • ')
                 : 'Nadie en tarima');
-            set('sched-live-next', next ? `${next.modality} (${next.startTime})` : '—');
+            set('sched-live-next', nextLabel ? `${nextLabel} (${next.startTime})` : '—');
             set('sched-live-end', eventEnd);
         }
 
@@ -5497,12 +5881,18 @@
             });
 
             const timeline = buildScheduleTimeline(eventSchedule);
-            const { current, next, eventEnd } = getCurrentAndNextModality(eventSchedule);
-            const totalAthletes = timeline.reduce((s, t) => s + t.athleteCount, 0);
+            const coverage = getScheduleCoverageStats();
             const totalMin = timeline.reduce((s, t) => s + t.duration, 0);
 
-            document.getElementById('sched-total-athletes').textContent = totalAthletes;
+            document.getElementById('sched-total-athletes').textContent = coverage.totalExpectedAppearances;
+            const labelEl = document.getElementById('sched-total-athletes-label');
+            if (labelEl) {
+                labelEl.textContent = `inscripciones (${coverage.totalRegistered} atletas únicos)`;
+            }
+            const modEl = document.getElementById('sched-total-modalities');
+            if (modEl) modEl.textContent = `${coverage.totalModalities} modalidades`;
             document.getElementById('sched-total-duration').textContent = `Duración: ${Math.floor(totalMin / 60)}h ${totalMin % 60}min`;
+            renderScheduleCoverageBanner();
             renderScheduleLiveWidget();
 
             const container = document.getElementById('schedule-cards-list');
@@ -5528,7 +5918,7 @@
                         <div class="w-10 h-10 rounded-xl bg-[#C5A85C]/15 border border-[#C5A85C]/35 flex items-center justify-center font-black text-[#FFEA8D]">${item.order}</div>
                         <div class="flex-1 min-w-0">
                             <div class="flex flex-wrap items-center gap-2">
-                                <span class="font-bold text-[#FFEA8D]">${escapeHtml(item.modality)}</span>
+                                <span class="font-bold text-[#FFEA8D]">${escapeHtml(item.displayModality || item.modality)}</span>
                                 <span class="sched-status-pill ${status}">${statusLabel}</span>
                             </div>
                             <div class="text-xs text-[#C5A85C]/70 mt-1">
@@ -5542,7 +5932,7 @@
                             </div>
                         </div>
                     </div>
-                    ${renderScheduleCategoriesHtml(item.modality, scheduleCategories)}
+                    ${renderScheduleCategoriesHtml(item.modality, scheduleCategories, isAdmin)}
                 </div>`;
             }).join('');
 
@@ -5560,7 +5950,36 @@
                 });
             });
 
+            container.querySelectorAll('[data-sched-cat-move]').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    moveScheduleCategory(
+                        btn.dataset.schedCatMod,
+                        decodeURIComponent(btn.dataset.schedCat || ''),
+                        parseInt(btn.dataset.schedCatMove, 10)
+                    );
+                });
+            });
+
             if (isAdmin) {
+                container.querySelectorAll('.sched-cat-card').forEach(card => {
+                    const mod = card.dataset.schedCatMod;
+                    const cat = decodeURIComponent(card.dataset.schedCat || '');
+                    const handle = card.querySelector('.sched-cat-drag-handle');
+                    if (handle) {
+                        handle.addEventListener('mousedown', e => e.stopPropagation());
+                        card.addEventListener('dragstart', e => {
+                            if (!e.target.closest('.sched-cat-drag-handle')) { e.preventDefault(); return; }
+                            onScheduleCatDragStart(e, mod, cat);
+                        });
+                    }
+                    card.setAttribute('draggable', 'true');
+                    card.addEventListener('dragend', onScheduleCatDragEnd);
+                    card.addEventListener('dragover', onScheduleCatDragOver);
+                    card.addEventListener('dragleave', onScheduleCatDragLeave);
+                    card.addEventListener('drop', e => onScheduleCatDrop(e, mod, cat));
+                });
+
                 container.querySelectorAll('.sched-card').forEach(card => {
                     const mod = card.dataset.schedMod;
                     card.addEventListener('dragstart', e => {
