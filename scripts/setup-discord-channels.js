@@ -53,6 +53,17 @@ const SERVER_LAYOUT = [
                     '`!eliminar ID_DEL_REGISTRO`',
                 ],
             },
+            {
+                name: 'login',
+                topic: 'Accesos a la Mesa de Control Web — manabipower.com',
+                pin: [
+                    '🔐 **Canal de login**',
+                    'Aquí se registran los accesos a **https://manabipower.com**',
+                    'Cada inicio y cierre de sesión queda sincronizado con Discord.',
+                ],
+                envKey: 'LOGIN_CHANNEL_ID',
+                everyoneCanSend: false,
+            },
         ],
     },
     {
@@ -366,6 +377,7 @@ async function main() {
     const envUpdates = {};
     if (createdMap.__dbChannelId) envUpdates.DB_CHANNEL_ID = createdMap.__dbChannelId;
     if (createdMap.LOG_CHANNEL_ID) envUpdates.LOG_CHANNEL_ID = createdMap.LOG_CHANNEL_ID;
+    if (createdMap.LOGIN_CHANNEL_ID) envUpdates.LOGIN_CHANNEL_ID = createdMap.LOGIN_CHANNEL_ID;
     if (createdMap.ANNOUNCE_CHANNEL_ID) envUpdates.ANNOUNCE_CHANNEL_ID = createdMap.ANNOUNCE_CHANNEL_ID;
     updateEnvFile(envUpdates);
 
@@ -378,6 +390,9 @@ async function main() {
     }
     if (createdMap.LOG_CHANNEL_ID) {
         console.log(`  LOG_CHANNEL_ID (env)     ${createdMap.LOG_CHANNEL_ID}`);
+    }
+    if (createdMap.LOGIN_CHANNEL_ID) {
+        console.log(`  LOGIN_CHANNEL_ID (env)   ${createdMap.LOGIN_CHANNEL_ID}`);
     }
     console.log('\nListo. Abra Discord y revise las categorías creadas.');
     console.log('Luego: npm start → http://localhost:3000\n');

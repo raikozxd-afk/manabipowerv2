@@ -33,6 +33,7 @@ function getServerStatus() {
         dbChannel: !!dbChannel,
         dbChannelName: dbChannel?.name || null,
         dbChannelId: DB_CHANNEL_ID || null,
+        loginChannel: !!LOGIN_CHANNEL_ID,
         botTag: client.user?.tag || null,
         uptime: Math.floor(process.uptime()),
         counts: { ...lastSyncCounts }
@@ -82,18 +83,58 @@ function authenticateUser(user, pass) {
         user: normalizedUser,
         role: account.role,
         judgeSlot: account.judgeSlot ?? null,
-        label: account.label
+        label: account.label,
+        discordReady: client.isReady(),
+        dbChannel: !!getDbChannelSync()
     };
 }
 
-app.post('/api/login', (req, res) => {
+async function postLoginLog(payload) {
+    if (!LOGIN_CHANNEL_ID || !client.isReady()) return;
+    try {
+        const channel = await client.channels.fetch(LOGIN_CHANNEL_ID);
+        if (!channel?.isTextBased?.()) return;
+        const { event, user, label, role, ok, detail } = payload;
+        const icon = ok ? '✅' : '❌';
+        const action = event === 'logout' ? 'Cierre de sesión' : (event === 'fail' ? 'Intento fallido' : 'Inicio de sesión');
+        const lines = [
+            `${icon} **${action}** — ${new Date().toLocaleString('es-ES')}`,
+            `Usuario: \`${user}\` · ${label || role || '—'}`,
+            `Rol: ${role || '—'}`,
+            `Discord: ${client.isReady() ? 'conectado' : 'no disponible'}`,
+            `BD: ${getDbChannelSync() ? `#${getDbChannelSync().name}` : 'no disponible'}`
+        ];
+        if (detail) lines.push(`Detalle: ${detail}`);
+        await channel.send(lines.join('\n'));
+    } catch (err) {
+        console.warn('Discord: no se pudo publicar en canal login:', err.message);
+    }
+}
+
+app.post('/api/login', async (req, res) => {
     const user = req.body?.user ?? req.body?.username ?? req.query?.user;
     const pass = req.body?.pass ?? req.body?.password ?? req.query?.pass;
     const result = authenticateUser(user, pass);
     if (!result.ok) {
+        postLoginLog({
+            event: 'fail',
+            user: String(user || '').trim().toLowerCase() || '—',
+            label: null,
+            role: null,
+            ok: false,
+            detail: result.error
+        }).catch(() => {});
         res.status(result.error?.includes('complete') ? 400 : 401).json(result);
         return;
     }
+    await postLoginLog({
+        event: 'login',
+        user: result.user,
+        label: result.label,
+        role: result.role,
+        ok: true
+    });
+    emitFullSync(null, { logToDiscord: false }).catch(() => {});
     res.json(result);
 });
 
@@ -112,6 +153,7 @@ const client = new Client({
 
 const DB_CHANNEL_ID = process.env.DB_CHANNEL_ID;
 const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID;
+const LOGIN_CHANNEL_ID = process.env.LOGIN_CHANNEL_ID;
 const FETCH_LIMIT = 100;
 const FETCH_MAX_MESSAGES = 5000;
 const SESSION_MAX_MS = 8 * 60 * 60 * 1000;
@@ -639,13 +681,42 @@ io.on('connection', (socket) => {
     console.log('Nueva conexión desde la Mesa de Control Web');
     socket.emit('estadoServidor', getServerStatus());
 
-    socket.on('intentarLogin', (payload, callback) => {
-        callback?.(authenticateUser(payload?.user, payload?.pass));
+    socket.on('intentarLogin', async (payload, callback) => {
+        const result = authenticateUser(payload?.user, payload?.pass);
+        if (result.ok) {
+            await postLoginLog({
+                event: 'login',
+                user: result.user,
+                label: result.label,
+                role: result.role,
+                ok: true,
+                detail: 'vía socket'
+            });
+            emitFullSync(socket, { logToDiscord: false }).catch(() => {});
+        } else {
+            postLoginLog({
+                event: 'fail',
+                user: String(payload?.user || '').trim().toLowerCase() || '—',
+                ok: false,
+                detail: result.error
+            }).catch(() => {});
+        }
+        callback?.(result);
     });
 
     socket.on('cerrarSesion', (payload) => {
         const token = payload?.token;
+        const session = token ? activeSessions.get(token) : null;
         if (token) activeSessions.delete(token);
+        if (session) {
+            postLoginLog({
+                event: 'logout',
+                user: session.user,
+                label: session.label,
+                role: session.role,
+                ok: true
+            }).catch(() => {});
+        }
     });
 
     socket.on('actualizarParticipacionDesdeWeb', async (payload) => {
@@ -1028,7 +1099,12 @@ server.listen(PORT, () => {
 setInterval(() => {
     if (!client.isReady()) return;
     io.emit('estadoServidor', getServerStatus());
-}, 60000);
+}, 30000);
+
+setInterval(() => {
+    if (!client.isReady() || !getDbChannelSync()) return;
+    emitFullSync(null, { logToDiscord: false }).catch(() => {});
+}, 90000);
 
 const discordToken = process.env.DISCORD_TOKEN;
 if (!discordToken || discordToken === 'tu_token_del_bot_de_discord') {

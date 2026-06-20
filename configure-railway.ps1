@@ -52,6 +52,7 @@ if ($vars['AUTH_ADMIN_PASS']) { & $railway variable set "AUTH_ADMIN_PASS=$($vars
 if ($vars['AUTH_SCRUT_PASS']) { & $railway variable set "AUTH_SCRUT_PASS=$($vars['AUTH_SCRUT_PASS'])" --skip-deploys }
 if ($vars['AUTH_JUDGE_PASS']) { & $railway variable set "AUTH_JUDGE_PASS=$($vars['AUTH_JUDGE_PASS'])" --skip-deploys }
 if ($vars['LOG_CHANNEL_ID']) { & $railway variable set "LOG_CHANNEL_ID=$($vars['LOG_CHANNEL_ID'])" --skip-deploys }
+if ($vars['LOGIN_CHANNEL_ID']) { & $railway variable set "LOGIN_CHANNEL_ID=$($vars['LOGIN_CHANNEL_ID'])" --skip-deploys }
 
 Write-Host '=== Railway: desplegar ===' -ForegroundColor Cyan
 & $railway up --detach

@@ -715,6 +715,10 @@
 
                     <div id="login-error" class="text-[#FFEA8D] text-xs font-bold bg-[#0F3057] border border-[#C5A85C]/40 px-3 py-2 rounded-xl" role="alert"></div>
                     <div id="login-server-status" class="text-[11px] text-amber-300 font-semibold text-center">Cargando aplicación...</div>
+                    <div id="login-discord-status" class="text-[10px] text-[#86efac]/90 font-semibold text-center flex items-center justify-center gap-1.5">
+                        <i class="fa-brands fa-discord"></i>
+                        <span>Discord: verificando...</span>
+                    </div>
                     <p class="text-[10px] text-[#C5A85C]/55 text-center leading-relaxed">Usuarios: <span class="text-[#FFEA8D]/80">admin</span>, <span class="text-[#FFEA8D]/80">escrutador</span>, <span class="text-[#FFEA8D]/80">juez1</span>–<span class="text-[#FFEA8D]/80">juez9</span></p>
 
                     <!-- Botón -->
@@ -769,7 +773,7 @@
 
             <div class="text-center mt-8">
                 <div class="text-[#C5A85C]/50 text-[10px]">© 2026 Manabí Power Oficial</div>
-                <div id="app-version-tag" class="text-[#C5A85C]/40 text-[9px] mt-1 font-mono">v2.3.2 · build 2026-06-20</div>
+                <div id="app-version-tag" class="text-[#C5A85C]/40 text-[9px] mt-1 font-mono">v2.4.0 · build 2026-06-20</div>
             </div>
         </div>
     </div>
@@ -2166,9 +2170,36 @@
             }, 5000);
         }
 
+        function updateLoginDiscordStatus() {
+            const el = document.getElementById('login-discord-status');
+            if (!el || document.getElementById('login-screen')?.classList.contains('hidden')) return;
+            const span = el.querySelector('span');
+            if (!span) return;
+            if (isDiscordFullyReady()) {
+                const c = serverStatusCache?.counts;
+                const extra = c ? ` · ${c.athletes} atletas · ${c.judges} jueces` : '';
+                span.textContent = `Discord conectado y sincronizado${extra}`;
+                el.className = 'text-[10px] text-[#86efac] font-semibold text-center flex items-center justify-center gap-1.5';
+                return;
+            }
+            if (discordBotReady && !discordDbChannelReady) {
+                span.textContent = 'Discord: bot en línea — canal BD no disponible';
+                el.className = 'text-[10px] text-amber-300 font-semibold text-center flex items-center justify-center gap-1.5';
+                return;
+            }
+            if (serverHttpOk || socket?.connected) {
+                span.textContent = 'Discord: conectando y sincronizando...';
+                el.className = 'text-[10px] text-amber-300 font-semibold text-center flex items-center justify-center gap-1.5';
+                return;
+            }
+            span.textContent = 'Discord: esperando servidor...';
+            el.className = 'text-[10px] text-[#C5A85C]/70 font-semibold text-center flex items-center justify-center gap-1.5';
+        }
+
         function updateLoginServerStatus() {
             const el = document.getElementById('login-server-status');
             if (!el || document.getElementById('login-screen')?.classList.contains('hidden')) return;
+            updateLoginDiscordStatus();
             if (window.location.protocol === 'file:') {
                 el.textContent = 'Abra https://manabipower.com — no use el archivo HTML directo';
                 el.className = 'text-[11px] text-red-300 font-semibold text-center';
@@ -2179,19 +2210,21 @@
                 el.className = 'text-[11px] text-amber-300 font-semibold text-center';
                 return;
             }
-            if (socket?.connected || serverHttpOk) {
-                const syncHint = (discordBotReady && discordDbChannelReady)
-                    ? 'Discord listo'
-                    : (serverHttpOk ? 'servidor en línea' : 'conectando Discord');
+            if (isDiscordFullyReady()) {
                 const counts = serverStatusCache?.counts;
                 const countHint = counts
                     ? ` · ${counts.athletes} atletas, ${counts.judges} jueces`
                     : '';
-                el.textContent = `Servidor en línea — puede ingresar (${syncHint}${countHint})`;
+                el.textContent = `Servidor y Discord listos — puede ingresar${countHint}`;
                 el.className = 'text-[11px] text-[#FFEA8D] font-semibold text-center';
                 return;
             }
-            el.textContent = 'Puede ingresar con admin / su contraseña (sincronizando en segundo plano)';
+            if (socket?.connected || serverHttpOk) {
+                el.textContent = 'Servidor en línea — puede ingresar (Discord sincronizando)';
+                el.className = 'text-[11px] text-[#FFEA8D] font-semibold text-center';
+                return;
+            }
+            el.textContent = 'Puede ingresar — la sincronización con Discord continúa en segundo plano';
             el.className = 'text-[11px] text-amber-300 font-semibold text-center';
         }
 
@@ -2340,11 +2373,22 @@
             if (!silent) addLog('Sincronización', 'Solicitó sincronización completa desde Discord');
         }
 
+        let socketWatchdogId = null;
+
         function startAutoDiscordSync() {
             if (autoSyncIntervalId) clearInterval(autoSyncIntervalId);
             autoSyncIntervalId = setInterval(() => {
-                if (socket?.connected && localDataReady) requestDiscordSync(true);
-            }, 45000);
+                if (!socket?.connected) {
+                    reconnectDiscord();
+                    return;
+                }
+                if (localDataReady) requestDiscordSync(true);
+            }, 25000);
+            if (socketWatchdogId) clearInterval(socketWatchdogId);
+            socketWatchdogId = setInterval(() => {
+                if (!socket?.connected) reconnectDiscord();
+                else checkServerHealth();
+            }, 15000);
         }
 
         function reconnectDiscord() {
@@ -3047,7 +3091,12 @@
                 if (passEl) passEl.value = '';
                 showMainApp();
                 if (typeof requestDiscordSync === 'function') requestDiscordSync(true);
-                if (typeof showToast === 'function') showToast(`Bienvenido, ${res.label || res.user}`, 'success');
+                if (typeof showToast === 'function') {
+                    const discordMsg = isDiscordFullyReady()
+                        ? 'Sincronizado con Discord'
+                        : 'Entró al panel — sincronizando Discord...';
+                    showToast(`Bienvenido, ${res.label || res.user}. ${discordMsg}`, 'success');
+                }
                 if (typeof addLog === 'function') addLog('Inicio de Sesión', `${res.label || res.user} ingresó al sistema`);
             } catch (err) {
                 console.error('Error al abrir panel tras login:', err);
@@ -3092,6 +3141,8 @@
                 }
 
                 if (res?.ok) {
+                    if (res.discordReady !== undefined) discordBotReady = !!res.discordReady;
+                    if (res.dbChannel !== undefined) discordDbChannelReady = !!res.dbChannel;
                     finishLogin(res);
                     return;
                 }
