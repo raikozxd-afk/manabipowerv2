@@ -1,0 +1,2328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manabí Power V3 Pro • Mesa de Control Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    
+    <script>
+        (function() {
+            const originalWarn = console.warn;
+            console.warn = function(...args) {
+                const msg = args[0] || '';
+                if (typeof msg === 'string' && msg.includes('cdn.tailwindcss.com should not be used in production')) {
+                    return; // Silenciar el warning de Tailwind
+                }
+                originalWarn.apply(console, args);
+            };
+        })();
+    </script>
+    <style>
+        :root {
+            --gold: #C5A85C;
+            --gold-light: #FFEA8D;
+            --dark-navy: #0A1931;
+            --navy: #0F3057;
+        }
+        
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        
+        .brand-font {
+            font-family: 'Outfit', system-ui, sans-serif;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .hero-pattern {
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(197,168,92,0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(59,130,246,0.1) 0%, transparent 40%),
+                radial-gradient(circle at 60% 80%, rgba(197,168,92,0.08) 0%, transparent 45%);
+        }
+
+        .glass-card {
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(197,168,92,0.15);
+        }
+
+        .gold-shimmer {
+            background: linear-gradient(90deg, #8A641B, #C5A85C, #FFEA8D, #C5A85C, #8A641B);
+            background-size: 200% auto;
+            animation: shimmer 4s linear infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes shimmer {
+            to { background-position: 200% center; }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(197,168,92,0.4); }
+            50% { box-shadow: 0 0 20px 4px rgba(197,168,92,0.2); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.45s ease forwards;
+        }
+
+        .connection-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            animation: pulse-glow 2s infinite;
+        }
+        .connection-dot.online { background: #10B981; }
+        .connection-dot.offline { background: #EF4444; animation: none; }
+
+        .export-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .export-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.25s;
+        }
+        .export-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -12px rgba(15,48,87,0.25);
+        }
+        .export-card:hover::before { opacity: 1; }
+
+        .athlete-avatar {
+            background: linear-gradient(135deg, #0F3057, #1E40AF);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .progress-bar {
+            height: 4px;
+            border-radius: 999px;
+            background: rgba(15,48,87,0.08);
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #C5A85C, #FFEA8D);
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .section.active { animation: fadeInUp 0.35s ease; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+        }
+
+        .manabi-gold {
+            color: #C5A85C;
+        }
+
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+        }
+
+        .nav-active {
+            background-color: #C5A85C;
+            color: white !important;
+            border-radius: 8px;
+        }
+
+        .athlete-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .athlete-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #FFEA8D, #C5A85C, #8A641B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .status-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 9999px;
+            letter-spacing: 0.5px;
+        }
+
+        .modality-chip {
+            transition: all 0.1s ease;
+        }
+        
+        .modality-chip.active {
+            background-color: #C5A85C;
+            color: white;
+            border-color: #C5A85C;
+        }
+
+        .metric-card {
+            transition: transform 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .custom-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #C5A85C33 #f1f5f9;
+        }
+
+        .login-bg {
+            background: linear-gradient(145deg, #030D1B, #0A1931, #0F3057);
+        }
+
+        .app-header {
+            background: #0A1931;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .nav-item {
+            transition: all 0.1s ease;
+        }
+        
+        .nav-item:hover {
+            background-color: #C5A85C22;
+        }
+
+        .nav-item.active {
+            background-color: #C5A85C;
+            color: white;
+        }
+
+        .form-input {
+            transition: all 0.2s ease;
+        }
+        
+        .form-input:focus {
+            border-color: #C5A85C;
+            box-shadow: 0 0 0 3px rgba(197, 168, 92, 0.15);
+        }
+
+        .dumbbell {
+            filter: drop-shadow(0 2px 4px rgba(197, 168, 92, 0.3));
+        }
+
+        .toast {
+            animation: slideUp 0.3s ease forwards;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .table-header {
+            background: #0F3057;
+            color: white;
+        }
+
+        .ifbb-badge {
+            background: linear-gradient(to right, #C5A85C, #8A641B);
+            color: white;
+            font-size: 9px;
+            padding: 1px 7px;
+            border-radius: 3px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="bg-[#F1F4F9] text-[#102A43]">
+    <div id="login-screen" class="min-h-screen flex items-center justify-center p-6 relative overflow-hidden"
+         style="background-image: url('https://media.discordapp.net/attachments/1517020555742547989/1517032583161057320/image_10.jpg?ex=6a34ce30&is=6a337cb0&hm=4d6d10c9c2d39f79e27a0d5a2c91be0d185e24c063454a08efd38d539b4471f0&=&format=webp');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;">
+        
+        <!-- Dark overlay -->
+        <div class="absolute inset-0 bg-gradient-to-b from-black/65 via-black/55 to-black/70"></div>
+        
+        <div class="w-full max-w-md relative z-10">
+            <div class="flex justify-center mb-6">
+                <img src="https://media.discordapp.net/attachments/1516969981525495960/1516982084802052257/Diseno_sin_titulo_1.png?ex=6a349f29&is=6a334da9&hm=755c3dbfb11670a3aab6172550f2ddf7f686b1acdcb88c42d5186090ab6dee09&=&format=webp&quality=lossless&width=900" 
+                     alt="Manabí Power Logo" 
+                     class="h-[135px] w-auto drop-shadow-[0_8px_25px_rgba(0,0,0,0.6)]">
+            </div>
+
+            <div class="text-center mb-6">
+                <div class="text-[#C5A85C] text-xs font-bold tracking-[2px]">MESA DE CONTROL OFICIAL • Campeonato Manabí Power</div>
+            </div>
+
+            <div class="bg-[#111827]/95 backdrop-blur-2xl border-2 border-[#C5A85C] rounded-3xl p-8 shadow-2xl"
+                 style="box-shadow: 0 25px 60px -15px rgb(0 0 0 / 0.7), 0 0 0 1px rgba(197,168,92,0.4), 0 0 50px -10px rgba(197,168,92,0.25);">
+                
+                <div class="mb-6">
+                    <div class="text-white text-xl font-bold">Acceso Administrador</div>
+                    <div class="text-white/60 text-sm">Sistema de pesaje, tallaje y clasificación</div>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- USUARIO -->
+                    <div>
+                        <label class="text-[#C5A85C] text-xs font-extrabold tracking-widest block mb-1.5">USUARIO</label>
+                        <div class="relative">
+                            <input id="login-user" type="text" value=""
+                                   class="w-full bg-[#1F2937] border border-[#C5A85C]/40 text-white rounded-2xl px-5 py-3.5 text-sm font-medium focus:outline-none focus:border-[#C5A85C]">
+                            <i class="fa-solid fa-user absolute right-5 top-4 text-[#C5A85C]/70"></i>
+                        </div>
+                    </div>
+
+                    <!-- CONTRASEÑA -->
+                    <div>
+                        <label class="text-[#C5A85C] text-xs font-extrabold tracking-widest block mb-1.5">CONTRASEÑA</label>
+                        <div class="relative">
+                            <input id="login-pass" type="password" value=""
+                                   class="w-full bg-[#1F2937] border border-[#C5A85C]/40 text-white rounded-2xl px-5 py-3.5 text-sm font-medium focus:outline-none focus:border-[#C5A85C]">
+                            <i class="fa-solid fa-lock absolute right-5 top-4 text-[#C5A85C]/70"></i>
+                        </div>
+                    </div>
+
+                    <div id="login-error" class="hidden text-red-400 text-xs font-bold bg-red-500/10 px-3 py-2 rounded-xl"></div>
+
+                    <!-- Botón -->
+                    <button onclick="attemptLogin()"
+                            class="w-full bg-gradient-to-r from-[#FFEA8D] via-[#C5A85C] to-[#8A641B] hover:brightness-110 transition-all text-[#0F2238] font-extrabold py-4 rounded-2xl text-sm tracking-wider shadow-lg active:scale-[0.985] mt-2">
+                        INGRESAR AL PANEL DE CONTROL
+                    </button>
+
+                    <!-- Instagram Button -->
+                    <div class="pt-4 flex justify-center">
+                        <a href="https://www.instagram.com/manabi_power/" target="_blank">
+                            <img src="https://media.discordapp.net/attachments/1516969981525495960/1517041448300843118/ewrwrw.png?ex=6a34d672&is=6a3384f2&hm=7cb58691c167b179a986b1871df3267640c167e0f7ab1099e62c1df94175b55b&=&format=webp&quality=lossless&width=600" 
+                                 alt="Síguenos en Instagram @manabipower" 
+                                 class="h-[78px] w-auto hover:scale-[1.02] transition cursor-pointer drop-shadow-md">
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-8">
+                <div class="text-white/40 text-[10px]">© 2026 Manabí Power Oficial</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-app" class="hidden min-h-screen bg-[#F1F4F9]">
+        <div class="app-header sticky top-0 z-50">
+            <div class="max-w-screen-2xl mx-auto">
+                <div class="px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-x-4">
+                        <div class="flex items-center gap-x-2">
+                            <svg width="28" height="20" viewBox="0 0 46 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="goldMini" x1="0%" y1="20%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="#FFEA8D"/>
+                                        <stop offset="30%" stop-color="#E8C56B"/>
+                                        <stop offset="55%" stop-color="#C5A85C"/>
+                                        <stop offset="100%" stop-color="#8A641B"/>
+                                    </linearGradient>
+                                </defs>
+                                <rect x="3" y="12" width="40" height="7" rx="1.5" fill="url(#goldMini)"/>
+                                <rect x="5" y="7" width="4" height="17" rx="1" fill="url(#goldMini)"/>
+                                <rect x="11" y="3" width="4" height="25" rx="1" fill="url(#goldMini)"/>
+                                <rect x="17" y="1" width="4" height="29" rx="1.5" fill="url(#goldMini)"/>
+                                <rect x="25" y="1" width="4" height="29" rx="1.5" fill="url(#goldMini)"/>
+                                <rect x="31" y="3" width="4" height="25" rx="1" fill="url(#goldMini)"/>
+                                <rect x="37" y="7" width="4" height="17" rx="1" fill="url(#goldMini)"/>
+                            </svg>
+
+                            <div class="leading-none">
+                                <span class="text-white font-black text-[21px] tracking-[1.5px]">MANABÍ</span>
+                                <span class="text-[#C5A85C] font-black text-[21px] tracking-[2px] -ml-0.5">POWER</span>
+                            </div>
+
+                            <svg width="28" height="20" viewBox="0 0 46 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="goldMini2" x1="0%" y1="20%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="#FFEA8D"/>
+                                        <stop offset="30%" stop-color="#E8C56B"/>
+                                        <stop offset="55%" stop-color="#C5A85C"/>
+                                        <stop offset="100%" stop-color="#8A641B"/>
+                                    </linearGradient>
+                                </defs>
+                                <rect x="3" y="12" width="40" height="7" rx="1.5" fill="url(#goldMini2)"/>
+                                <rect x="5" y="7" width="4" height="17" rx="1" fill="url(#goldMini2)"/>
+                                <rect x="11" y="3" width="4" height="25" rx="1" fill="url(#goldMini2)"/>
+                                <rect x="17" y="1" width="4" height="29" rx="1.5" fill="url(#goldMini2)"/>
+                                <rect x="25" y="1" width="4" height="29" rx="1.5" fill="url(#goldMini2)"/>
+                                <rect x="31" y="3" width="4" height="25" rx="1" fill="url(#goldMini2)"/>
+                                <rect x="37" y="7" width="4" height="17" rx="1" fill="url(#goldMini2)"/>
+                            </svg>
+                        </div>
+                        <div class="px-3 py-1 bg-white/10 rounded-2xl text-xs text-white/70 font-bold flex items-center gap-x-1.5">
+                            <i class="fa-solid fa-globe fa-sm"></i>
+                            <span>MANTA 2026</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-x-4">
+                        <div id="connection-status" class="hidden md:flex items-center gap-x-2 px-3 py-1.5 bg-white/5 rounded-2xl text-xs font-bold text-white/80">
+                            <div id="connection-dot" class="connection-dot offline"></div>
+                            <span id="connection-text">Conectando...</span>
+                        </div>
+
+                        <div class="flex items-center gap-x-2 text-sm">
+                            <div class="text-right">
+                                <div id="header-user" class="font-bold text-white text-sm"></div>
+                                <div class="text-[#C5A85C] text-[10px] -mt-0.5">OPERADOR MESA DE CONTROL</div>
+                            </div>
+                            <div class="w-9 h-9 bg-[#C5A85C] rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-inner">
+                                <i class="fa-solid fa-user-shield"></i>
+                            </div>
+                        </div>
+                        
+                        <button onclick="logout()" 
+                                class="flex items-center gap-x-2 text-xs font-bold px-4 py-2 bg-white/10 hover:bg-white/20 transition rounded-2xl text-white/90">
+                            <i class="fa-solid fa-sign-out-alt"></i>
+                            <span class="hidden md:inline">CERRAR SESIÓN</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-screen-2xl mx-auto px-6 pt-6 pb-20">
+            <div class="flex flex-wrap gap-2 mb-6 border-b border-[#0F3057]/10 pb-1">
+                <button onclick="switchSection(0)" id="nav-0"
+                        class="nav-item active flex items-center gap-x-2 px-5 py-2.5 text-sm font-bold text-[#0F3057]">
+                    <i class="fa-solid fa-tachometer-alt w-4"></i>
+                    <span>INICIO</span>
+                </button>
+                <button onclick="switchSection(1)" id="nav-1"
+                        class="nav-item flex items-center gap-x-2 px-5 py-2.5 text-sm font-bold text-[#0F3057]">
+                    <i class="fa-solid fa-user-plus w-4"></i>
+                    <span>REGISTRO</span>
+                </button>
+                <button onclick="switchSection(2)" id="nav-2"
+                        class="nav-item flex items-center gap-x-2 px-5 py-2.5 text-sm font-bold text-[#0F3057]">
+                    <i class="fa-solid fa-search w-4"></i>
+                    <span>BÚSQUEDA / PESAJE</span>
+                </button>
+                <button onclick="switchSection(3)" id="nav-3"
+                        class="nav-item flex items-center gap-x-2 px-5 py-2.5 text-sm font-bold text-[#0F3057]">
+                    <i class="fa-solid fa-file-excel w-4"></i>
+                    <span>PLANILLAS OFICIALES</span>
+                </button>
+                <button onclick="switchSection(4)" id="nav-4"
+                        class="nav-item flex items-center gap-x-2 px-5 py-2.5 text-sm font-bold text-[#0F3057]">
+                    <i class="fa-solid fa-cogs w-4"></i>
+                    <span>ADMIN V2</span>
+                </button>
+            </div>
+
+            <div id="section-0" class="section active">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-12 relative overflow-hidden rounded-3xl text-white hero-pattern"
+                         style="background: linear-gradient(135deg, #030D1B 0%, #0A1931 50%, #0F3057 100%);">
+                        <div class="absolute inset-0 opacity-20"
+                             style="background-image: url('https://media.discordapp.net/attachments/1517020555742547989/1517032583161057320/image_10.jpg?ex=6a34ce30&is=6a337cb0&hm=4d6d10c9c2d39f79e27a0d5a2c91be0d185e24c063454a08efd38d539b4471f0&=&format=webp');
+                                    background-size: cover; background-position: center;"></div>
+                        <div class="absolute top-0 right-0 w-96 h-96 bg-[#C5A85C]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+                        <div class="relative p-8 md:p-10">
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-y-8">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-x-3 mb-4">
+                                        <img src="https://media.discordapp.net/attachments/1516969981525495960/1516982084802052257/Diseno_sin_titulo_1.png?ex=6a349f29&is=6a334da9&hm=755c3dbfb11670a3aab6172550f2ddf7f686b1acdcb88c42d5186090ab6dee09&=&format=webp&quality=lossless&width=200"
+                                             alt="Logo" class="h-16 w-auto drop-shadow-lg hidden sm:block">
+                                        <div class="flex items-center gap-x-2">
+                                            <div class="ifbb-badge">IFBB OFICIAL</div>
+                                            <div class="text-xs px-3 py-1 bg-white/10 rounded-full text-white/70 backdrop-blur">EDICIÓN 2026</div>
+                                            <div class="text-xs px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full font-bold flex items-center gap-x-1">
+                                                <i class="fa-solid fa-signal fa-xs"></i> EN VIVO
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <h1 class="brand-font text-4xl md:text-5xl tracking-tight leading-tight">
+                                        <span class="gold-shimmer">CONGRESILLO TÉCNICO</span><br>
+                                        <span class="text-white">Y MESA DE CONTROL</span>
+                                    </h1>
+                                    <p class="mt-4 text-white/70 max-w-lg text-sm md:text-base leading-relaxed">
+                                        Sistema oficial de registro, pesaje y clasificación en tiempo real para el Campeonato Manabí Power 2026 — Manta, Ecuador.
+                                    </p>
+                                    <div class="mt-5 flex flex-wrap gap-3 text-xs">
+                                        <span class="px-3 py-1.5 bg-white/10 rounded-full backdrop-blur"><i class="fa-solid fa-users mr-1.5 text-[#C5A85C]"></i><span id="hero-total">0</span> atletas</span>
+                                        <span class="px-3 py-1.5 bg-white/10 rounded-full backdrop-blur"><i class="fa-solid fa-dumbbell mr-1.5 text-[#C5A85C]"></i>16 modalidades</span>
+                                        <span class="px-3 py-1.5 bg-white/10 rounded-full backdrop-blur"><i class="fa-solid fa-cloud mr-1.5 text-[#C5A85C]"></i>Sincronizado Discord</span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col sm:flex-row lg:flex-col gap-3 flex-shrink-0">
+                                    <button onclick="switchSection(1)"
+                                            class="px-8 py-4 bg-gradient-to-r from-[#FFEA8D] via-[#C5A85C] to-[#8A641B] hover:brightness-110 transition flex items-center justify-center gap-x-3 rounded-2xl font-extrabold text-sm text-[#0F2238] shadow-xl active:scale-[0.985]">
+                                        <i class="fa-solid fa-user-plus"></i>
+                                        <span>NUEVA INSCRIPCIÓN</span>
+                                    </button>
+                                    <button onclick="switchSection(3)"
+                                            class="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur transition flex items-center justify-center gap-x-3 rounded-2xl font-bold text-sm border border-white/20">
+                                        <i class="fa-solid fa-file-export"></i>
+                                        <span>EXPORTAR PLANILLAS</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-12">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <!-- Total Atletas -->
+                            <div class="metric-card bg-[#0F2238] border border-[#3B82F6]/30 rounded-3xl p-5 text-white">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="text-xs font-bold text-white/70">TOTAL ATLETAS</div>
+                                        <div id="metric-total" class="text-5xl font-black text-[#3B82F6] mt-1">0</div>
+                                    </div>
+                                    <i class="fa-solid fa-users text-4xl text-[#3B82F6]/40"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Aprobaron Peso -->
+                            <div class="metric-card bg-[#0F2238] border border-[#10B981]/30 rounded-3xl p-5 text-white">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="text-xs font-bold text-white/70">APROBARON PESO</div>
+                                        <div id="metric-passed" class="text-5xl font-black text-[#10B981] mt-1">0</div>
+                                    </div>
+                                    <i class="fa-solid fa-check-circle text-4xl text-[#10B981]/40"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Excedieron Peso -->
+                            <div class="metric-card bg-[#0F2238] border border-[#EF4444]/30 rounded-3xl p-5 text-white">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="text-xs font-bold text-white/70">EXCEDIERON PESO</div>
+                                        <div id="metric-failed" class="text-5xl font-black text-[#EF4444] mt-1">0</div>
+                                    </div>
+                                    <i class="fa-solid fa-times-circle text-4xl text-[#EF4444]/40"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Subieron Categoría -->
+                            <div class="metric-card bg-[#0F2238] border border-[#F59E0B]/30 rounded-3xl p-5 text-white">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="text-xs font-bold text-white/70">SUBIERON CATEGORÍA</div>
+                                        <div id="metric-shifted" class="text-5xl font-black text-[#F59E0B] mt-1">0</div>
+                                    </div>
+                                    <i class="fa-solid fa-arrow-up text-4xl text-[#F59E0B]/40"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-5 bg-white border border-[#0F3057]/10 rounded-3xl p-6">
+                        <div class="font-extrabold text-sm mb-4 flex items-center gap-x-2 text-[#0F3057]">
+                            <i class="fa-solid fa-bolt text-[#C5A85C]"></i> 
+                            <span>ACCESOS DIRECTOS</span>
+                        </div>
+                        <div class="space-y-2.5">
+                            <button onclick="switchSection(1)" class="w-full flex items-center justify-between px-5 py-3.5 bg-[#F8FAFC] hover:bg-[#0F3057] hover:text-white transition rounded-2xl text-sm font-bold group">
+                                <div class="flex items-center gap-x-3"><i class="fa-solid fa-user-plus text-[#C5A85C] group-hover:text-white"></i> <span>Registrar nuevo atleta</span></div>
+                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                            </button>
+                            <button onclick="switchSection(2)" class="w-full flex items-center justify-between px-5 py-3.5 bg-[#F8FAFC] hover:bg-[#0F3057] hover:text-white transition rounded-2xl text-sm font-bold group">
+                                <div class="flex items-center gap-x-3"><i class="fa-solid fa-search text-[#C5A85C] group-hover:text-white"></i> <span>Buscar y verificar pesaje</span></div>
+                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                            </button>
+                            <button onclick="switchSection(3)" class="w-full flex items-center justify-between px-5 py-3.5 bg-[#F8FAFC] hover:bg-[#0F3057] hover:text-white transition rounded-2xl text-sm font-bold group">
+                                <div class="flex items-center gap-x-3"><i class="fa-solid fa-file-export text-[#C5A85C] group-hover:text-white"></i> <span>Exportar planillas oficiales</span></div>
+                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-7 bg-white border border-[#0F3057]/10 rounded-3xl p-6">
+                        <div class="font-extrabold text-sm mb-4 flex items-center justify-between">
+                            <div class="flex items-center gap-x-2 text-[#0F3057]">
+                                <i class="fa-solid fa-list-check text-[#C5A85C]"></i> 
+                                <span>MODALIDADES IFBB REGISTRADAS</span>
+                            </div>
+                            <span id="modalities-count" class="text-xs font-mono bg-[#0F3057] text-white px-2.5 py-px rounded">16</span>
+                        </div>
+                        
+                        <div id="modalities-grid" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-1" class="section">
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 id="form-title" class="text-3xl font-black text-[#0F3057]">NUEVO REGISTRO DE ATLETA</h2>
+                            <p class="text-sm text-[#0F3057]/60">Complete los datos del competidor. Los campos con * son obligatorios.</p>
+                        </div>
+                        <button onclick="cancelEdit()" id="cancel-edit-btn"
+                                class="hidden items-center gap-x-2 text-sm font-bold px-5 h-10 bg-red-100 text-red-600 hover:bg-red-200 transition rounded-2xl">
+                            <i class="fa-solid fa-times"></i>
+                            <span>CANCELAR EDICIÓN</span>
+                        </button>
+                    </div>
+
+                    <div class="bg-white border border-[#0F3057]/10 shadow-sm rounded-3xl p-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                            
+                            <div class="md:col-span-2">
+                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">NOMBRE COMPLETO DEL ATLETA *</label>
+                                <input id="fullName" type="text" placeholder="Ej: Carlos Francisco Pérez Mendoza"
+                                       class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
+                            </div>
+
+                            <div>
+                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">CÉDULA / DOCUMENTO DE IDENTIDAD *</label>
+                                <input id="idCard" type="text" placeholder="1312345678" maxlength="13"
+                                       class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">NÚMERO DE FICHA (OPCIONAL)</label>
+                                <input id="manualBib" type="number" placeholder="Dejar vacío para auto-asignar"
+                                       class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
+                            </div>
+
+                            <div>
+                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">CLUB O ENTRENADOR</label>
+                                <input id="club" type="text" placeholder="Manta Fitness Club / Entrenador particular"
+                                       class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">PROVINCIA / PAÍS</label>
+                                <input id="province" type="text" placeholder="Manabí / Ecuador"
+                                       class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-2">MODALIDAD OFICIAL IFBB *</label>
+                                <div id="modality-chips" class="flex flex-wrap gap-2"></div>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">CATEGORÍA / DIVISIÓN *</label>
+                                <input id="category" type="text" placeholder="Ej: Senior Open, Junior Sub-21, Master +40, Novice..."
+                                       class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3.5 text-sm">
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-2">CLASIFICACIÓN DEL ATLETA *</label>
+                                <div class="flex gap-3">
+                                    <div onclick="selectClassification('Novato')" id="class-novato"
+                                         class="flex-1 cursor-pointer border-2 border-[#C5A85C] bg-[#C5A85C]/5 rounded-2xl p-4 flex items-center gap-x-3">
+                                        <i class="fa-solid fa-star text-[#C5A85C]"></i>
+                                        <div>
+                                            <div class="font-extrabold">Novato</div>
+                                            <div class="text-[10px] text-[#0F3057]/60">Primera competencia oficial</div>
+                                        </div>
+                                    </div>
+                                    <div onclick="selectClassification('Clasificado')" id="class-clasificado"
+                                         class="flex-1 cursor-pointer border border-[#0F3057]/20 hover:border-[#C5A85C]/50 rounded-2xl p-4 flex items-center gap-x-3">
+                                        <i class="fa-solid fa-trophy text-[#0F3057]"></i>
+                                        <div>
+                                            <div class="font-extrabold">Clasificado</div>
+                                            <div class="text-[10px] text-[#0F3057]/60">Atleta con experiencia previa</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="biometric-card" class="md:col-span-2 border border-amber-200 bg-amber-50/30 rounded-3xl p-6">
+                                <div class="flex items-center gap-x-2 mb-4">
+                                    <i class="fa-solid fa-weight-hanging text-amber-600"></i>
+                                    <div class="font-extrabold text-sm text-amber-700">CONTROL BIOMÉTRICO EN CABINA</div>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1">PESO OFICIAL (kg) *</label>
+                                        <input id="weight" type="number" step="0.1" placeholder="72.5"
+                                               class="form-input w-full border border-amber-300 focus:border-amber-500 rounded-2xl px-5 py-3 text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1">ALTURA (cm)</label>
+                                        <input id="height" type="number" placeholder="178"
+                                               class="form-input w-full border border-amber-300 focus:border-amber-500 rounded-2xl px-5 py-3 text-sm">
+                                    </div>
+                                </div>
+
+                                <div id="weight-advice" class="hidden mt-3 text-xs bg-white border border-amber-300 rounded-2xl p-3 text-amber-700"></div>
+
+                                <div class="mt-5">
+                                    <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-2">¿HIZO EL PESO REGLAMENTARIO?</label>
+                                    <div class="flex gap-2">
+                                        <div onclick="selectPassStatus('Sí')" id="pass-si"
+                                             class="flex-1 cursor-pointer text-center py-3 rounded-2xl border-2 border-emerald-500 bg-emerald-500 text-white text-sm font-extrabold">SÍ</div>
+                                        <div onclick="selectPassStatus('No')" id="pass-no"
+                                             class="flex-1 cursor-pointer text-center py-3 rounded-2xl border border-red-300 hover:bg-red-50 text-sm font-extrabold">NO</div>
+                                        <div onclick="selectPassStatus('Subió de categoría')" id="pass-subio"
+                                             class="flex-1 cursor-pointer text-center py-3 rounded-2xl border border-amber-400 hover:bg-amber-50 text-sm font-extrabold">SUBIÓ DE CATEGORÍA</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="text-xs font-extrabold text-[#0F3057]/70 block mb-1.5">OBSERVACIONES / NOVEDADES</label>
+                                <textarea id="observations" rows="2" placeholder="Ej: Pagó inscripción el día del evento, llegó con 300g de sobrepeso..."
+                                          class="form-input w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-5 py-3 text-sm"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 flex gap-3">
+                            <button onclick="registerAthlete()"
+                                    class="flex-1 bg-[#0F3057] hover:bg-[#0A1931] transition text-white font-extrabold py-4 rounded-2xl flex items-center justify-center gap-x-3 text-sm tracking-wider">
+                                <i class="fa-solid fa-save"></i>
+                                <span id="submit-btn-text">COMPLETAR INSCRIPCIÓN OFICIAL</span>
+                            </button>
+                        </div>
+                        
+                        <div id="form-warning" class="hidden mt-3 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-4 py-2.5 rounded-2xl"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-2" class="section">
+                <div class="max-w-screen-2xl">
+                    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-y-4 mb-5">
+                        <div>
+                            <h2 class="text-3xl font-black text-[#0F3057]">BÚSQUEDA Y CONTROL DE PESAJE</h2>
+                            <p class="text-[#0F3057]/60">Busque atletas por nombre, cédula, ficha o club. Filtre por modalidad.</p>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <div class="relative flex-1 md:w-80">
+                                <input id="search-input" type="text" placeholder="Buscar por nombre, cédula, ficha..." onkeyup="filterAthletes()"
+                                       class="w-full border border-[#0F3057]/20 focus:border-[#C5A85C] pl-11 py-3 rounded-2xl text-sm">
+                                <i class="fa-solid fa-search absolute left-4 top-4 text-[#C5A85C]"></i>
+                            </div>
+                            
+                            <select id="filter-modality" onchange="filterAthletes()" 
+                                    class="border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-4 text-sm bg-white">
+                                <option value="Todas">Todas las modalidades</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="athletes-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+                    
+                    <div id="no-results" class="hidden col-span-full text-center py-12">
+                        <i class="fa-solid fa-search text-6xl text-[#0F3057]/10 mb-4"></i>
+                        <p class="font-bold text-[#0F3057]/70">No se encontraron atletas con esos criterios</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-3" class="section">
+                <div class="max-w-screen-2xl">
+                    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="brand-font text-3xl text-[#0F3057]">PLANILLAS OFICIALES Y EXPORTACIÓN</h2>
+                            <p class="text-sm text-[#0F3057]/60">Exporte datos filtrados en múltiples formatos profesionales para la mesa técnica IFBB.</p>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs font-bold text-[#0F3057]/60 bg-white px-4 py-2 rounded-2xl border border-[#0F3057]/10">
+                            <i class="fa-solid fa-database text-[#C5A85C]"></i>
+                            <span id="export-preview-count">0 atletas listos</span>
+                        </div>
+                    </div>
+
+                    <!-- Panel de filtros de exportación -->
+                    <div class="glass-card rounded-3xl p-6 mb-6 shadow-sm">
+                        <div class="font-extrabold text-sm mb-4 flex items-center gap-x-2 text-[#0F3057]">
+                            <i class="fa-solid fa-filter text-[#C5A85C]"></i>
+                            <span>FILTROS DE EXPORTACIÓN</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="text-[10px] font-extrabold text-[#0F3057]/50 block mb-1.5">MODALIDAD</label>
+                                <select id="export-filter-modality" onchange="updateExportPreview()"
+                                        class="w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-4 py-3 text-sm bg-white">
+                                    <option value="Todas">Todas las modalidades</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-extrabold text-[#0F3057]/50 block mb-1.5">ESTADO DE PESAJE</label>
+                                <select id="export-filter-status" onchange="updateExportPreview()"
+                                        class="w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-4 py-3 text-sm bg-white">
+                                    <option value="Todos">Todos los estados</option>
+                                    <option value="Sí">Aprobaron peso</option>
+                                    <option value="No">Excedieron peso</option>
+                                    <option value="Subió de categoría">Subieron categoría</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-extrabold text-[#0F3057]/50 block mb-1.5">CLASIFICACIÓN</label>
+                                <select id="export-filter-class" onchange="updateExportPreview()"
+                                        class="w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-4 py-3 text-sm bg-white">
+                                    <option value="Todas">Novatos y Clasificados</option>
+                                    <option value="Novato">Solo Novatos</option>
+                                    <option value="Clasificado">Solo Clasificados</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-extrabold text-[#0F3057]/50 block mb-1.5">ORDENAR POR</label>
+                                <select id="export-sort-by"
+                                        class="w-full border border-[#0F3057]/20 focus:border-[#C5A85C] rounded-2xl px-4 py-3 text-sm bg-white">
+                                    <option value="bib">Número de ficha</option>
+                                    <option value="name">Nombre alfabético</option>
+                                    <option value="modality">Modalidad</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                        <button onclick="exportToXLSX()"
+                                class="export-card flex items-center gap-x-4 bg-gradient-to-br from-emerald-600 to-emerald-700 text-white font-extrabold py-5 px-6 rounded-3xl">
+                            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-file-excel text-2xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <div class="text-sm">EXCEL REAL (.xlsx)</div>
+                                <div class="text-[10px] opacity-75 font-medium">Hojas por modalidad + resumen</div>
+                            </div>
+                        </button>
+
+                        <button onclick="exportToExcel()"
+                                class="export-card flex items-center gap-x-4 bg-gradient-to-br from-teal-600 to-teal-700 text-white font-extrabold py-5 px-6 rounded-3xl">
+                            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-table text-2xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <div class="text-sm">CSV COMPATIBLE</div>
+                                <div class="text-[10px] opacity-75 font-medium">Agrupado por modalidad</div>
+                            </div>
+                        </button>
+
+                        <button onclick="exportToJSON()"
+                                class="export-card flex items-center gap-x-4 bg-gradient-to-br from-slate-700 to-slate-800 text-white font-extrabold py-5 px-6 rounded-3xl">
+                            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-code text-2xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <div class="text-sm">JSON ESTRUCTURADO</div>
+                                <div class="text-[10px] opacity-75 font-medium">Para integraciones y respaldos</div>
+                            </div>
+                        </button>
+
+                        <button onclick="exportTextReport()"
+                                class="export-card flex items-center gap-x-4 bg-gradient-to-br from-[#0F3057] to-[#0A1931] text-white font-extrabold py-5 px-6 rounded-3xl">
+                            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-file-alt text-2xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <div class="text-sm">REPORTE TXT</div>
+                                <div class="text-[10px] opacity-75 font-medium">Formato tabular profesional</div>
+                            </div>
+                        </button>
+
+                        <button onclick="exportToWord()"
+                                class="export-card flex items-center gap-x-4 bg-gradient-to-br from-[#1E40AF] to-[#1E3A8A] text-white font-extrabold py-5 px-6 rounded-3xl">
+                            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-file-word text-2xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <div class="text-sm">DOCUMENTO WORD</div>
+                                <div class="text-[10px] opacity-75 font-medium">Listo para imprimir</div>
+                            </div>
+                        </button>
+
+                        <button onclick="generateVisualReport()"
+                                class="export-card flex items-center gap-x-4 bg-gradient-to-br from-purple-600 to-purple-700 text-white font-extrabold py-5 px-6 rounded-3xl">
+                            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-print text-2xl"></i>
+                            </div>
+                            <div class="text-left">
+                                <div class="text-sm">REPORTE VISUAL / PDF</div>
+                                <div class="text-[10px] opacity-75 font-medium">Imprimible con logo oficial</div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="bg-white border border-[#0F3057]/10 rounded-3xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="font-extrabold">LISTADO COMPLETO DE COMPETIDORES</div>
+                            <div class="text-xs px-3 py-1 bg-[#0F3057] text-white rounded-full font-mono" id="total-athletes-report">0 ATLETAS</div>
+                        </div>
+                        
+                        <div id="planillas-list" class="max-h-[520px] overflow-auto custom-scroll space-y-2 pr-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="section-4" class="section">
+                <div class="max-w-4xl mx-auto space-y-6">
+                    <div class="bg-[#0A1931] text-white rounded-3xl p-8">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="text-[#C5A85C] text-xs font-bold tracking-widest">MESA DE CONTROL INTELIGENTE V2</div>
+                                <div class="text-3xl font-black">ADMINISTRACIÓN Y SEGURIDAD</div>
+                            </div>
+                            <div class="text-right text-xs">
+                                <div class="text-white/60">ÚLTIMA ACTIVIDAD</div>
+                                <div id="last-sync" class="font-mono text-[#C5A85C]"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-[#0F3057]/10 rounded-3xl p-6">
+                        <div class="font-extrabold mb-4 flex items-center gap-x-2">
+                            <i class="fa-solid fa-users-cog text-[#C5A85C]"></i>
+                            <span>USUARIOS AUTORIZADOS DE MESA</span>
+                        </div>
+                        
+                        <div class="space-y-2" id="admin-users-list"></div>
+                    </div>
+
+                    <div class="bg-white border border-[#0F3057]/10 rounded-3xl p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="font-extrabold flex items-center gap-x-2">
+                                <i class="fa-solid fa-cloud-upload-alt text-[#C5A85C]"></i>
+                                <span>RESPALDOS LOCALES</span>
+                            </div>
+                            <button onclick="createLocalBackup()" class="text-xs font-bold px-4 py-2 bg-[#C5A85C] text-white rounded-2xl flex items-center gap-x-2">
+                                <i class="fa-solid fa-download"></i>
+                                <span>CREAR RESPALDO AHORA</span>
+                            </button>
+                        </div>
+                        
+                        <div class="flex items-center gap-x-3">
+                            <label class="flex-1 cursor-pointer">
+                                <div class="border border-dashed border-[#C5A85C]/40 hover:border-[#C5A85C] transition rounded-2xl px-5 py-4 text-center text-sm">
+                                    <i class="fa-solid fa-upload mr-2 text-[#C5A85C]"></i>
+                                    <span class="font-bold">RESTAURAR DESDE ARCHIVO JSON</span>
+                                </div>
+                                <input type="file" id="restore-file" accept=".json" class="hidden" onchange="restoreFromBackup(event)">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-[#0F3057]/10 rounded-3xl p-6">
+                        <div class="font-extrabold mb-4 flex items-center gap-x-2">
+                            <i class="fa-solid fa-history text-[#C5A85C]"></i>
+                            <span>HISTORIAL DE ACTIVIDAD (LOCAL)</span>
+                        </div>
+                        <div id="activity-log" class="text-xs space-y-1.5 max-h-64 overflow-auto custom-scroll font-mono"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[100]"></div>
+
+    <script>
+        // ==================== TAILWIND CONFIG ====================
+        function initTailwind() {
+            document.documentElement.style.setProperty('--accent-gold', '#C5A85C');
+        }
+
+        // ==================== DATA & STATE & SOCKET ====================
+        let athletes = [];
+        let currentUser = null;
+        let editingAthleteId = null;
+        let currentSection = 0;
+        let activityLogs = [];
+
+        const MODALITIES = [
+            "Fitness Coreográfico Infantil", "Fit & Beauty", "Posing Art",
+            "Men's Physique", "Men's Fit", "Muscular Men's Physique", "Games Classic",
+            "Culturismo Clásico", "Classic Physique", "Fisicoculturismo",
+            "Bikini Fitness", "Wellness Fitness", "Body Fitness",
+            "Women's Physique", "Parejas Fitness", "Parejas Culturistas"
+        ];
+
+        const NON_WEIGHING = [
+            "Fitness Coreográfico Infantil", "Fit & Beauty", "Posing Art", 
+            "Parejas Fitness", "Parejas Culturistas"
+        ];
+
+        // --- CONEXIÓN A RAILWAY ---
+        // ¡IMPORTANTE! Reemplaza este enlace por el que te dio Railway en Settings -> Public Domain
+        const URL_DEL_BOT = "https://manabipower.com/"; 
+        const socket = io(URL_DEL_BOT);
+        let isSocketConnected = false;
+
+        function updateConnectionStatus(connected) {
+            isSocketConnected = connected;
+            const dot = document.getElementById('connection-dot');
+            const text = document.getElementById('connection-text');
+            if (!dot || !text) return;
+            dot.className = `connection-dot ${connected ? 'online' : 'offline'}`;
+            text.textContent = connected ? 'En línea • Discord' : 'Desconectado';
+            text.className = connected ? 'text-emerald-300' : 'text-red-300';
+        }
+
+        socket.on('connect', () => updateConnectionStatus(true));
+        socket.on('disconnect', () => updateConnectionStatus(false));
+        socket.on('connect_error', () => updateConnectionStatus(false));
+
+        socket.on('cargarAtletas', (datosDeDiscord) => {
+            athletes = datosDeDiscord;
+            refreshAllViews();
+        });
+
+        socket.on('nuevoAtleta', (nuevoAtleta) => {
+            if (!athletes.find(a => a.id === nuevoAtleta.id)) {
+                athletes.unshift(nuevoAtleta);
+                refreshAllViews();
+                showToast(`Registro remoto: ${nuevoAtleta.fullName}`, 'success');
+            }
+        });
+
+        function refreshAllViews() {
+            if (currentSection === 0) { updateDashboardMetrics(); renderModalitiesOverview(); }
+            if (currentSection === 2) filterAthletes();
+            if (currentSection === 3) { renderPlanillasList(); updateExportPreview(); }
+        }
+
+        // ==================== PERSISTENCE (LOCAL PARA LOGIN) ====================
+        function loadData() {
+            const savedLogs = localStorage.getItem('manabi_logs');
+            if (savedLogs) activityLogs = JSON.parse(savedLogs);
+
+            const savedUser = localStorage.getItem('manabi_current_user');
+            if (savedUser) currentUser = savedUser;
+            // Ya no cargamos atletas de localStorage, ahora vienen de Discord
+        }
+
+        function saveAthletes() {
+            // Esta función se queda vacía por compatibilidad, 
+            // ya que ahora todo se guarda en Discord y el servidor provee los datos.
+        }
+
+        function saveLogs() {
+            localStorage.setItem('manabi_logs', JSON.stringify(activityLogs));
+        }
+
+        function addLog(action, details) {
+            const log = {
+                timestamp: Date.now(),
+                user: currentUser || "Sistema",
+                action: action,
+                details: details
+            };
+            activityLogs.unshift(log);
+            if (activityLogs.length > 80) activityLogs.pop();
+            saveLogs();
+            
+            // Update admin log if visible
+            if (document.getElementById('section-4').classList.contains('active')) {
+                renderActivityLog();
+            }
+        }
+
+        // ==================== LOGIN ====================
+        function attemptLogin() {
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            const errorEl = document.getElementById('login-error');
+
+            const correctUser = 'admin';
+            const correctPass = 'raikoz7841';
+
+            if (!user || !pass) {
+                showLoginError("Por favor complete usuario y contraseña.");
+                return;
+            }
+
+            if (user !== correctUser) {
+                showLoginError("Usuario no autorizado en esta mesa de control.");
+                return;
+            }
+
+            if (pass !== correctPass) {
+                showLoginError("Contraseña incorrecta.");
+                return;
+            }
+
+            // Success
+            currentUser = user;
+            localStorage.setItem('manabi_current_user', user);
+            errorEl.classList.add('hidden');
+            
+            showMainApp();
+            showToast(`Bienvenido, ${user}. Mesa de control activa.`, 'success');
+            addLog("Inicio de Sesión", `El operador ${user} ingresó al sistema`);
+        }
+
+        function showLoginError(msg) {
+            const errorEl = document.getElementById('login-error');
+            errorEl.textContent = msg;
+            errorEl.classList.remove('hidden');
+        }
+
+        function quickLogin(user) {
+            document.getElementById('login-user').value = user;
+            document.getElementById('login-pass').value = 'missymrbodybeach2026';
+            attemptLogin();
+        }
+
+        function logout() {
+            if (confirm('¿Cerrar sesión en la mesa de control?')) {
+                addLog("Cierre de Sesión", `El operador ${currentUser} cerró sesión`);
+                currentUser = null;
+                localStorage.removeItem('manabi_current_user');
+                
+                document.getElementById('main-app').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+                
+                // Reset form states
+                editingAthleteId = null;
+            }
+        }
+
+        function showMainApp() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            
+            document.getElementById('header-user').innerHTML = currentUser;
+            
+            // Initialize filters
+            populateModalityFilter();
+            
+            // Render initial section
+            switchSection(0);
+            
+            // Update metrics
+            updateDashboardMetrics();
+        }
+
+        // ==================== NAVIGATION ====================
+        function switchSection(section) {
+            // Hide all
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            
+            // Deactivate nav
+            document.querySelectorAll('[id^="nav-"]').forEach(el => el.classList.remove('active', 'bg-[#C5A85C]', 'text-white'));
+            
+            // Activate
+            const target = document.getElementById(`section-${section}`);
+            if (target) target.classList.add('active');
+            
+            const nav = document.getElementById(`nav-${section}`);
+            if (nav) nav.classList.add('active', 'bg-[#C5A85C]', 'text-white');
+
+            currentSection = section;
+
+            // Section specific renders
+            if (section === 0) {
+                updateDashboardMetrics();
+                renderModalitiesOverview();
+            }
+            if (section === 2) {
+                filterAthletes();
+            }
+            if (section === 3) {
+                renderPlanillasList();
+                updateExportPreview();
+            }
+            if (section === 4) {
+                renderAdminUsers();
+                renderActivityLog();
+                updateLastSync();
+            }
+        }
+
+        // ==================== REGISTRATION FORM ====================
+        let selectedModality = "Men's Physique";
+        let selectedClassification = "Novato";
+        let selectedPassStatus = "Sí";
+
+        function initRegistrationForm() {
+            // Modality chips
+            const container = document.getElementById('modality-chips');
+            container.innerHTML = '';
+            
+            MODALITIES.forEach(mod => {
+                const chip = document.createElement('div');
+                chip.className = `modality-chip px-4 py-1.5 text-xs font-bold border cursor-pointer rounded-2xl ${mod === selectedModality ? 'active border-[#C5A85C] bg-[#C5A85C] text-white' : 'border-[#0F3057]/20 hover:border-[#C5A85C]/60'}`;
+                chip.innerHTML = mod;
+                chip.onclick = () => {
+                    selectedModality = mod;
+                    initRegistrationForm(); // re-render chips
+                    toggleBiometricCard();
+                    updateWeightAdvice();
+                };
+                container.appendChild(chip);
+            });
+
+            // Set initial values if editing
+            if (editingAthleteId) {
+                const athlete = athletes.find(a => a.id === editingAthleteId);
+                if (athlete) {
+                    document.getElementById('fullName').value = athlete.fullName || '';
+                    document.getElementById('idCard').value = athlete.idCard || '';
+                    document.getElementById('manualBib').value = athlete.bibNumber || '';
+                    document.getElementById('club').value = athlete.club || '';
+                    document.getElementById('province').value = athlete.province || '';
+                    document.getElementById('category').value = athlete.category || '';
+                    document.getElementById('weight').value = athlete.weight || '';
+                    document.getElementById('height').value = athlete.height || '';
+                    document.getElementById('observations').value = athlete.observations || '';
+                    
+                    selectedModality = athlete.modality;
+                    selectedClassification = athlete.classification || 'Novato';
+                    selectedPassStatus = athlete.didPassWeight || 'Sí';
+                    
+                    // Re-init chips with correct selection
+                    initRegistrationForm();
+                }
+            } else {
+                // New registration defaults
+                document.getElementById('fullName').value = '';
+                document.getElementById('idCard').value = '';
+                document.getElementById('manualBib').value = '';
+                document.getElementById('club').value = '';
+                document.getElementById('province').value = '';
+                document.getElementById('category').value = '';
+                document.getElementById('weight').value = '';
+                document.getElementById('height').value = '';
+                document.getElementById('observations').value = '';
+            }
+
+            // Classification buttons
+            selectClassification(selectedClassification);
+            
+            // Pass status
+            selectPassStatus(selectedPassStatus);
+            
+            // Biometric visibility
+            toggleBiometricCard();
+            
+            // Weight advice listener
+            const heightInput = document.getElementById('height');
+            const weightInput = document.getElementById('weight');
+            if (heightInput) heightInput.oninput = updateWeightAdvice;
+            if (weightInput) weightInput.oninput = updateWeightAdvice;
+            
+            // Form title
+            document.getElementById('form-title').textContent = editingAthleteId ? 'EDITAR REGISTRO DE ATLETA' : 'NUEVO REGISTRO DE ATLETA';
+            document.getElementById('submit-btn-text').textContent = editingAthleteId ? 'GUARDAR CAMBIOS LOCALES' : 'COMPLETAR INSCRIPCIÓN OFICIAL';
+            
+            document.getElementById('cancel-edit-btn').classList.toggle('hidden', !editingAthleteId);
+            document.getElementById('cancel-edit-btn').classList.toggle('flex', !!editingAthleteId);
+        }
+
+        function selectClassification(type) {
+            selectedClassification = type;
+            
+            const novato = document.getElementById('class-novato');
+            const clasificado = document.getElementById('class-clasificado');
+            
+            if (type === 'Novato') {
+                novato.classList.add('border-[#C5A85C]', 'bg-[#C5A85C]/5');
+                novato.classList.remove('border-[#0F3057]/20');
+                clasificado.classList.remove('border-[#C5A85C]', 'bg-[#C5A85C]/5');
+                clasificado.classList.add('border-[#0F3057]/20');
+            } else {
+                clasificado.classList.add('border-[#C5A85C]', 'bg-[#C5A85C]/5');
+                clasificado.classList.remove('border-[#0F3057]/20');
+                novato.classList.remove('border-[#C5A85C]', 'bg-[#C5A85C]/5');
+                novato.classList.add('border-[#0F3057]/20');
+            }
+        }
+
+        function selectPassStatus(status) {
+            selectedPassStatus = status;
+            
+            const si = document.getElementById('pass-si');
+            const no = document.getElementById('pass-no');
+            const subio = document.getElementById('pass-subio');
+            
+            [si, no, subio].forEach(el => el.classList.remove('border-2', 'bg-emerald-500', 'text-white', 'border-red-500', 'border-amber-500'));
+            
+            if (status === 'Sí') {
+                si.classList.add('border-2', 'bg-emerald-500', 'text-white');
+            } else if (status === 'No') {
+                no.classList.add('border-2', 'border-red-500', 'bg-red-50');
+            } else {
+                subio.classList.add('border-2', 'border-amber-500', 'bg-amber-50');
+            }
+        }
+
+        function toggleBiometricCard() {
+            const card = document.getElementById('biometric-card');
+            const needsWeighing = !NON_WEIGHING.includes(selectedModality);
+            card.style.display = needsWeighing ? 'block' : 'none';
+            
+            if (!needsWeighing) {
+                selectedPassStatus = 'Sí'; // Auto pass for non-weighing
+            }
+        }
+
+        function updateWeightAdvice() {
+            const adviceEl = document.getElementById('weight-advice');
+            const heightVal = parseFloat(document.getElementById('height').value);
+            
+            if (!heightVal || heightVal < 140) {
+                adviceEl.classList.add('hidden');
+                return;
+            }
+            
+            let advice = null;
+            
+            if (selectedModality === 'Classic Physique') {
+                const base = heightVal - 100;
+                let maxW = base;
+                if (heightVal < 162) maxW = base + 2;
+                else if (heightVal < 168) maxW = base + 4;
+                else if (heightVal < 171) maxW = base + 6;
+                else if (heightVal < 175) maxW = base + 8;
+                else if (heightVal < 180) maxW = base + 11;
+                else maxW = base + 15;
+                
+                advice = `Para ${heightVal}cm en Classic Physique el peso máximo aproximado es ${maxW} kg (regla IFBB).`;
+            } 
+            else if (selectedModality === 'Culturismo Clásico' || selectedModality === 'Games Classic') {
+                const base = heightVal - 100;
+                let maxW = base;
+                if (heightVal <= 168) maxW = base;
+                else if (heightVal <= 171) maxW = base + 2;
+                else if (heightVal <= 175) maxW = base + 4;
+                else if (heightVal <= 180) maxW = base + 6;
+                else maxW = base + 8;
+                
+                advice = `Para ${heightVal}cm en ${selectedModality} el peso máximo aproximado es ${maxW} kg.`;
+            }
+            
+            if (advice) {
+                adviceEl.innerHTML = `<i class="fa-solid fa-info-circle mr-2"></i> ${advice}`;
+                adviceEl.classList.remove('hidden');
+            } else {
+                adviceEl.classList.add('hidden');
+            }
+        }
+
+        function registerAthlete() {
+            const fullName = document.getElementById('fullName').value.trim();
+            const idCard = document.getElementById('idCard').value.trim();
+            const category = document.getElementById('category').value.trim();
+            const club = document.getElementById('club').value.trim();
+            const province = document.getElementById('province').value.trim();
+            const observations = document.getElementById('observations').value.trim();
+            const manualBib = parseInt(document.getElementById('manualBib').value) || null;
+            
+            const needsWeighing = !NON_WEIGHING.includes(selectedModality);
+            const weight = needsWeighing ? parseFloat(document.getElementById('weight').value) : null;
+            const height = needsWeighing ? parseFloat(document.getElementById('height').value) : null;
+
+            // Basic validation
+            if (!fullName || !idCard || !category) {
+                showFormWarning("Complete al menos: Nombre completo, Cédula y Categoría.");
+                return;
+            }
+
+            let finalBib;
+            if (manualBib && manualBib > 0) {
+                finalBib = manualBib;
+            } else if (editingAthleteId) {
+                const existing = athletes.find(a => a.id === editingAthleteId);
+                finalBib = existing ? existing.bibNumber : (Math.max(0, ...athletes.map(a => a.bibNumber)) + 1);
+            } else {
+                finalBib = (Math.max(0, ...athletes.map(a => a.bibNumber)) || 0) + 1;
+            }
+
+            const athleteData = {
+                fullName,
+                idCard,
+                modality: selectedModality,
+                category,
+                weight: weight || null,
+                height: height || null,
+                didPassWeight: needsWeighing ? selectedPassStatus : "Sí",
+                bibNumber: finalBib,
+                observations,
+                club: club || "INDEPENDIENTE",
+                province: province || "MANABÍ",
+                classification: selectedClassification,
+                registrationTimestamp: editingAthleteId ? 
+                    (athletes.find(a => a.id === editingAthleteId)?.registrationTimestamp || Date.now()) : Date.now()
+            };
+
+            if (editingAthleteId) {
+                // Update (Nota: Con Discord como BD, la edición se guarda solo local a menos que crees un socket 'editarDesdeWeb')
+                const index = athletes.findIndex(a => a.id === editingAthleteId);
+                if (index !== -1) {
+                    athletes[index] = { ...athletes[index], ...athleteData };
+                    addLog("Edición", `Editó atleta #${finalBib} - ${fullName}`);
+                    showToast(`Atleta #${finalBib} actualizado correctamente`, 'success');
+                }
+            } else {
+                // Create new y enviar a Discord
+                const newAthlete = {
+                    id: Date.now().toString(),
+                    ...athleteData
+                };
+                
+                // Emite al bot de Railway para que lo guarde en Discord
+                socket.emit('registrarDesdeWeb', newAthlete);
+                
+                // Agregarlo a la pantalla al instante
+                athletes.unshift(newAthlete); 
+                
+                addLog("Registro", `Registró atleta #${finalBib} - ${fullName}`);
+                showToast(`Atleta #${finalBib} registrado exitosamente`, 'success');
+            }
+
+            saveAthletes(); // Función vacía, pero mantenida por estabilidad
+            
+            // Reset form
+            editingAthleteId = null;
+            cancelEdit();
+            
+            // Go to search
+            setTimeout(() => {
+                switchSection(2);
+                filterAthletes();
+            }, 600);
+        }
+
+        function showFormWarning(msg) {
+            const warn = document.getElementById('form-warning');
+            warn.innerHTML = msg;
+            warn.classList.remove('hidden');
+            setTimeout(() => warn.classList.add('hidden'), 4500);
+        }
+
+        function cancelEdit() {
+            editingAthleteId = null;
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
+            document.getElementById('cancel-edit-btn').classList.remove('flex');
+            
+            // Clear form
+            document.querySelectorAll('#section-1 input, #section-1 textarea').forEach(el => el.value = '');
+            selectedModality = "Men's Physique";
+            selectedClassification = "Novato";
+            selectedPassStatus = "Sí";
+            
+            initRegistrationForm();
+            document.getElementById('form-warning').classList.add('hidden');
+            
+            document.getElementById('form-title').textContent = 'NUEVO REGISTRO DE ATLETA';
+            document.getElementById('submit-btn-text').textContent = 'COMPLETAR INSCRIPCIÓN OFICIAL';
+        }
+
+        function startEditAthlete(athleteId) {
+            editingAthleteId = athleteId;
+            switchSection(1);
+            setTimeout(() => {
+                initRegistrationForm();
+            }, 50);
+        }
+
+        // ==================== SEARCH & LIST ====================
+        function populateModalityFilter() {
+            const select = document.getElementById('filter-modality');
+            const exportSelect = document.getElementById('export-filter-modality');
+            select.innerHTML = '<option value="Todas">Todas las modalidades</option>';
+            if (exportSelect) exportSelect.innerHTML = '<option value="Todas">Todas las modalidades</option>';
+            
+            MODALITIES.forEach(mod => {
+                const opt = document.createElement('option');
+                opt.value = mod;
+                opt.textContent = mod;
+                select.appendChild(opt);
+                if (exportSelect) {
+                    const opt2 = opt.cloneNode(true);
+                    exportSelect.appendChild(opt2);
+                }
+            });
+        }
+
+        function getFilteredAthletesForExport() {
+            const modFilter = document.getElementById('export-filter-modality')?.value || 'Todas';
+            const statusFilter = document.getElementById('export-filter-status')?.value || 'Todos';
+            const classFilter = document.getElementById('export-filter-class')?.value || 'Todas';
+            const sortBy = document.getElementById('export-sort-by')?.value || 'bib';
+
+            let filtered = [...athletes];
+
+            if (modFilter !== 'Todas') filtered = filtered.filter(a => a.modality === modFilter);
+            if (statusFilter !== 'Todos') filtered = filtered.filter(a => a.didPassWeight === statusFilter);
+            if (classFilter !== 'Todas') filtered = filtered.filter(a => (a.classification || 'Novato') === classFilter);
+
+            if (sortBy === 'name') filtered.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
+            else if (sortBy === 'modality') filtered.sort((a, b) => (a.modality || '').localeCompare(b.modality || '') || a.bibNumber - b.bibNumber);
+            else filtered.sort((a, b) => a.bibNumber - b.bibNumber);
+
+            return filtered;
+        }
+
+        function updateExportPreview() {
+            const count = getFilteredAthletesForExport().length;
+            const el = document.getElementById('export-preview-count');
+            if (el) el.textContent = `${count} atleta${count !== 1 ? 's' : ''} listo${count !== 1 ? 's' : ''}`;
+        }
+
+        function groupAthletesByModality(list) {
+            const grouped = {};
+            list.forEach(a => {
+                if (!grouped[a.modality]) grouped[a.modality] = [];
+                grouped[a.modality].push(a);
+            });
+            Object.keys(grouped).forEach(k => grouped[k].sort((a, b) => a.bibNumber - b.bibNumber));
+            return grouped;
+        }
+
+        function escapeCSV(val) {
+            if (val == null) return '';
+            const str = String(val).replace(/"/g, '""');
+            return `"${str}"`;
+        }
+
+        function getAthleteInitials(name) {
+            if (!name) return '?';
+            return name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+        }
+
+        function animateCounter(el, target) {
+            if (!el) return;
+            const start = parseInt(el.textContent) || 0;
+            const duration = 600;
+            const startTime = performance.now();
+            function step(now) {
+                const progress = Math.min((now - startTime) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(start + (target - start) * eased);
+                if (progress < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function filterAthletes() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const filter = document.getElementById('filter-modality').value;
+            
+            let filtered = athletes;
+            
+            if (query) {
+                filtered = filtered.filter(a => 
+                    (a.fullName && a.fullName.toLowerCase().includes(query)) ||
+                    (a.idCard && a.idCard.includes(query)) ||
+                    (a.bibNumber && a.bibNumber.toString().includes(query)) ||
+                    (a.club && a.club.toLowerCase().includes(query)) ||
+                    (a.province && a.province.toLowerCase().includes(query))
+                );
+            }
+            
+            if (filter !== "Todas") {
+                filtered = filtered.filter(a => a.modality === filter);
+            }
+            
+            renderAthletesList(filtered);
+        }
+
+        function renderAthletesList(list) {
+            const container = document.getElementById('athletes-list');
+            container.innerHTML = '';
+            
+            const noResults = document.getElementById('no-results');
+            
+            if (list.length === 0) {
+                noResults.classList.remove('hidden');
+                return;
+            } else {
+                noResults.classList.add('hidden');
+            }
+            
+            list.forEach(athlete => {
+                const needsWeigh = !NON_WEIGHING.includes(athlete.modality);
+                
+                const statusColor = athlete.didPassWeight === 'Sí' ? 'emerald' : 
+                                   athlete.didPassWeight === 'No' ? 'red' : 'amber';
+                
+                const card = document.createElement('div');
+                card.className = `athlete-card bg-white border border-[#0F3057]/10 rounded-3xl p-5 shadow-sm`;
+                
+                const initials = getAthleteInitials(athlete.fullName);
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center gap-x-3">
+                            <div class="relative flex-shrink-0">
+                                <div class="w-11 h-11 athlete-avatar text-white rounded-2xl flex items-center justify-center font-black text-sm shadow-inner">
+                                    ${initials}
+                                </div>
+                                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-[#C5A85C] text-[#0F2238] rounded-lg flex items-center justify-center text-[9px] font-black shadow">
+                                    ${athlete.bibNumber}
+                                </div>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="font-extrabold text-base leading-tight truncate">${athlete.fullName || 'SIN NOMBRE'}</div>
+                                <div class="text-xs text-[#0F3057]/60">${athlete.idCard || 'Sin cédula'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-x-1">
+                            <button onclick="startEditAthlete('${athlete.id}'); event.stopImmediatePropagation();" 
+                                    class="w-8 h-8 flex items-center justify-center text-[#0F3057] hover:bg-[#0F3057]/5 rounded-xl">
+                                <i class="fa-solid fa-edit fa-sm"></i>
+                            </button>
+                            <button onclick="deleteAthlete('${athlete.id}'); event.stopImmediatePropagation();" 
+                                    class="w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-xl">
+                                <i class="fa-solid fa-trash fa-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-xs">
+                        <div class="font-bold text-[#0F3057]">${athlete.modality}</div>
+                        <div class="text-[#0F3057]/70">${athlete.category || 'Sin categoría'} • ${athlete.classification || 'Novato'}</div>
+                        
+                        <div class="flex items-center justify-between mt-3">
+                            <div class="text-[10px]">
+                                <span class="font-semibold">${athlete.club}</span><br>
+                                <span class="text-[#0F3057]/50">${athlete.province}</span>
+                            </div>
+                            
+                            ${needsWeigh ? `
+                            <div class="text-right text-xs">
+                                <div>${athlete.weight || '-'} kg</div>
+                                <div class="text-[#0F3057]/50">${athlete.height || '-'} cm</div>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="status-badge bg-${statusColor}-100 text-${statusColor}-700 border border-${statusColor}-200">
+                            ${athlete.didPassWeight}
+                        </div>
+                        
+                        ${athlete.observations ? `
+                        <div class="text-[10px] max-w-[140px] truncate text-[#0F3057]/60 italic">"${athlete.observations}"</div>` : ''}
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        function deleteAthlete(id) {
+            if (!confirm('¿Ocultar este registro de atleta en esta pantalla? (Se mantendrá en Discord)')) return;
+            
+            const athlete = athletes.find(a => a.id === id);
+            if (!athlete) return;
+            
+            athletes = athletes.filter(a => a.id !== id);
+            
+            addLog("Eliminación Local", `Ocultó atleta #${athlete.bibNumber} - ${athlete.fullName}`);
+            
+            filterAthletes();
+            updateDashboardMetrics();
+            showToast('Atleta ocultado de la lista', 'error');
+        }
+
+        // ==================== DASHBOARD ====================
+        function updateDashboardMetrics() {
+            const total = athletes.length;
+            const passed = athletes.filter(a => a.didPassWeight === 'Sí').length;
+            const failed = athletes.filter(a => a.didPassWeight === 'No').length;
+            const shifted = athletes.filter(a => a.didPassWeight === 'Subió de categoría').length;
+            
+            animateCounter(document.getElementById('metric-total'), total);
+            animateCounter(document.getElementById('metric-passed'), passed);
+            animateCounter(document.getElementById('metric-failed'), failed);
+            animateCounter(document.getElementById('metric-shifted'), shifted);
+
+            const heroTotal = document.getElementById('hero-total');
+            if (heroTotal) heroTotal.textContent = total;
+        }
+
+        function renderModalitiesOverview() {
+            // Actualizar contador dinámico
+            document.getElementById('modalities-count').textContent = MODALITIES.length;
+
+            const container = document.getElementById('modalities-grid');
+            container.innerHTML = '';
+            
+            const grouped = {};
+            athletes.forEach(a => {
+                grouped[a.modality] = (grouped[a.modality] || 0) + 1;
+            });
+            
+            const maxCount = Math.max(1, ...MODALITIES.map(m => grouped[m] || 0));
+
+            MODALITIES.forEach(mod => {
+                const count = grouped[mod] || 0;
+                const needsWeigh = !NON_WEIGHING.includes(mod);
+                const pct = Math.round((count / maxCount) * 100);
+                
+                const div = document.createElement('div');
+                div.className = `px-3 py-2.5 rounded-2xl border text-xs ${count > 0 ? 'border-[#C5A85C]/30 bg-[#C5A85C]/5' : 'border-[#0F3057]/10 bg-white'}`;
+                
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-1.5">
+                        <div class="min-w-0 flex-1 pr-2">
+                            <div class="font-bold text-[#0F3057] truncate">${mod}</div>
+                            <div class="text-[10px] text-[#0F3057]/50">${needsWeigh ? '<i class="fa-solid fa-weight-hanging mr-1"></i>Requiere pesaje' : '<i class="fa-solid fa-check mr-1 text-emerald-500"></i>Pase directo'}</div>
+                        </div>
+                        <div class="font-mono text-right flex-shrink-0">
+                            <span class="font-black text-lg leading-none text-[#C5A85C]">${count}</span>
+                            <div class="text-[9px] -mt-1 text-[#0F3057]/50">insc.</div>
+                        </div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-bar-fill" style="width: ${pct}%"></div></div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // ==================== PLANILLAS ====================
+        function renderPlanillasList() {
+            const container = document.getElementById('planillas-list');
+            container.innerHTML = '';
+            document.getElementById('total-athletes-report').textContent = `${athletes.length} ATLETAS`;
+            
+            if (athletes.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-sm text-[#0F3057]/50">Aún no hay atletas registrados.</div>`;
+                return;
+            }
+            
+            // Group by modality
+            const grouped = {};
+            athletes.forEach(a => {
+                if (!grouped[a.modality]) grouped[a.modality] = [];
+                grouped[a.modality].push(a);
+            });
+            
+            Object.keys(grouped).sort().forEach(modality => {
+                const list = grouped[modality].sort((a,b) => a.bibNumber - b.bibNumber);
+                
+                const section = document.createElement('div');
+                section.className = 'mb-5';
+                
+                let html = `
+                    <div class="flex items-center gap-x-3 mb-2 px-1">
+                        <div class="font-extrabold text-sm">${modality}</div>
+                        <div class="text-xs px-2.5 py-px bg-[#0F3057] text-white rounded">${list.length}</div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs">
+                            <thead>
+                                <tr class="bg-[#0F3057] text-white">
+                                    <th class="px-3 py-2 text-left font-bold rounded-l-2xl">#</th>
+                                    <th class="px-3 py-2 text-left font-bold">NOMBRE</th>
+                                    <th class="px-3 py-2 text-left font-bold">CÉDULA</th>
+                                    <th class="px-3 py-2 text-center font-bold">CLASIF.</th>
+                                    <th class="px-3 py-2 text-left font-bold">CLUB / PROCEDENCIA</th>
+                                    ${!NON_WEIGHING.includes(modality) ? `<th class="px-3 py-2 text-center font-bold">PESO</th>` : ''}
+                                    <th class="px-3 py-2 text-center font-bold rounded-r-2xl">ESTADO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                list.forEach(a => {
+                    html += `
+                        <tr class="border-b border-[#0F3057]/10 last:border-none hover:bg-[#F8FAFC]">
+                            <td class="px-3 py-2.5 font-black">#${a.bibNumber}</td>
+                            <td class="px-3 py-2.5 font-bold">${a.fullName}</td>
+                            <td class="px-3 py-2.5 text-[#0F3057]/70">${a.idCard}</td>
+                            <td class="px-3 py-2.5 text-center"><span class="text-[10px] px-2 py-px bg-[#C5A85C]/10 text-[#C5A85C] rounded font-bold">${a.classification || 'Novato'}</span></td>
+                            <td class="px-3 py-2.5 text-xs">${a.club} <span class="text-[#0F3057]/40">• ${a.province}</span></td>
+                            ${!NON_WEIGHING.includes(modality) ? `<td class="px-3 py-2.5 text-center font-mono text-xs">${a.weight || '-'}kg</td>` : ''}
+                            <td class="px-3 py-2.5 text-center">
+                                <span class="status-badge text-[9px] ${a.didPassWeight === 'Sí' ? 'bg-emerald-100 text-emerald-700' : a.didPassWeight === 'No' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}">
+                                    ${a.didPassWeight}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `</tbody></table></div>`;
+                section.innerHTML = html;
+                container.appendChild(section);
+            });
+        }
+
+        function exportToExcel() {
+            const data = getFilteredAthletesForExport();
+            if (data.length === 0) {
+                showToast('No hay datos con los filtros seleccionados', 'error');
+                return;
+            }
+            
+            let csv = '\uFEFF';
+            const fecha = new Date().toLocaleString('es-EC');
+            
+            csv += "MANABÍ POWER 2026 - PLANILLAS OFICIALES MESA DE CONTROL IFBB\n";
+            csv += "Campeonato Manabí Power • Manta, Ecuador\n";
+            csv += `Generado: ${fecha}\n`;
+            csv += `Operador: ${currentUser || 'Sistema'}\n`;
+            csv += "═══════════════════════════════════════════════════════════════════════════════\n\n";
+            
+            const grouped = groupAthletesByModality(data);
+            let totalGeneral = 0;
+            
+            Object.keys(grouped).sort().forEach(modality => {
+                const list = grouped[modality];
+                totalGeneral += list.length;
+                const needsWeigh = !NON_WEIGHING.includes(modality);
+                
+                csv += `═══════════════════════════════════════════════════════════════════════════════\n`;
+                csv += `${modality.toUpperCase()} - PLANILLA MESA DE CONTROL\n`;
+                csv += `═══════════════════════════════════════════════════════════════════════════════\n`;
+                
+                const headers = ['Nro','Nombre Completo','Cédula','Modalidad','Categoría','Clasificación','Club','Provincia'];
+                if (needsWeigh) headers.push('Peso (kg)','Altura (cm)','¿Pasó Peso?');
+                headers.push('Observaciones','Hora Reg.');
+                csv += headers.join(',') + '\n';
+                
+                list.forEach(a => {
+                    const hora = new Date(a.registrationTimestamp || Date.now()).toLocaleTimeString('es-EC', {hour:'2-digit', minute:'2-digit'});
+                    const row = [a.bibNumber, a.fullName, a.idCard, a.modality, a.category || '', a.classification || 'Novato', a.club, a.province];
+                    if (needsWeigh) row.push(a.weight || '-', a.height || '-', a.didPassWeight);
+                    row.push(a.observations || '', hora);
+                    csv += row.map(escapeCSV).join(',') + '\n';
+                });
+                
+                csv += `\nTotal en ${modality}: ${list.length}\n\n`;
+            });
+            
+            csv += `═══════════════════════════════════════════════════════════════════════════════\n`;
+            csv += `TOTAL EXPORTADO: ${totalGeneral} ATLETAS\n`;
+            csv += `═══════════════════════════════════════════════════════════════════════════════\n`;
+            
+            downloadFile(csv, `Manabi_Power_2026_Planillas_${dateStamp()}.csv`, 'text/csv;charset=utf-8;');
+            showToast(`CSV exportado: ${totalGeneral} atletas`, 'success');
+            addLog("Exportación CSV", `Exportó ${totalGeneral} atletas con filtros aplicados`);
+        }
+
+        function exportToXLSX() {
+            const data = getFilteredAthletesForExport();
+            if (data.length === 0) {
+                showToast('No hay datos con los filtros seleccionados', 'error');
+                return;
+            }
+            if (typeof XLSX === 'undefined') {
+                showToast('Librería Excel no disponible', 'error');
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+            const grouped = groupAthletesByModality(data);
+            const fecha = new Date().toLocaleString('es-EC');
+
+            const summaryData = [
+                ['MANABÍ POWER 2026 — MESA DE CONTROL IFBB'],
+                ['Campeonato Manabí Power • Manta, Ecuador'],
+                ['Generado:', fecha],
+                ['Operador:', currentUser || 'Sistema'],
+                ['Total atletas exportados:', data.length],
+                [],
+                ['RESUMEN POR MODALIDAD'],
+                ['Modalidad', 'Inscritos', 'Aprobaron', 'Excedieron', 'Subieron Cat.']
+            ];
+
+            Object.keys(grouped).sort().forEach(mod => {
+                const list = grouped[mod];
+                summaryData.push([
+                    mod, list.length,
+                    list.filter(a => a.didPassWeight === 'Sí').length,
+                    list.filter(a => a.didPassWeight === 'No').length,
+                    list.filter(a => a.didPassWeight === 'Subió de categoría').length
+                ]);
+            });
+
+            const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+            wsSummary['!cols'] = [{wch:35},{wch:12},{wch:12},{wch:12},{wch:14}];
+            XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
+
+            Object.keys(grouped).sort().forEach(modality => {
+                const list = grouped[modality];
+                const needsWeigh = !NON_WEIGHING.includes(modality);
+                const sheetData = [
+                    [`${modality} — Manabí Power 2026`],
+                    [`Total: ${list.length} atletas`],
+                    []
+                ];
+                const headers = ['#','Nombre','Cédula','Categoría','Clasif.','Club','Provincia'];
+                if (needsWeigh) headers.push('Peso','Altura','Estado');
+                headers.push('Observaciones');
+                sheetData.push(headers);
+
+                list.forEach(a => {
+                    const row = [a.bibNumber, a.fullName, a.idCard, a.category || '', a.classification || 'Novato', a.club, a.province];
+                    if (needsWeigh) row.push(a.weight || '-', a.height || '-', a.didPassWeight);
+                    row.push(a.observations || '');
+                    sheetData.push(row);
+                });
+
+                const safeName = modality.substring(0, 28).replace(/[\\/*?:\[\]]/g, '');
+                const ws = XLSX.utils.aoa_to_sheet(sheetData);
+                ws['!cols'] = [{wch:5},{wch:28},{wch:14},{wch:16},{wch:10},{wch:22},{wch:14},{wch:8},{wch:8},{wch:14},{wch:30}];
+                XLSX.utils.book_append_sheet(wb, ws, safeName);
+            });
+
+            XLSX.writeFile(wb, `Manabi_Power_2026_Planillas_${dateStamp()}.xlsx`);
+            showToast(`Excel exportado: ${data.length} atletas en ${Object.keys(grouped).length} hojas`, 'success');
+            addLog("Exportación XLSX", `Exportó ${data.length} atletas a Excel`);
+        }
+
+        function exportToJSON() {
+            const data = getFilteredAthletesForExport();
+            if (data.length === 0) {
+                showToast('No hay datos con los filtros seleccionados', 'error');
+                return;
+            }
+
+            const exportData = {
+                meta: {
+                    event: 'Manabí Power 2026',
+                    location: 'Manta, Ecuador',
+                    generated: new Date().toISOString(),
+                    operator: currentUser || 'Sistema',
+                    totalAthletes: data.length,
+                    filters: {
+                        modality: document.getElementById('export-filter-modality')?.value,
+                        status: document.getElementById('export-filter-status')?.value,
+                        classification: document.getElementById('export-filter-class')?.value
+                    }
+                },
+                summary: {},
+                athletes: data
+            };
+
+            const grouped = groupAthletesByModality(data);
+            Object.keys(grouped).forEach(mod => { exportData.summary[mod] = grouped[mod].length; });
+
+            downloadFile(JSON.stringify(exportData, null, 2), `Manabi_Power_2026_Datos_${dateStamp()}.json`, 'application/json');
+            showToast(`JSON exportado: ${data.length} atletas`, 'success');
+            addLog("Exportación JSON", `Exportó ${data.length} atletas estructurados`);
+        }
+
+        function downloadFile(content, filename, mime) {
+            const blob = new Blob([content], { type: mime });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function dateStamp() {
+            return new Date().toISOString().slice(0, 10);
+        }
+
+        // ==================== EXPORTAR A WORD ====================
+        function exportToWord() {
+            const data = getFilteredAthletesForExport();
+            if (data.length === 0) {
+                showToast('No hay datos con los filtros seleccionados', 'error');
+                return;
+            }
+
+            const grouped = groupAthletesByModality(data);
+            const fecha = new Date().toLocaleString('es-EC');
+
+            let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word'>
+            <head><meta charset='utf-8'>
+            <style>
+                body { font-family: Calibri, Arial, sans-serif; margin: 40px; color: #1f2937; }
+                h1 { color: #0F2238; border-bottom: 3px solid #C5A85C; padding-bottom: 10px; }
+                h2 { color: #0F3057; background: #f1f5f9; padding: 8px 12px; margin-top: 24px; }
+                table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11pt; }
+                th { background: #0F3057; color: white; padding: 8px; text-align: left; }
+                td { border-bottom: 1px solid #e5e7eb; padding: 6px 8px; }
+                .meta { color: #6b7280; font-size: 10pt; }
+                .total { font-weight: bold; margin-top: 20px; color: #0F2238; }
+            </style></head><body>
+            <h1>MANABÍ POWER 2026 — PLANILLA OFICIAL</h1>
+            <p class="meta">Mesa de Control IFBB • Manta, Ecuador<br>
+            Generado: ${fecha} • Operador: ${currentUser || 'Sistema'}<br>
+            Total exportado: <strong>${data.length} atletas</strong></p>`;
+
+            Object.keys(grouped).sort().forEach(modality => {
+                const list = grouped[modality];
+                const needsWeigh = !NON_WEIGHING.includes(modality);
+                html += `<h2>${modality} (${list.length} atletas)</h2><table><tr>
+                    <th>#</th><th>Nombre</th><th>Cédula</th><th>Categoría</th><th>Club</th>`;
+                if (needsWeigh) html += `<th>Peso</th><th>Estado</th>`;
+                html += `</tr>`;
+                list.forEach(a => {
+                    html += `<tr><td>${a.bibNumber}</td><td>${a.fullName}</td><td>${a.idCard}</td>
+                        <td>${a.category || ''}</td><td>${a.club} (${a.province})</td>`;
+                    if (needsWeigh) html += `<td>${a.weight || '-'} kg</td><td>${a.didPassWeight}</td>`;
+                    html += `</tr>`;
+                });
+                html += `</table>`;
+            });
+
+            html += `<p class="total">TOTAL GENERAL: ${data.length} ATLETAS — Manabí Power 2026</p></body></html>`;
+
+            downloadFile(html, `Manabi_Power_2026_Planilla_${dateStamp()}.doc`, 'application/msword');
+            showToast(`Word exportado: ${data.length} atletas`, 'success');
+            addLog("Exportación Word", `Exportó ${data.length} atletas a Word`);
+        }
+
+        // ==================== REPORTE VISUAL HTML (IMPECABLE) ====================
+        function generateVisualReport() {
+            const data = getFilteredAthletesForExport();
+            if (data.length === 0) {
+                showToast('No hay datos con los filtros seleccionados', 'error');
+                return;
+            }
+
+            const grouped = groupAthletesByModality(data);
+            const fecha = new Date().toLocaleString('es-EC');
+            const logoUrl = 'https://media.discordapp.net/attachments/1516969981525495960/1516982084802052257/Diseno_sin_titulo_1.png?ex=6a349f29&is=6a334da9&hm=755c3dbfb11670a3aab6172550f2ddf7f686b1acdcb88c42d5186090ab6dee09&=&format=webp&quality=lossless&width=300';
+            const passed = data.filter(a => a.didPassWeight === 'Sí').length;
+            const failed = data.filter(a => a.didPassWeight === 'No').length;
+
+            let html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+                <title>Manabí Power 2026 - Planilla Oficial</title>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');
+                    * { box-sizing: border-box; }
+                    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f1f4f9; color: #1f2937; }
+                    .page { max-width: 1100px; margin: 0 auto; padding: 32px; }
+                    .header { text-align: center; margin-bottom: 32px; background: linear-gradient(135deg, #030D1B, #0A1931, #0F3057); color: white; padding: 32px; border-radius: 16px; }
+                    .header img { height: 80px; margin-bottom: 12px; }
+                    .header h1 { font-family: 'Outfit', sans-serif; margin: 0; font-size: 32px; letter-spacing: 1px; }
+                    .header .gold { color: #C5A85C; }
+                    .header p { color: rgba(255,255,255,0.7); margin: 6px 0 0; font-size: 13px; }
+                    .stats { display: flex; gap: 16px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+                    .stat { background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 10px; font-size: 13px; }
+                    .stat strong { color: #FFEA8D; font-size: 20px; display: block; }
+                    .modality-section { margin-bottom: 28px; background: white; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow: hidden; page-break-inside: avoid; }
+                    .modality-header { background: linear-gradient(90deg, #0F2238, #0F3057); color: white; padding: 14px 24px; font-size: 16px; font-weight: 700; display: flex; justify-content: space-between; }
+                    .modality-header .count { background: #C5A85C; color: #0F2238; padding: 2px 10px; border-radius: 20px; font-size: 12px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th { background: #f8fafc; text-align: left; padding: 10px 14px; font-size: 11px; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; }
+                    td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+                    tr:nth-child(even) { background: #fafbfc; }
+                    .badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+                    .badge-ok { background: #d1fae5; color: #065f46; }
+                    .badge-fail { background: #fee2e2; color: #991b1b; }
+                    .badge-warn { background: #fef3c7; color: #92400e; }
+                    .footer { text-align: center; margin-top: 32px; padding: 20px; color: #9ca3af; font-size: 12px; border-top: 2px solid #C5A85C; }
+                    .print-btn { position: fixed; top: 20px; right: 20px; background: #C5A85C; color: #0F2238; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+                    .print-btn:hover { background: #FFEA8D; }
+                    @media print { .print-btn { display: none; } body { background: white; } .page { padding: 0; } }
+                </style></head><body>
+                <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+                <div class="page">
+                    <div class="header">
+                        <img src="${logoUrl}" alt="Manabí Power">
+                        <h1>MANABÍ <span class="gold">POWER</span> 2026</h1>
+                        <p>PLANILLA OFICIAL — MESA DE CONTROL IFBB</p>
+                        <p>Manta, Ecuador &nbsp;|&nbsp; ${fecha} &nbsp;|&nbsp; Operador: ${currentUser || 'Sistema'}</p>
+                        <div class="stats">
+                            <div class="stat"><strong>${data.length}</strong>Total Atletas</div>
+                            <div class="stat"><strong>${passed}</strong>Aprobaron Peso</div>
+                            <div class="stat"><strong>${failed}</strong>Excedieron</div>
+                            <div class="stat"><strong>${Object.keys(grouped).length}</strong>Modalidades</div>
+                        </div>
+                    </div>`;
+
+            Object.keys(grouped).sort().forEach(modality => {
+                const list = grouped[modality];
+                const needsWeigh = !NON_WEIGHING.includes(modality);
+
+                html += `<div class="modality-section">
+                    <div class="modality-header"><span>${modality}</span><span class="count">${list.length} atletas</span></div>
+                    <table><thead><tr>
+                        <th>#</th><th>Nombre</th><th>Cédula</th><th>Categoría</th><th>Club</th>`;
+                if (needsWeigh) html += `<th>Peso</th><th>Estado</th>`;
+                html += `</tr></thead><tbody>`;
+
+                list.forEach(a => {
+                    const badgeClass = a.didPassWeight === 'Sí' ? 'badge-ok' : a.didPassWeight === 'No' ? 'badge-fail' : 'badge-warn';
+                    html += `<tr><td><strong>#${a.bibNumber}</strong></td><td><strong>${a.fullName}</strong></td>
+                        <td>${a.idCard}</td><td>${a.category || '-'}</td><td>${a.club} • ${a.province}</td>`;
+                    if (needsWeigh) html += `<td>${a.weight ? a.weight + ' kg' : '-'}</td>
+                        <td><span class="badge ${badgeClass}">${a.didPassWeight}</span></td>`;
+                    html += `</tr>`;
+                });
+
+                html += `</tbody></table></div>`;
+            });
+
+            html += `<div class="footer">
+                <p><strong>TOTAL EXPORTADO: ${data.length} ATLETAS</strong></p>
+                <p>© 2026 Manabí Power Oficial — IFBB Ecuador</p>
+            </div></div></body></html>`;
+
+            const win = window.open('', '_blank');
+            win.document.write(html);
+            win.document.close();
+            showToast('Reporte visual listo — usa Imprimir para PDF', 'success');
+            addLog("Reporte Visual", `Generó reporte HTML de ${data.length} atletas`);
+        }
+
+        function exportTextReport() {
+            const data = getFilteredAthletesForExport();
+            if (data.length === 0) {
+                showToast('No hay datos con los filtros seleccionados', 'error');
+                return;
+            }
+            
+            const fecha = new Date().toLocaleString('es-EC');
+            let report = `╔════════════════════════════════════════════════════════════════════════════╗\n`;
+            report += `║              REPORTE OFICIAL - MANABÍ POWER 2026 - IFBB                    ║\n`;
+            report += `╠════════════════════════════════════════════════════════════════════════════╣\n`;
+            report += `║  Campeonato Manabí Power • Manta, Ecuador                                   ║\n`;
+            report += `║  Operador: ${(currentUser || 'Sistema').padEnd(58)}║\n`;
+            report += `║  Generado: ${fecha.padEnd(58)}║\n`;
+            report += `║  Total exportado: ${String(data.length).padEnd(52)}║\n`;
+            report += `╚════════════════════════════════════════════════════════════════════════════╝\n\n`;
+            
+            const grouped = groupAthletesByModality(data);
+            
+            Object.keys(grouped).sort().forEach(mod => {
+                const list = grouped[mod];
+                report += `┌────────────────────────────────────────────────────────────────────────────┐\n`;
+                report += `│  ${mod.toUpperCase().padEnd(70)}│\n`;
+                report += `│  ${list.length} ATLETAS                                                                │\n`;
+                report += `├────┬──────────────────────────────┬────────────┬──────────┬────────────────────┤\n`;
+                report += `│  # │ NOMBRE                       │ CÉDULA     │ CLASIF.  │ CLUB / PROCEDENCIA │\n`;
+                report += `├────┼──────────────────────────────┼────────────┼──────────┼────────────────────┤\n`;
+                
+                list.forEach(a => {
+                    const nombre = (a.fullName || '').substring(0, 26).padEnd(26);
+                    const cedula = (a.idCard || '').padEnd(10);
+                    const clasif = (a.classification || 'Novato').padEnd(8);
+                    const club = `${a.club || ''} • ${a.province || ''}`.substring(0, 18).padEnd(18);
+                    
+                    report += `│ ${String(a.bibNumber).padStart(2)} │ ${nombre} │ ${cedula} │ ${clasif} │ ${club} │\n`;
+                    
+                    if (a.weight) {
+                        report += `│    │ Peso: ${a.weight}kg  Altura: ${a.height || '-'}cm   Estado: ${a.didPassWeight}                          │\n`;
+                    }
+                    if (a.observations) {
+                        report += `│    │ Obs: ${a.observations.substring(0, 60)}                              │\n`;
+                    }
+                });
+                
+                report += `└────┴──────────────────────────────┴────────────┴──────────┴────────────────────┘\n\n`;
+            });
+            
+            report += `════════════════════════════════════════════════════════════════════════════\n`;
+            report += `                    TOTAL EXPORTADO: ${data.length} ATLETAS\n`;
+            report += `════════════════════════════════════════════════════════════════════════════\n`;
+            
+            downloadFile(report, `Reporte_Manabi_Power_2026_${dateStamp()}.txt`, 'text/plain');
+            showToast(`Reporte TXT: ${data.length} atletas`, 'success');
+            addLog("Exportación TXT", `Exportó reporte de ${data.length} atletas`);
+        }
+
+        // ==================== ADMIN ====================
+        function renderAdminUsers() {
+            const container = document.getElementById('admin-users-list');
+            container.innerHTML = '';
+            
+            const users = [
+                { name: 'Raikoz', role: 'Administrador Principal' },
+                { name: 'Carlos', role: 'Operador de Pesaje' },
+                { name: 'Pangorita', role: 'Coordinadora Mesa Técnica' }
+            ];
+            
+            users.forEach(u => {
+                const isCurrent = u.name === currentUser;
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between px-4 py-3 rounded-2xl ${isCurrent ? 'bg-[#C5A85C]/10 border border-[#C5A85C]/30' : 'bg-[#F8FAFC]'}`;
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-x-3">
+                        <div class="w-9 h-9 ${isCurrent ? 'bg-[#C5A85C]' : 'bg-[#0F3057]'} rounded-2xl flex items-center justify-center text-white">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <div class="font-extrabold">${u.name} ${isCurrent ? '<span class="text-xs text-[#C5A85C]">(ACTUAL)</span>' : ''}</div>
+                            <div class="text-xs text-[#0F3057]/60">${u.role}</div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="changePasswordPrompt('${u.name}')" class="text-xs px-4 py-1.5 border border-[#C5A85C]/60 hover:bg-[#C5A85C] hover:text-white transition rounded-2xl font-bold">
+                        CAMBIAR CLAVE
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function changePasswordPrompt(username) {
+            const newPass = prompt(`Ingrese la NUEVA contraseña para ${username}:`);
+            if (!newPass || newPass.length < 4) {
+                alert('La contraseña debe tener al menos 4 caracteres.');
+                return;
+            }
+            
+            // In real app this would update cloud. Here we just log it.
+            addLog("Cambio de Clave", `Se actualizó la contraseña del usuario ${username} (simulado localmente)`);
+            showToast(`Contraseña de ${username} actualizada (modo demo)`, 'success');
+        }
+
+        function createLocalBackup() {
+            const backup = {
+                timestamp: Date.now(),
+                user: currentUser,
+                athletes: athletes,
+                version: "Manabí Power Web V2"
+            };
+            
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Manabi_Power_Backup_${new Date().toISOString().slice(0,10)}.json`;
+            link.click();
+            
+            addLog("Respaldo", `Creó respaldo local con ${athletes.length} atletas`);
+            showToast('Respaldo descargado correctamente', 'success');
+        }
+
+        function restoreFromBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    
+                    if (confirm(`¿Restaurar ${backup.athletes ? backup.athletes.length : 0} atletas del respaldo del ${new Date(backup.timestamp).toLocaleDateString()}? Esto reemplazará los datos actuales.`)) {
+                        athletes = backup.athletes || [];
+                        saveAthletes();
+                        
+                        addLog("Restauración", `Restauró base de datos desde respaldo (${backup.athletes ? backup.athletes.length : 0} atletas)`);
+                        
+                        showToast('Datos restaurados exitosamente', 'success');
+                        
+                        // Refresh current views
+                        updateDashboardMetrics();
+                        if (document.getElementById('section-2').classList.contains('active')) filterAthletes();
+                        if (document.getElementById('section-3').classList.contains('active')) renderPlanillasList();
+                    }
+                } catch (err) {
+                    alert('Archivo de respaldo inválido o corrupto.');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // reset
+        }
+
+        function renderActivityLog() {
+            const container = document.getElementById('activity-log');
+            container.innerHTML = '';
+            
+            if (activityLogs.length === 0) {
+                container.innerHTML = `<div class="text-[#0F3057]/40 px-2">Sin actividad registrada aún.</div>`;
+                return;
+            }
+            
+            activityLogs.slice(0, 12).forEach(log => {
+                const time = new Date(log.timestamp).toLocaleTimeString('es-EC', {hour:'2-digit', minute:'2-digit'});
+                const div = document.createElement('div');
+                div.className = `px-3 py-1.5 flex gap-x-3 text-xs border-l-2 border-[#C5A85C]/40`;
+                div.innerHTML = `
+                    <div class="w-11 flex-shrink-0 text-[#C5A85C] font-mono">${time}</div>
+                    <div class="flex-1">
+                        <span class="font-bold">${log.user}</span> — <span class="text-[#0F3057]/70">${log.action}</span><br>
+                        <span class="text-[#0F3057]/60">${log.details}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateLastSync() {
+            const el = document.getElementById('last-sync');
+            el.textContent = new Date().toLocaleTimeString('es-EC');
+        }
+
+        // ==================== UTILITIES ====================
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const styles = {
+                success: 'bg-emerald-600 text-white border-emerald-700',
+                error: 'bg-red-600 text-white border-red-700',
+                info: 'bg-[#0F3057] text-white border-[#C5A85C]/40'
+            };
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast max-w-sm px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-x-3 text-sm font-medium border ${styles[type] || styles.success}`;
+            
+            toast.innerHTML = `
+                <i class="fa-solid ${icons[type] || icons.success} text-lg"></i>
+                <div class="flex-1">${message}</div>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.transition = 'all 0.3s ease';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+
+        // ==================== INITIALIZATION ====================
+        function initializeApp() {
+            initTailwind();
+            loadData();
+            
+            // If already logged in
+            if (currentUser) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('header-user').innerHTML = currentUser;
+                
+                populateModalityFilter();
+                switchSection(0);
+            }
+            
+            // Keyboard support
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !document.getElementById('login-screen').classList.contains('hidden')) {
+                    const active = document.activeElement;
+                    if (active && (active.id === 'login-user' || active.id === 'login-pass')) {
+                        e.preventDefault();
+                        attemptLogin();
+                    }
+                }
+                if (e.key === '/' && !document.getElementById('main-app').classList.contains('hidden')) {
+                    e.preventDefault();
+                    const search = document.getElementById('search-input');
+                    if (search) {
+                        switchSection(2);
+                        setTimeout(() => search.focus(), 100);
+                    }
+                }
+            });
+            
+            initRegistrationForm();
+            updateConnectionStatus(socket.connected);
+            console.log('%c[Manabí Power V3 Pro] Sistema listo — Socket.io + Exportación avanzada', 'color:#C5A85C; font-weight:bold');
+        }
+
+        // Boot
+        window.onload = initializeApp;
+    </script>
+</body>
+</html>
