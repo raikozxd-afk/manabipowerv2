@@ -89,6 +89,18 @@
         .sched-status-pill.pendiente { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
         .sched-status-pill.en_curso { background: rgba(234,179,8,0.2); color: #FFEA8D; border: 1px solid rgba(234,179,8,0.45); }
         .sched-status-pill.finalizada { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.35); }
+        .sched-cat-card { transition: border-color 0.15s; }
+        .sched-cat-header { cursor: pointer; }
+        .sched-cat-count { letter-spacing: 0.02em; }
+        .sched-participants-table th { background: rgba(15,48,87,0.6); }
+        .sched-part-status { font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em; display: inline-block; }
+        .sched-part-status.pendiente { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+        .sched-part-status.en_tarima { background: rgba(234,179,8,0.2); color: #FFEA8D; border: 1px solid rgba(234,179,8,0.45); }
+        .sched-part-status.finalizado { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.35); }
+        .sched-part-action { font-size: 8px; font-weight: 800; padding: 3px 7px; border-radius: 6px; border: 1px solid rgba(197,168,92,0.3); color: #C5A85C; background: rgba(15,48,87,0.6); transition: all 0.12s; white-space: nowrap; }
+        .sched-part-action:hover { background: rgba(197,168,92,0.15); color: #FFEA8D; border-color: rgba(197,168,92,0.5); }
+        .sched-part-action.active-tarima { background: rgba(234,179,8,0.2); color: #FFEA8D; border-color: rgba(234,179,8,0.45); }
+        .sched-part-action.active-fin { background: rgba(34,197,94,0.15); color: #86efac; border-color: rgba(34,197,94,0.35); }
 
         .score-tab { padding: 8px 14px; border-radius: 10px; font-size: 11px; font-weight: 700; color: rgba(197,168,92,0.7); border: 1px solid transparent; transition: all 0.15s; white-space: nowrap; }
         .score-tab:hover { color: #FFEA8D; background: rgba(197,168,92,0.08); }
@@ -999,6 +1011,7 @@
                                     <div onclick="selectClassification('Clasificado')" id="class-clasificado" class="flex-1 cursor-pointer border border-[#C5A85C]/30 rounded-xl p-3 text-center hover:border-[#C5A85C]/60 text-[#FFEA8D]"><i class="fa-solid fa-trophy text-[#C5A85C]/60"></i><div class="font-bold text-sm mt-1">Clasificado</div></div>
                                 </div>
                             </div>
+                            <div><label class="lbl">Estado de Participación</label><select id="participationStatus" class="dark-input w-full rounded-xl px-4 py-3 text-sm" onchange="onFormChange()"><option value="Pendiente">Pendiente</option><option value="En Tarima">En Tarima</option><option value="Finalizado">Finalizado</option></select></div>
                             <div id="field-weigh-control" class="md:col-span-2 lg:col-span-3 border border-[#C5A85C]/25 bg-[#0A1931] rounded-xl p-4">
                                 <label class="lbl">Control de Pesaje</label>
                                 <div class="flex gap-2 mt-2">
@@ -1448,7 +1461,7 @@
                     <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
                         <div>
                             <h2 class="brand-font text-2xl md:text-3xl text-[#FFEA8D]">Cronograma Oficial</h2>
-                            <p class="text-sm text-[#C5A85C]/80 mt-1">Orden de salida, horarios estimados y estado en vivo del campeonato</p>
+                            <p class="text-sm text-[#C5A85C]/80 mt-1">Orden de salida, competidores por categoría y estado en vivo del campeonato</p>
                         </div>
                         <div class="flex flex-wrap gap-2" id="schedule-admin-actions">
                             <button onclick="resetEventSchedule()" class="text-xs font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-rotate-left mr-1"></i>Restablecer</button>
@@ -1457,16 +1470,20 @@
                         </div>
                     </div>
 
-                    <div class="sched-live-banner p-5 mb-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="sched-live-banner p-5 mb-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                             <div class="text-[10px] text-[#C5A85C] font-bold tracking-widest">EN COMPETENCIA AHORA</div>
                             <div id="sched-live-current" class="text-lg font-black text-[#FFEA8D] mt-1">—</div>
                         </div>
                         <div>
+                            <div class="text-[10px] text-[#C5A85C] font-bold tracking-widest">EN TARIMA AHORA</div>
+                            <div id="sched-live-on-stage" class="text-sm font-bold text-[#FFEA8D] mt-1 leading-snug">—</div>
+                        </div>
+                        <div>
                             <div class="text-[10px] text-[#C5A85C] font-bold tracking-widest">SIGUIENTE MODALIDAD</div>
                             <div id="sched-live-next" class="text-lg font-bold text-[#C5A85C] mt-1">—</div>
                         </div>
-                        <div class="text-right md:text-left">
+                        <div>
                             <div class="text-[10px] text-[#C5A85C] font-bold tracking-widest">FINALIZACIÓN ESTIMADA</div>
                             <div id="sched-live-end" class="text-2xl font-black text-[#C5A85C] mt-1">—</div>
                         </div>
@@ -1486,6 +1503,17 @@
                             <div class="text-3xl font-black text-[#FFEA8D] mt-2" id="sched-total-athletes">0</div>
                             <div class="text-xs text-[#C5A85C]/70">atletas en cronograma</div>
                             <div class="text-sm font-bold text-[#C5A85C] mt-4" id="sched-total-duration">Duración: —</div>
+                        </div>
+                    </div>
+
+                    <div class="dark-panel rounded-2xl p-4 mb-4 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
+                        <div class="flex-1 min-w-[200px] relative">
+                            <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-[#C5A85C]/50 text-xs"></i>
+                            <input id="sched-search" type="text" placeholder="Buscar por nombre, ficha, cédula, club..." oninput="onScheduleSearchInput()" class="dark-input w-full rounded-xl pl-10 pr-4 py-3 text-sm">
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="expandAllScheduleCategories()" class="text-xs font-bold px-4 py-2.5 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-angles-down mr-1"></i>Expandir todo</button>
+                            <button type="button" onclick="collapseAllScheduleCategories()" class="text-xs font-bold px-4 py-2.5 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-angles-up mr-1"></i>Contraer todo</button>
                         </div>
                     </div>
 
@@ -1678,7 +1706,10 @@
         let scoreSaveTimer = null;
         let eventSchedule = null;
         let draggedScheduleModality = null;
+        let scheduleExpandedCategories = new Set();
+        let scheduleSearchQuery = '';
         const SCHEDULE_ID = 'mp-event-schedule';
+        const AGE_CATEGORY_ORDER = ['Junior', 'Senior', 'Master +35', 'Master +40', 'Master +45', 'Master +50', 'Master +55', 'Master +60', 'Sin edad'];
         let currentSection = 0;
         let activityLogs = [];
         let registrationsClosed = localStorage.getItem('mp_reg_closed') === 'true';
@@ -1784,6 +1815,52 @@
             return a.fullName || '';
         }
 
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function normalizeParticipationStatus(status) {
+            if (!status) return 'Pendiente';
+            const s = String(status).toLowerCase();
+            if (s.includes('tarima')) return 'En Tarima';
+            if (s.includes('finaliz')) return 'Finalizado';
+            return 'Pendiente';
+        }
+
+        function getParticipationStatus(a) {
+            return normalizeParticipationStatus(a.participationStatus || a.status);
+        }
+
+        function findAthleteDuplicates(bibNumber, idCard, excludeId) {
+            const conflicts = [];
+            const bib = parseInt(bibNumber, 10);
+            const card = String(idCard || '').trim();
+            athletes.forEach(a => {
+                if (excludeId && String(a.id) === String(excludeId)) return;
+                if (bib > 0 && parseInt(a.bibNumber, 10) === bib) {
+                    conflicts.push({ type: 'bib', message: `Ficha #${bib} ya usada por ${getFullName(a)}` });
+                }
+                if (card && card !== 'Pendiente' && String(a.idCard || '').trim() === card) {
+                    conflicts.push({ type: 'idCard', message: `Cédula ya registrada: ${getFullName(a)}` });
+                }
+            });
+            return conflicts;
+        }
+
+        function emitAthleteToDiscord(event, athlete, onError) {
+            if (!socket.connected) {
+                showToast('Sin conexión con Discord. Cambio guardado solo en este navegador.', 'error');
+                return;
+            }
+            socket.emit(event, athlete, (res) => {
+                if (res && res.ok === false) {
+                    showToast(res.error || 'Error al sincronizar con Discord', 'error');
+                    requestDiscordSync(true);
+                    if (onError) onError(res);
+                }
+            });
+        }
+
         function normalizeAthlete(a) {
             if (a.modality && MODALITY_ALIASES[a.modality]) {
                 a.modality = MODALITY_ALIASES[a.modality];
@@ -1796,6 +1873,7 @@
             a.athleteStatus = a.athleteStatus || a.classification || 'Novato';
             a.passStatus = a.passStatus || a.didPassWeight || 'Sí';
             a.paymentStatus = a.paymentStatus || 'Pendiente';
+            a.participationStatus = normalizeParticipationStatus(a.participationStatus || a.status);
             if (!a.category && a.modality) {
                 a.category = calculateAutoCategory(a.modality, a.birthDate, a.height, a.weight);
             }
@@ -2028,7 +2106,8 @@
 
         function refreshAllViews() {
             populateClubFilters();
-            if (currentSection === 0) { updateDashboardMetrics(); renderModalitiesOverview(); renderScheduleLiveWidget(); }
+            if (currentSection === 0) { updateDashboardMetrics(); renderModalitiesOverview(); }
+            renderScheduleLiveWidget();
             if (currentSection === 2) filterAthletes();
             if (currentSection === 3) { renderPlanillasList(); updateExportPreview(); }
             if (currentSection === 5) renderJudgesList();
@@ -2057,26 +2136,20 @@
         const SESSION_KEY = 'mp_session';
         const SESSION_MAX_MS = 8 * 60 * 60 * 1000;
 
-        const AUTH_USERS = {
-            admin: { password: 'raikoz7841', role: 'admin', label: 'Administrador' },
-            escrutador: { password: 'scrut2026', role: 'scrutineer', label: 'Escrutador' },
-            juez1: { password: 'juez2026', role: 'judge', judgeSlot: 0, label: 'Juez 1' },
-            juez2: { password: 'juez2026', role: 'judge', judgeSlot: 1, label: 'Juez 2' },
-            juez3: { password: 'juez2026', role: 'judge', judgeSlot: 2, label: 'Juez 3' },
-            juez4: { password: 'juez2026', role: 'judge', judgeSlot: 3, label: 'Juez 4' },
-            juez5: { password: 'juez2026', role: 'judge', judgeSlot: 4, label: 'Juez 5' },
-            juez6: { password: 'juez2026', role: 'judge', judgeSlot: 5, label: 'Juez 6' },
-            juez7: { password: 'juez2026', role: 'judge', judgeSlot: 6, label: 'Juez 7' },
-            juez8: { password: 'juez2026', role: 'judge', judgeSlot: 7, label: 'Juez 8' },
-            juez9: { password: 'juez2026', role: 'judge', judgeSlot: 8, label: 'Juez 9' }
+        const USER_LABELS = {
+            admin: 'Administrador',
+            escrutador: 'Escrutador',
+            juez1: 'Juez 1', juez2: 'Juez 2', juez3: 'Juez 3', juez4: 'Juez 4', juez5: 'Juez 5',
+            juez6: 'Juez 6', juez7: 'Juez 7', juez8: 'Juez 8', juez9: 'Juez 9'
         };
 
-        function createSession(user, role = 'admin', judgeSlot = null) {
+        function createSession(user, role = 'admin', judgeSlot = null, token = null, label = null) {
             const session = {
                 user,
                 role,
                 judgeSlot,
-                token: (crypto.randomUUID && crypto.randomUUID()) || `sess-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                label: label || USER_LABELS[user] || user,
+                token: token || ((crypto.randomUUID && crypto.randomUUID()) || `sess-${Date.now()}-${Math.random().toString(36).slice(2)}`),
                 createdAt: Date.now()
             };
             sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
@@ -2095,6 +2168,7 @@
                     clearSession();
                     return null;
                 }
+                currentUser = session.user;
                 currentUserRole = session.role || 'admin';
                 currentJudgeSlot = session.judgeSlot ?? null;
                 return session;
@@ -2104,7 +2178,13 @@
             }
         }
 
+        function getSessionToken() {
+            return getValidSession()?.token || null;
+        }
+
         function clearSession() {
+            const token = getSessionToken();
+            if (token && socket?.connected) socket.emit('cerrarSesion', { token });
             sessionStorage.removeItem(SESSION_KEY);
             localStorage.removeItem('manabi_current_user');
             currentUser = null;
@@ -2415,25 +2495,31 @@
             const user = document.getElementById('login-user').value.trim().toLowerCase();
             const pass = document.getElementById('login-pass').value.trim();
             const errorEl = document.getElementById('login-error');
+            const loginBtn = document.querySelector('#login-screen button[onclick="attemptLogin()"]');
 
             if (!user || !pass) {
-                showLoginError("Por favor complete usuario y contraseña.");
+                showLoginError('Por favor complete usuario y contraseña.');
+                return;
+            }
+            if (!socket.connected) {
+                showLoginError('Sin conexión con el servidor. Espere la sincronización con Discord.');
                 return;
             }
 
-            const account = AUTH_USERS[user];
-            if (!account || pass !== account.password) {
-                showLoginError("Usuario o contraseña incorrectos.");
-                return;
-            }
-
-            createSession(user, account.role, account.judgeSlot ?? null);
-            errorEl.classList.add('hidden');
-            document.getElementById('login-pass').value = '';
-
-            showMainApp();
-            showToast(`Bienvenido, ${account.label || user}. ${athletes.length} atletas en sistema.`, 'success');
-            addLog("Inicio de Sesión", `${account.label || user} ingresó al sistema`);
+            if (loginBtn) loginBtn.disabled = true;
+            socket.emit('intentarLogin', { user, pass }, (res) => {
+                if (loginBtn) loginBtn.disabled = false;
+                if (!res?.ok) {
+                    showLoginError(res?.error || 'Usuario o contraseña incorrectos.');
+                    return;
+                }
+                createSession(res.user, res.role, res.judgeSlot ?? null, res.token, res.label);
+                errorEl.classList.add('hidden');
+                document.getElementById('login-pass').value = '';
+                showMainApp();
+                showToast(`Bienvenido, ${res.label || res.user}. ${athletes.length} atletas en sistema.`, 'success');
+                addLog('Inicio de Sesión', `${res.label || res.user} ingresó al sistema`);
+            });
         }
 
         function showLoginError(msg) {
@@ -2456,7 +2542,8 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
             
-            const roleLabel = AUTH_USERS[currentUser]?.label || currentUser;
+            const session = getValidSession();
+            const roleLabel = session?.label || USER_LABELS[currentUser] || currentUser;
             document.getElementById('header-user').innerHTML = `${roleLabel}<span class="block text-[9px] text-[#C5A85C]/60 font-normal">${currentUserRole === 'judge' ? 'Juez ' + (currentJudgeSlot + 1) : currentUserRole}</span>`;
             
             populateModalityFilter();
@@ -2554,6 +2641,7 @@
                     document.getElementById('manualBib').value = a.bibNumber || '';
                     document.getElementById('modality-select').value = a.modality || selectedModality;
                     document.getElementById('paymentStatus').value = a.paymentStatus || 'Pendiente';
+                    document.getElementById('participationStatus').value = getParticipationStatus(a);
                     document.getElementById('category').value = a.category || '';
                     document.getElementById('doblajes').value = a.doblajes || '';
                     selectedModality = a.modality || selectedModality;
@@ -2567,6 +2655,7 @@
                 document.querySelectorAll('#section-1 input:not([type=hidden]), #section-1 textarea').forEach(el => { if (el.id !== 'nationality') el.value = ''; });
                 document.getElementById('nationality').value = 'Ecuatoriana';
                 document.getElementById('modality-select').value = selectedModality;
+                document.getElementById('participationStatus').value = 'Pendiente';
                 document.getElementById('category').value = '';
                 document.getElementById('doblajes').value = '';
                 document.getElementById('form-title').textContent = 'Registro de Atleta';
@@ -2690,6 +2779,12 @@
             let finalBib = manualBib > 0 ? manualBib : (editingAthleteId ? athletes.find(a => a.id === editingAthleteId)?.bibNumber : null);
             if (!finalBib) finalBib = (Math.max(0, ...athletes.map(a => a.bibNumber)) || 0) + 1;
 
+            const duplicateConflicts = findAthleteDuplicates(finalBib, resolvedIdCard, editingAthleteId);
+            if (duplicateConflicts.length) {
+                showFormWarning(duplicateConflicts.map(c => c.message).join('. '));
+                return;
+            }
+
             const athleteData = normalizeAthlete({
                 lastName: resolvedLastName,
                 firstName: resolvedFirstName,
@@ -2712,6 +2807,8 @@
                 athleteStatus: selectedClassification, classification: selectedClassification,
                 passStatus: selectedPassStatus, didPassWeight: selectedPassStatus,
                 paymentStatus: document.getElementById('paymentStatus').value,
+                participationStatus: document.getElementById('participationStatus')?.value || 'Pendiente',
+                status: document.getElementById('participationStatus')?.value || 'Pendiente',
                 observations: document.getElementById('observations').value.trim(),
                 bibNumber: finalBib,
                 registrationTimestamp: editingAthleteId ? athletes.find(a => a.id === editingAthleteId)?.registrationTimestamp || Date.now() : Date.now()
@@ -2723,7 +2820,7 @@
                     const updatedAthlete = { ...athletes[idx], ...athleteData, id: editingAthleteId };
                     athletes[idx] = updatedAthlete;
                     markSocketOp('edit', editingAthleteId);
-                    emitToDiscord('editarDesdeWeb', updatedAthlete);
+                    emitAthleteToDiscord('editarDesdeWeb', updatedAthlete);
                     addLog('Edición', `#${finalBib} ${athleteData.fullName}`);
                     showToast(missingAthleteFields.length ? `Atleta #${finalBib} actualizado (incompleto: ${missingAthleteFields.join(', ')})` : `Atleta #${finalBib} actualizado`, missingAthleteFields.length ? 'info' : 'success');
                 }
@@ -2731,13 +2828,17 @@
                 const newAthlete = { id: Date.now().toString(), ...athleteData };
                 markSocketOp('add', newAthlete.id);
                 athletes.unshift(newAthlete);
-                emitToDiscord('registrarDesdeWeb', newAthlete);
+                emitAthleteToDiscord('registrarDesdeWeb', newAthlete);
                 addLog('Registro', `#${finalBib} ${athleteData.fullName}`);
                 showToast(missingAthleteFields.length ? `Atleta #${finalBib} registrado (incompleto: ${missingAthleteFields.join(', ')})` : `Atleta #${finalBib} registrado`, missingAthleteFields.length ? 'info' : 'success');
                 localStorage.removeItem('mp_form_draft');
             }
             saveAthletes();
             populateClubFilters();
+            updateDashboardMetrics();
+            renderModalitiesOverview();
+            renderScheduleLiveWidget();
+            if (currentSection === 7) renderScheduleSection();
             categoryManualOverride = false;
             editingAthleteId = null; cancelEdit();
             setTimeout(() => { switchSection(2); filterAthletes(); }, 500);
@@ -3352,6 +3453,8 @@
             filterAthletes();
             updateDashboardMetrics();
             renderModalitiesOverview();
+            renderScheduleLiveWidget();
+            if (currentSection === 7) renderScheduleSection();
             updateExportPreview();
             showToast(`Atleta #${athlete.bibNumber} eliminado`, 'success');
         }
@@ -4970,11 +5073,219 @@
         function normalizeSchedule(s) {
             if (!s.order?.length) s.order = [...SCHEDULE_DEFAULT_ORDER];
             s.statuses = s.statuses || {};
+            s.categoryOrder = s.categoryOrder || {};
             s.order.forEach(m => { if (!s.statuses[m]) s.statuses[m] = 'pendiente'; });
             s.eventStart = s.eventStart || '08:00';
             s.minutesPerAthlete = parseInt(s.minutesPerAthlete, 10) || 4;
             s.baseMinutesPerModality = parseInt(s.baseMinutesPerModality, 10) || 12;
             return s;
+        }
+
+        function getCategoryMeasureType(modality) {
+            if (HEIGHT_RULES[modality]) return 'estatura';
+            if (WEIGHT_RULES[modality]) return 'peso';
+            return 'talla';
+        }
+
+        function getCategoryMeasureLabel(modality) {
+            return { estatura: 'Estatura', peso: 'Peso', talla: 'Talla' }[getCategoryMeasureType(modality)] || 'Talla';
+        }
+
+        function getCategoryPhysPart(category) {
+            if (!category) return '—';
+            const parts = category.split('•').map(s => s.trim());
+            return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+        }
+
+        function sortScheduleCategoryNames(a, b) {
+            const getAgeIdx = (cat) => {
+                for (let i = 0; i < AGE_CATEGORY_ORDER.length; i++) {
+                    if (cat.includes(AGE_CATEGORY_ORDER[i])) return i;
+                }
+                return 99;
+            };
+            const ageDiff = getAgeIdx(a) - getAgeIdx(b);
+            if (ageDiff !== 0) return ageDiff;
+            return a.localeCompare(b, 'es');
+        }
+
+        function getScheduleCategoryKey(scheduleMod, category) {
+            return `${scheduleMod}|||${category}`;
+        }
+
+        function toggleScheduleCategory(scheduleMod, category) {
+            const key = getScheduleCategoryKey(scheduleMod, category);
+            if (scheduleExpandedCategories.has(key)) scheduleExpandedCategories.delete(key);
+            else scheduleExpandedCategories.add(key);
+            renderScheduleSection();
+        }
+
+        function onScheduleSearchInput() {
+            scheduleSearchQuery = document.getElementById('sched-search')?.value?.trim().toLowerCase() || '';
+            renderScheduleSection();
+        }
+
+        function matchesScheduleSearch(athlete) {
+            if (!scheduleSearchQuery) return true;
+            const q = scheduleSearchQuery;
+            return getFullName(athlete).toLowerCase().includes(q)
+                || String(athlete.bibNumber || '').includes(q)
+                || (athlete.club || '').toLowerCase().includes(q)
+                || (athlete.province || '').toLowerCase().includes(q)
+                || (athlete.idCard || '').includes(q);
+        }
+
+        function expandAllScheduleCategories() {
+            if (!eventSchedule) return;
+            eventSchedule.order.forEach(mod => {
+                getScheduleCategoriesForModality(mod).forEach(cat => {
+                    scheduleExpandedCategories.add(getScheduleCategoryKey(mod, cat.category));
+                });
+            });
+            renderScheduleSection();
+        }
+
+        function collapseAllScheduleCategories() {
+            scheduleExpandedCategories.clear();
+            renderScheduleSection();
+        }
+
+        function canManageParticipationStatus() {
+            return ['admin', 'scrutineer'].includes(currentUserRole);
+        }
+
+        function setAthleteParticipationStatus(athleteId, status) {
+            if (!canManageParticipationStatus()) {
+                showToast('Sin permisos para cambiar estado', 'error');
+                return;
+            }
+            const idx = athletes.findIndex(a => String(a.id) === String(athleteId));
+            if (idx === -1) return;
+
+            const updated = normalizeAthlete({ ...athletes[idx], participationStatus: status, status });
+            athletes[idx] = updated;
+            saveAthletes();
+            markSocketOp('edit', athleteId);
+
+            const token = getSessionToken();
+            if (socket.connected && token) {
+                socket.emit('actualizarParticipacionDesdeWeb', { id: athleteId, participationStatus: status, token });
+            } else {
+                emitAthleteToDiscord('editarDesdeWeb', updated);
+            }
+
+            addLog('Cronograma', `#${updated.bibNumber} ${getFullName(updated)} → ${status}`);
+            renderScheduleLiveWidget();
+            if (currentSection === 7) renderScheduleSection();
+            if (currentSection === 2) filterAthletes();
+        }
+
+        function getAthletesForScheduleModality(scheduleMod) {
+            const appMod = getAppModalityForSchedule(scheduleMod);
+            return athletes.map(normalizeAthlete).filter(a => a.modality === appMod || a.modality === scheduleMod);
+        }
+
+        function getScheduleCategoriesForModality(scheduleMod) {
+            const appMod = getAppModalityForSchedule(scheduleMod);
+            const athleteList = getAthletesForScheduleModality(scheduleMod);
+            const categorySet = new Set();
+            athleteList.forEach(a => categorySet.add(a.category || 'Sin categoría'));
+
+            if (!eventSchedule.categoryOrder) eventSchedule.categoryOrder = {};
+            const stored = eventSchedule.categoryOrder[scheduleMod] || [];
+            const ordered = stored.filter(c => categorySet.has(c));
+            [...categorySet].sort(sortScheduleCategoryNames).forEach(c => {
+                if (!ordered.includes(c)) ordered.push(c);
+            });
+            eventSchedule.categoryOrder[scheduleMod] = ordered;
+
+            const measureLabel = getCategoryMeasureLabel(appMod);
+            return ordered.map(cat => {
+                const catAthletes = sortAthletesList(
+                    athleteList.filter(a => (a.category || 'Sin categoría') === cat),
+                    'bib'
+                ).filter(matchesScheduleSearch);
+                return {
+                    category: cat,
+                    athletes: catAthletes,
+                    measureLabel,
+                    physPart: getCategoryPhysPart(cat)
+                };
+            }).filter(cat => !scheduleSearchQuery || cat.athletes.length > 0);
+        }
+
+        function renderScheduleCategoriesHtml(scheduleMod, categories) {
+            const appMod = getAppModalityForSchedule(scheduleMod);
+            const canManage = canManageParticipationStatus();
+            categories = categories || getScheduleCategoriesForModality(scheduleMod);
+            if (!categories.length) {
+                const emptyMsg = scheduleSearchQuery
+                    ? 'Ningún competidor coincide con la búsqueda en esta modalidad'
+                    : 'Sin competidores inscritos en esta modalidad';
+                return `<div class="sched-cat-empty text-xs text-[#C5A85C]/50 italic mt-3 pt-3 border-t border-[#C5A85C]/15">${emptyMsg}</div>`;
+            }
+            const statusClass = { Pendiente: 'pendiente', 'En Tarima': 'en_tarima', Finalizado: 'finalizado' };
+            const totalInView = categories.reduce((s, c) => s + c.athletes.length, 0);
+            return `<div class="sched-categories mt-3 pt-3 border-t border-[#C5A85C]/15 space-y-2">
+                <div class="text-[10px] font-bold text-[#C5A85C]/70 tracking-widest uppercase mb-1">${categories.length} categoría${categories.length !== 1 ? 's' : ''} • ${totalInView} competidor${totalInView !== 1 ? 'es' : ''}</div>
+                ${categories.map(cat => {
+                    const key = getScheduleCategoryKey(scheduleMod, cat.category);
+                    const expanded = scheduleExpandedCategories.has(key) || !!scheduleSearchQuery;
+                    const count = cat.athletes.length;
+                    return `<div class="sched-cat-card rounded-xl border border-[#C5A85C]/20 bg-[#0A1931]/50 overflow-hidden">
+                        <button type="button" class="sched-cat-header w-full flex flex-wrap items-center gap-2 p-3 text-left hover:bg-[#C5A85C]/5 transition-colors"
+                            data-sched-toggle-cat data-sched-mod="${escapeHtml(scheduleMod)}" data-sched-cat="${encodeURIComponent(cat.category)}">
+                            <i class="fa-solid fa-chevron-${expanded ? 'down' : 'right'} text-[10px] text-[#C5A85C]/60"></i>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-xs font-bold text-[#FFEA8D]">${escapeHtml(cat.category)}</span>
+                                    <span class="sched-cat-count text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#C5A85C]/15 text-[#FFEA8D]">${count} competidor${count !== 1 ? 'es' : ''}</span>
+                                </div>
+                                <div class="text-[10px] text-[#C5A85C]/60 mt-1">
+                                    <span class="mr-3"><i class="fa-solid fa-layer-group mr-1"></i>${escapeHtml(appMod)}</span>
+                                    <span><i class="fa-solid fa-ruler-vertical mr-1"></i>${escapeHtml(cat.measureLabel)}: ${escapeHtml(cat.physPart)}</span>
+                                </div>
+                            </div>
+                        </button>
+                        <div class="sched-cat-participants ${expanded ? '' : 'hidden'} border-t border-[#C5A85C]/10">
+                            <div class="overflow-x-auto">
+                                <table class="sched-participants-table w-full text-xs">
+                                    <thead>
+                                        <tr class="text-[9px] text-[#C5A85C]/60 uppercase tracking-wider">
+                                            <th class="px-3 py-2 text-left">Nº Competidor</th>
+                                            <th class="px-3 py-2 text-left">Nombre Completo</th>
+                                            <th class="px-3 py-2 text-left">Provincia / Club</th>
+                                            <th class="px-3 py-2 text-center">Estado</th>
+                                            ${canManage ? '<th class="px-3 py-2 text-center">Acciones</th>' : ''}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${cat.athletes.map(a => {
+                                            const ps = getParticipationStatus(a);
+                                            const psCls = statusClass[ps] || 'pendiente';
+                                            const provClub = [a.province, a.club].filter(Boolean).join(' / ') || '—';
+                                            const actions = canManage ? `<td class="px-3 py-2 text-center">
+                                                <div class="flex gap-1 justify-center flex-wrap">
+                                                    <button type="button" data-sched-set-status data-athlete-id="${escapeHtml(a.id)}" data-status="En Tarima" class="sched-part-action ${ps === 'En Tarima' ? 'active-tarima' : ''}" title="Marcar en tarima">Tarima</button>
+                                                    <button type="button" data-sched-set-status data-athlete-id="${escapeHtml(a.id)}" data-status="Finalizado" class="sched-part-action ${ps === 'Finalizado' ? 'active-fin' : ''}" title="Marcar finalizado">Fin</button>
+                                                    <button type="button" data-sched-set-status data-athlete-id="${escapeHtml(a.id)}" data-status="Pendiente" class="sched-part-action" title="Marcar pendiente">Pend.</button>
+                                                </div>
+                                            </td>` : '';
+                                            return `<tr class="border-t border-[#C5A85C]/8 hover:bg-[#C5A85C]/5">
+                                                <td class="px-3 py-2 font-mono font-bold text-[#C5A85C]">#${a.bibNumber || '—'}</td>
+                                                <td class="px-3 py-2 font-semibold text-[#FFEA8D]">${escapeHtml(getFullName(a))}</td>
+                                                <td class="px-3 py-2 text-[#C5A85C]/80">${escapeHtml(provClub)}</td>
+                                                <td class="px-3 py-2 text-center"><span class="sched-part-status ${psCls}">${ps}</span></td>
+                                                ${actions}
+                                            </tr>`;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>`;
         }
 
         function getAppModalityForSchedule(scheduleMod) {
@@ -5164,8 +5475,12 @@
         function renderScheduleLiveWidget() {
             if (!eventSchedule) return;
             const { current, next, eventEnd } = getCurrentAndNextModality(eventSchedule);
+            const onStage = athletes.map(normalizeAthlete).filter(a => getParticipationStatus(a) === 'En Tarima');
             const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
             set('sched-live-current', current ? `${current.modality} (${current.startTime})` : 'Sin modalidad activa');
+            set('sched-live-on-stage', onStage.length
+                ? onStage.map(a => `#${a.bibNumber} ${getFullName(a)}`).join(' • ')
+                : 'Nadie en tarima');
             set('sched-live-next', next ? `${next.modality} (${next.startTime})` : '—');
             set('sched-live-end', eventEnd);
         }
@@ -5188,9 +5503,7 @@
 
             document.getElementById('sched-total-athletes').textContent = totalAthletes;
             document.getElementById('sched-total-duration').textContent = `Duración: ${Math.floor(totalMin / 60)}h ${totalMin % 60}min`;
-            document.getElementById('sched-live-current').textContent = current ? `${current.modality} • ${current.startTime}` : '—';
-            document.getElementById('sched-live-next').textContent = next ? `${next.modality} • ${next.startTime}` : '—';
-            document.getElementById('sched-live-end').textContent = eventEnd;
+            renderScheduleLiveWidget();
 
             const container = document.getElementById('schedule-cards-list');
             if (!container) return;
@@ -5206,6 +5519,8 @@
                         <button onclick="setScheduleModalityStatus('${item.modality.replace(/'/g, "\\'")}', 'en_curso')" class="text-[9px] font-bold px-2 py-1 rounded-lg bg-[#C5A85C]/20 text-[#FFEA8D] border border-[#C5A85C]/30">En curso</button>
                         <button onclick="setScheduleModalityStatus('${item.modality.replace(/'/g, "\\'")}', 'finalizada')" class="text-[9px] font-bold px-2 py-1 rounded-lg bg-[#0F3057] text-[#86efac] border border-green-500/30">Finalizada</button>
                     </div>` : '';
+                const scheduleCategories = getScheduleCategoriesForModality(item.modality);
+                const catCount = scheduleCategories.length;
                 return `<div class="sched-card dark-panel rounded-2xl p-4 status-${status}" data-sched-mod="${item.modality}" draggable="${isAdmin}" id="sched-card-${idx}">
                     <div class="flex flex-wrap items-center gap-3">
                         ${isAdmin ? `<div class="sched-drag-handle" title="Arrastrar"><i class="fa-solid fa-grip-vertical"></i></div>` : ''}
@@ -5213,11 +5528,13 @@
                         <div class="w-10 h-10 rounded-xl bg-[#C5A85C]/15 border border-[#C5A85C]/35 flex items-center justify-center font-black text-[#FFEA8D]">${item.order}</div>
                         <div class="flex-1 min-w-0">
                             <div class="flex flex-wrap items-center gap-2">
-                                <span class="font-bold text-[#FFEA8D]">${item.modality}</span>
+                                <span class="font-bold text-[#FFEA8D]">${escapeHtml(item.modality)}</span>
                                 <span class="sched-status-pill ${status}">${statusLabel}</span>
                             </div>
                             <div class="text-xs text-[#C5A85C]/70 mt-1">
-                                <i class="fa-solid fa-users mr-1"></i>${item.athleteCount} atletas
+                                <i class="fa-solid fa-users mr-1"></i>${item.athleteCount} competidor${item.athleteCount !== 1 ? 'es' : ''}
+                                <span class="mx-2">•</span>
+                                <i class="fa-solid fa-tags mr-1"></i>${catCount} categoría${catCount !== 1 ? 's' : ''}
                                 <span class="mx-2">•</span>
                                 <i class="fa-solid fa-clock mr-1"></i>${item.startTime} – ${item.endTime}
                                 <span class="mx-2">•</span>
@@ -5225,8 +5542,23 @@
                             </div>
                         </div>
                     </div>
+                    ${renderScheduleCategoriesHtml(item.modality, scheduleCategories)}
                 </div>`;
             }).join('');
+
+            container.querySelectorAll('[data-sched-toggle-cat]').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    toggleScheduleCategory(btn.dataset.schedMod, decodeURIComponent(btn.dataset.schedCat || ''));
+                });
+            });
+
+            container.querySelectorAll('[data-sched-set-status]').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    setAthleteParticipationStatus(btn.dataset.athleteId, btn.dataset.status);
+                });
+            });
 
             if (isAdmin) {
                 container.querySelectorAll('.sched-card').forEach(card => {

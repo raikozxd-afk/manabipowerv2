@@ -1,4 +1,5 @@
 require('dotenv').config();
+const crypto = require('crypto');
 const { Client, GatewayIntentBits } = require('discord.js');
 const express = require('express');
 const http = require('http');
@@ -24,6 +25,62 @@ const client = new Client({
 
 const DB_CHANNEL_ID = process.env.DB_CHANNEL_ID;
 const FETCH_LIMIT = 100;
+const SESSION_MAX_MS = 8 * 60 * 60 * 1000;
+const JUDGE_PASS = process.env.AUTH_JUDGE_PASS || 'juez2026';
+
+const AUTH_USERS = {
+    admin: { password: process.env.AUTH_ADMIN_PASS || 'raikoz7841', role: 'admin', label: 'Administrador' },
+    escrutador: { password: process.env.AUTH_SCRUT_PASS || 'scrut2026', role: 'scrutineer', label: 'Escrutador' },
+    juez1: { password: JUDGE_PASS, role: 'judge', judgeSlot: 0, label: 'Juez 1' },
+    juez2: { password: JUDGE_PASS, role: 'judge', judgeSlot: 1, label: 'Juez 2' },
+    juez3: { password: JUDGE_PASS, role: 'judge', judgeSlot: 2, label: 'Juez 3' },
+    juez4: { password: JUDGE_PASS, role: 'judge', judgeSlot: 3, label: 'Juez 4' },
+    juez5: { password: JUDGE_PASS, role: 'judge', judgeSlot: 4, label: 'Juez 5' },
+    juez6: { password: JUDGE_PASS, role: 'judge', judgeSlot: 5, label: 'Juez 6' },
+    juez7: { password: JUDGE_PASS, role: 'judge', judgeSlot: 6, label: 'Juez 7' },
+    juez8: { password: JUDGE_PASS, role: 'judge', judgeSlot: 7, label: 'Juez 8' },
+    juez9: { password: JUDGE_PASS, role: 'judge', judgeSlot: 8, label: 'Juez 9' }
+};
+
+const activeSessions = new Map();
+
+function createAuthToken() {
+    return crypto.randomUUID ? crypto.randomUUID() : `tok-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
+}
+
+function getValidSession(token) {
+    if (!token) return null;
+    const session = activeSessions.get(token);
+    if (!session) return null;
+    if (Date.now() - session.createdAt > SESSION_MAX_MS) {
+        activeSessions.delete(token);
+        return null;
+    }
+    return session;
+}
+
+function findAthleteDuplicatesInList(list, athleteData) {
+    const excludeId = String(athleteData?.id || '');
+    const bib = parseInt(athleteData?.bibNumber, 10);
+    const idCard = String(athleteData?.idCard || '').trim();
+    const conflicts = [];
+
+    for (const a of list || []) {
+        if (!a?.id || String(a.id) === excludeId) continue;
+        if (bib > 0 && parseInt(a.bibNumber, 10) === bib) {
+            conflicts.push({ type: 'bib', bibNumber: bib, existing: a });
+        }
+        if (idCard && idCard !== 'Pendiente' && String(a.idCard || '').trim() === idCard) {
+            conflicts.push({ type: 'idCard', idCard, existing: a });
+        }
+    }
+    return conflicts;
+}
+
+async function validateAthleteDuplicates(athleteData) {
+    const list = await fetchAthletesFromDiscord();
+    return findAthleteDuplicatesInList(list, athleteData);
+}
 
 function parseRecordMessage(content) {
     if (!content || !content.startsWith('```json')) return null;
@@ -247,6 +304,63 @@ io.on('connection', async (socket) => {
     await emitScoringRoundsList(socket);
     await emitSchedule(socket);
 
+    socket.on('intentarLogin', (payload, callback) => {
+        const user = String(payload?.user || '').trim().toLowerCase();
+        const pass = String(payload?.pass || '').trim();
+        const account = AUTH_USERS[user];
+
+        if (!user || !pass) {
+            callback?.({ ok: false, error: 'Por favor complete usuario y contraseña.' });
+            return;
+        }
+        if (!account || pass !== account.password) {
+            callback?.({ ok: false, error: 'Usuario o contraseña incorrectos.' });
+            return;
+        }
+
+        const token = createAuthToken();
+        activeSessions.set(token, {
+            user,
+            role: account.role,
+            judgeSlot: account.judgeSlot ?? null,
+            label: account.label,
+            createdAt: Date.now()
+        });
+
+        callback?.({
+            ok: true,
+            token,
+            user,
+            role: account.role,
+            judgeSlot: account.judgeSlot ?? null,
+            label: account.label
+        });
+    });
+
+    socket.on('cerrarSesion', (payload) => {
+        const token = payload?.token;
+        if (token) activeSessions.delete(token);
+    });
+
+    socket.on('actualizarParticipacionDesdeWeb', async (payload) => {
+        const { id, participationStatus, token } = payload || {};
+        const session = getValidSession(token);
+        if (!session || !['admin', 'scrutineer'].includes(session.role)) return;
+
+        const found = await findAthleteMessage(id);
+        if (!found?.record) return;
+
+        const updated = {
+            ...found.record,
+            participationStatus,
+            status: participationStatus,
+            updatedAt: Date.now()
+        };
+
+        await found.message.edit(formatAthleteMessage(updated));
+        io.emit('atletaActualizado', updated);
+    });
+
     socket.on('solicitarAtletas', async () => {
         await emitAthletesList(socket);
     });
@@ -276,35 +390,72 @@ io.on('connection', async (socket) => {
         io.emit('cronogramaActualizado', scheduleData);
     });
 
-    socket.on('registrarDesdeWeb', async (athleteData) => {
+    socket.on('registrarDesdeWeb', async (athleteData, callback) => {
         const dbChannel = getDbChannel();
-        if (!dbChannel || !athleteData?.id) return;
+        if (!dbChannel || !athleteData?.id) {
+            callback?.({ ok: false, error: 'Sin conexión con Discord.' });
+            return;
+        }
+
+        const conflicts = await validateAthleteDuplicates(athleteData);
+        if (conflicts.length) {
+            const msg = conflicts.map((c) => {
+                const name = c.existing.fullName || c.existing.firstName || 'otro atleta';
+                return c.type === 'bib'
+                    ? `Ficha #${c.bibNumber} ya usada por ${name}`
+                    : `Cédula ${c.idCard} ya registrada (${name})`;
+            }).join('. ');
+            callback?.({ ok: false, error: msg });
+            return;
+        }
 
         const existing = await findAthleteMessage(athleteData.id);
         if (existing) {
             await existing.message.edit(formatAthleteMessage(athleteData));
             io.emit('atletaActualizado', athleteData);
+            callback?.({ ok: true });
             return;
         }
 
         await dbChannel.send(formatAthleteMessage(athleteData));
         io.emit('nuevoAtleta', athleteData);
+        callback?.({ ok: true });
     });
 
-    socket.on('editarDesdeWeb', async (athleteData) => {
-        if (!athleteData?.id) return;
+    socket.on('editarDesdeWeb', async (athleteData, callback) => {
+        if (!athleteData?.id) {
+            callback?.({ ok: false, error: 'Datos de atleta inválidos.' });
+            return;
+        }
+
+        const conflicts = await validateAthleteDuplicates(athleteData);
+        if (conflicts.length) {
+            const msg = conflicts.map((c) => {
+                const name = c.existing.fullName || c.existing.firstName || 'otro atleta';
+                return c.type === 'bib'
+                    ? `Ficha #${c.bibNumber} ya usada por ${name}`
+                    : `Cédula ${c.idCard} ya registrada (${name})`;
+            }).join('. ');
+            callback?.({ ok: false, error: msg });
+            return;
+        }
 
         const found = await findAthleteMessage(athleteData.id);
         if (found) {
             await found.message.edit(formatAthleteMessage(athleteData));
             io.emit('atletaActualizado', athleteData);
+            callback?.({ ok: true });
             return;
         }
 
         const dbChannel = getDbChannel();
-        if (!dbChannel) return;
+        if (!dbChannel) {
+            callback?.({ ok: false, error: 'Sin conexión con Discord.' });
+            return;
+        }
         await dbChannel.send(formatAthleteMessage(athleteData));
         io.emit('nuevoAtleta', athleteData);
+        callback?.({ ok: true });
     });
 
     socket.on('eliminarDesdeWeb', async (payload) => {
