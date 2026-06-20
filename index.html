@@ -732,27 +732,175 @@
 
                 <script>
                 (function () {
+                    var SESSION_KEY = 'mp_session';
+                    var SESSION_MAX_MS = 8 * 60 * 60 * 1000;
+
                     function earlyLoginStatus(msg) {
                         var el = document.getElementById('login-server-status');
                         if (el) el.textContent = msg;
                     }
+
+                    function showLoginError(msg) {
+                        var errorEl = document.getElementById('login-error');
+                        if (!errorEl) return;
+                        if (!msg) {
+                            errorEl.textContent = '';
+                            errorEl.classList.remove('is-visible');
+                            return;
+                        }
+                        errorEl.textContent = msg;
+                        errorEl.classList.add('is-visible');
+                    }
+
+                    function showMainShell() {
+                        var loginScreen = document.getElementById('login-screen');
+                        var mainApp = document.getElementById('main-app');
+                        if (loginScreen) {
+                            loginScreen.classList.add('hidden', 'is-hidden');
+                            loginScreen.style.display = 'none';
+                        }
+                        if (mainApp) {
+                            mainApp.classList.remove('hidden');
+                            mainApp.classList.add('is-visible');
+                            mainApp.style.display = 'block';
+                        }
+                    }
+
+                    function saveSession(res) {
+                        sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+                            user: res.user,
+                            role: res.role,
+                            judgeSlot: res.judgeSlot != null ? res.judgeSlot : null,
+                            label: res.label || res.user,
+                            token: res.token || ('sess-' + Date.now()),
+                            createdAt: Date.now()
+                        }));
+                        window.__earlyLoginDone = true;
+                    }
+
+                    function getStoredSession() {
+                        try {
+                            var raw = sessionStorage.getItem(SESSION_KEY);
+                            if (!raw) return null;
+                            var session = JSON.parse(raw);
+                            if (!session || !session.user || !session.token || !session.createdAt) return null;
+                            if (Date.now() - session.createdAt > SESSION_MAX_MS) {
+                                sessionStorage.removeItem(SESSION_KEY);
+                                return null;
+                            }
+                            return session;
+                        } catch (e) {
+                            return null;
+                        }
+                    }
+
+                    function standaloneLogin() {
+                        var userEl = document.getElementById('login-user');
+                        var passEl = document.getElementById('login-pass');
+                        var btn = document.getElementById('login-submit-btn');
+                        var user = (userEl && userEl.value || '').trim().toLowerCase();
+                        var pass = (passEl && passEl.value || '').trim();
+
+                        if (!user || !pass) {
+                            showLoginError('Por favor complete usuario y contraseña.');
+                            return;
+                        }
+
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.textContent = 'INGRESANDO...';
+                        }
+                        earlyLoginStatus('Verificando credenciales...');
+                        showLoginError('');
+
+                        fetch('/api/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                            body: JSON.stringify({ user: user, pass: pass }),
+                            cache: 'no-store'
+                        })
+                        .then(function (response) {
+                            return response.json().then(function (data) {
+                                return { ok: response.ok, data: data };
+                            });
+                        })
+                        .then(function (result) {
+                            if (result.ok && result.data && result.data.ok) {
+                                saveSession(result.data);
+                                if (passEl) passEl.value = '';
+                                earlyLoginStatus('Acceso concedido — cargando panel...');
+                                showMainShell();
+                                return;
+                            }
+                            showLoginError((result.data && result.data.error) || 'Usuario o contraseña incorrectos.');
+                            earlyLoginStatus('Credenciales incorrectas — intente de nuevo');
+                        })
+                        .catch(function (err) {
+                            var hint = window.location.protocol === 'file:'
+                                ? 'Abra https://manabipower.com (no use el archivo HTML directo).'
+                                : (err.message || 'No se pudo conectar al servidor.');
+                            showLoginError(hint);
+                            earlyLoginStatus('Error de conexión');
+                        })
+                        .finally(function () {
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.textContent = 'INGRESAR AL PANEL DE CONTROL';
+                            }
+                        });
+                    }
+
+                    function pollStatus() {
+                        if (window.location.protocol === 'file:') {
+                            earlyLoginStatus('Abra https://manabipower.com — no use el archivo HTML directo');
+                            return;
+                        }
+                        fetch('/api/status', { cache: 'no-store' })
+                            .then(function (r) { return r.ok ? r.json() : null; })
+                            .then(function (data) {
+                                if (!data || !data.ok) return;
+                                var loginScreen = document.getElementById('login-screen');
+                                if (loginScreen && loginScreen.classList.contains('hidden')) return;
+                                var el = document.getElementById('login-discord-status');
+                                var span = el && el.querySelector('span');
+                                if (span) {
+                                    if (data.discordReady && data.dbChannel) {
+                                        var extra = data.counts ? (' · ' + data.counts.athletes + ' atletas · ' + data.counts.judges + ' jueces') : '';
+                                        span.textContent = 'Discord conectado y sincronizado' + extra;
+                                    } else if (data.discordReady) {
+                                        span.textContent = 'Discord: bot en línea — sincronizando BD...';
+                                    } else {
+                                        span.textContent = 'Servidor en línea — Discord conectando...';
+                                    }
+                                }
+                                earlyLoginStatus('Servidor en línea — puede ingresar');
+                            })
+                            .catch(function () {});
+                    }
+
                     function earlyBindLogin() {
                         var form = document.getElementById('login-form');
                         if (!form || form.dataset.earlyBound === '1') return;
                         form.dataset.earlyBound = '1';
                         earlyLoginStatus('Listo — ingrese usuario y contraseña');
+                        pollStatus();
+                        setInterval(pollStatus, 15000);
+
+                        if (getStoredSession()) {
+                            showMainShell();
+                            earlyLoginStatus('Sesión activa — cargando panel...');
+                        }
+
                         form.addEventListener('submit', function (e) {
                             e.preventDefault();
                             if (typeof window.attemptLogin === 'function') {
                                 window.attemptLogin();
                             } else {
-                                earlyLoginStatus('Cargando… intente de nuevo en 2 segundos');
-                                setTimeout(function () {
-                                    if (typeof window.attemptLogin === 'function') window.attemptLogin();
-                                }, 2000);
+                                standaloneLogin();
                             }
                         });
                     }
+
                     if (document.readyState === 'loading') {
                         document.addEventListener('DOMContentLoaded', earlyBindLogin);
                     } else {
@@ -773,7 +921,7 @@
 
             <div class="text-center mt-8">
                 <div class="text-[#C5A85C]/50 text-[10px]">© 2026 Manabí Power Oficial</div>
-                <div id="app-version-tag" class="text-[#C5A85C]/40 text-[9px] mt-1 font-mono">v2.4.0 · build 2026-06-20</div>
+                <div id="app-version-tag" class="text-[#C5A85C]/40 text-[9px] mt-1 font-mono">v2.4.1 · build 2026-06-20</div>
             </div>
         </div>
     </div>
@@ -5867,7 +6015,7 @@
 
         function splitDoblajesParts(raw) {
             return raw
-                .split(/\s*;\s*|\n+|\s*\|\s*|,\s*(?=[A-Za-zÁÉÍÓÚÑ"'(])/i|(?=\btambi[eé]n\b)/i)
+                .split(/\s*;\s*|\n+|\s*\|\s*|,\s*(?=[A-Za-zÁÉÍÓÚÑ"'(])|(?=\btambi[eé]n\b)/i)
                 .map(p => p.replace(/^(?:tambi[eé]n|doblajes?|doble inscripci[oó]n)\s*:?\s*/i, '').trim())
                 .filter(Boolean);
         }
