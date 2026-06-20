@@ -890,14 +890,22 @@
                     <div id="reg-closed-banner" class="hidden mb-4 p-4 bg-[#0F3057] border border-[#C5A85C]/40 rounded-xl text-[#FFEA8D] text-sm font-bold text-center"><i class="fa-solid fa-lock mr-2 text-[#C5A85C]"></i>Inscripciones cerradas — no se permiten nuevos registros</div>
 
                     <div class="dark-panel rounded-2xl p-6 md:p-8">
-                        <div class="category-preview rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                                <div class="text-[10px] text-[#C5A85C] font-bold tracking-widest uppercase">Categoría automática</div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                            <div class="category-preview rounded-xl p-4">
+                                <div class="text-[10px] text-[#C5A85C] font-bold tracking-widest uppercase">Categoría asignada</div>
                                 <div id="auto-category-preview" class="text-lg font-bold text-[#FFEA8D] mt-1">Complete los datos para calcular</div>
+                                <div class="text-[10px] text-[#C5A85C]/60 mt-2">Calculada automáticamente según edad, estatura y peso</div>
                             </div>
-                            <div class="text-right">
-                                <div class="text-[10px] text-[#C5A85C]/70">Edad calculada</div>
-                                <div id="age-preview" class="text-2xl font-black text-[#C5A85C]">—</div>
+                            <div class="category-preview rounded-xl p-4">
+                                <div class="text-[10px] text-[#C5A85C] font-bold tracking-widest uppercase">Doblajes</div>
+                                <div id="doblajes-preview" class="text-lg font-bold text-[#FFEA8D] mt-1">Sin doblajes</div>
+                                <div class="text-[10px] text-[#C5A85C]/60 mt-2">Modalidad o categoría adicional del competidor</div>
+                            </div>
+                            <div class="category-preview rounded-xl p-4 flex flex-col justify-between">
+                                <div>
+                                    <div class="text-[10px] text-[#C5A85C]/70 font-bold tracking-widest uppercase">Edad calculada</div>
+                                    <div id="age-preview" class="text-2xl font-black text-[#C5A85C] mt-1">—</div>
+                                </div>
                             </div>
                         </div>
 
@@ -918,7 +926,8 @@
                             <div id="field-height"><label class="lbl">Estatura (cm)</label><input id="height" type="number" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="175" oninput="onFormChange()"></div>
                             <div id="field-weight"><label class="lbl">Peso (kg)</label><input id="weight" type="number" step="0.1" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="72.5" oninput="onFormChange()"></div>
                             <div><label class="lbl">Estado de Pago</label><select id="paymentStatus" class="dark-input w-full rounded-xl px-4 py-3 text-sm"><option value="Pendiente">Pendiente</option><option value="Pagado">Pagado</option><option value="Parcial">Parcial</option></select></div>
-                            <input type="hidden" id="category">
+                            <div><label class="lbl">Categoría / División</label><input id="category" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Se calcula automáticamente" oninput="onCategoryManualEdit()"></div>
+                            <div><label class="lbl">Doblajes</label><input id="doblajes" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Ej: también Men's Physique — Senior • Hasta 175 cm" oninput="onFormChange()"></div>
                             <div class="md:col-span-2 lg:col-span-3">
                                 <label class="lbl">Estado del Atleta *</label>
                                 <div class="flex gap-3 mt-1">
@@ -1143,7 +1152,7 @@
                     <div class="flex items-center justify-between mb-5">
                         <div>
                             <h2 id="judge-form-title" class="brand-font text-2xl md:text-3xl text-[#FFEA8D]">Jueces del Evento</h2>
-                            <p class="text-sm text-[#C5A85C]/80 mt-1">Registro de la mesa técnica IFBB — apartado independiente de los competidores</p>
+                            <p class="text-sm text-[#C5A85C]/80 mt-1">Registro de la mesa técnica IFBB — se sincroniza en tiempo real como los atletas</p>
                         </div>
                         <button onclick="cancelJudgeEdit()" id="cancel-judge-edit-btn" class="hidden items-center gap-2 text-sm font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-times"></i>Cancelar</button>
                     </div>
@@ -1271,7 +1280,7 @@
                                 <span>SINCRONIZAR AHORA</span>
                             </button>
                         </div>
-                        <p class="text-xs text-[#C5A85C]/70">La lista se actualiza en tiempo real al registrar, editar o eliminar atletas. También responde a cambios hechos en Discord con <code class="text-[#FFEA8D]">!registrar</code> y <code class="text-[#FFEA8D]">!eliminar ID</code>.</p>
+                        <p class="text-xs text-[#C5A85C]/70">Las listas de atletas y jueces se actualizan en tiempo real al registrar, editar o eliminar. También responde a cambios hechos en Discord con <code class="text-[#FFEA8D]">!registrar</code> y <code class="text-[#FFEA8D]">!eliminar ID</code>.</p>
                         <div class="mt-3 text-[11px] text-[#C5A85C]/60">Última sincronización: <span id="last-discord-sync" class="font-mono text-[#FFEA8D]">—</span></div>
                     </div>
 
@@ -1501,17 +1510,17 @@
         let syncState = { syncing: false, lastSync: null };
         const pendingSocketOps = new Set();
 
-        function athleteOpKey(type, id) {
+        function socketOpKey(type, id) {
             return `${type}:${String(id)}`;
         }
 
         function markSocketOp(type, id) {
-            pendingSocketOps.add(athleteOpKey(type, id));
-            setTimeout(() => pendingSocketOps.delete(athleteOpKey(type, id)), 8000);
+            pendingSocketOps.add(socketOpKey(type, id));
+            setTimeout(() => pendingSocketOps.delete(socketOpKey(type, id)), 8000);
         }
 
         function consumeSocketOp(type, id) {
-            const key = athleteOpKey(type, id);
+            const key = socketOpKey(type, id);
             if (!pendingSocketOps.has(key)) return false;
             pendingSocketOps.delete(key);
             return true;
@@ -1530,7 +1539,7 @@
             }
             text.className = 'text-[#FFEA8D]';
             if (syncState.syncing) text.textContent = 'Sincronizando con Discord...';
-            else text.textContent = `En línea • ${athletes.length} atletas`;
+            else text.textContent = `En línea • ${athletes.length} atletas • ${judges.length} jueces`;
         }
 
         function requestDiscordSync(silent = false) {
@@ -1538,7 +1547,8 @@
             syncState.syncing = true;
             updateConnectionStatus(true);
             socket.emit('solicitarAtletas');
-            if (!silent) addLog('Sincronización', 'Solicitó lista actualizada desde Discord');
+            socket.emit('solicitarJueces');
+            if (!silent) addLog('Sincronización', 'Solicitó listas actualizadas desde Discord');
         }
 
         function applyRemoteAthletesList(list) {
@@ -1576,6 +1586,37 @@
             updateConnectionStatus(true);
             refreshAllViews();
             if (notify && existing) showToast(`Eliminado en Discord: ${getFullName(existing)}`, 'info');
+        }
+
+        function applyRemoteJudgesList(list) {
+            judges = (list || []).map(normalizeJudge);
+            saveJudges();
+            syncState.syncing = false;
+            syncState.lastSync = Date.now();
+            updateConnectionStatus(true);
+            updateLastSync();
+            refreshAllViews();
+        }
+
+        function upsertJudgeFromRemote(raw, notify = true) {
+            const judge = normalizeJudge(raw);
+            const idx = judges.findIndex(j => String(j.id) === String(judge.id));
+            if (idx !== -1) judges[idx] = { ...judges[idx], ...judge };
+            else judges.unshift(judge);
+            saveJudges();
+            updateConnectionStatus(true);
+            refreshAllViews();
+            if (notify) showToast(`Actualización remota: ${getJudgeFullName(judge)}`, 'info');
+        }
+
+        function removeJudgeFromRemote(id, notify = true) {
+            const strId = String(id);
+            const existing = judges.find(j => String(j.id) === strId);
+            judges = judges.filter(j => String(j.id) !== strId);
+            saveJudges();
+            updateConnectionStatus(true);
+            refreshAllViews();
+            if (notify && existing) showToast(`Juez eliminado en Discord: ${getJudgeFullName(existing)}`, 'info');
         }
 
         function emitToDiscord(event, payload) {
@@ -1618,6 +1659,31 @@
             if (!id) return;
             const silent = consumeSocketOp('delete', id);
             removeAthleteFromRemote(id, !silent);
+        });
+
+        socket.on('cargarJueces', (datosDeDiscord) => {
+            const count = (datosDeDiscord || []).length;
+            applyRemoteJudgesList(datosDeDiscord);
+            if (currentUser) showToast(`Jueces sincronizados: ${count}`, 'success');
+        });
+
+        socket.on('nuevoJuez', (nuevoJuez) => {
+            if (!nuevoJuez?.id) return;
+            const silent = consumeSocketOp('add', nuevoJuez.id);
+            upsertJudgeFromRemote(nuevoJuez, !silent);
+        });
+
+        socket.on('juezActualizado', (juezData) => {
+            if (!juezData?.id) return;
+            const silent = consumeSocketOp('edit', juezData.id);
+            upsertJudgeFromRemote(juezData, !silent);
+        });
+
+        socket.on('juezEliminado', (payload) => {
+            const id = String(payload?.id || payload || '');
+            if (!id) return;
+            const silent = consumeSocketOp('delete', id);
+            removeJudgeFromRemote(id, !silent);
         });
 
         function refreshAllViews() {
@@ -1740,7 +1806,7 @@
                 const cached = localStorage.getItem('mp_judges_cache');
                 if (cached) {
                     const list = JSON.parse(cached);
-                    if (Array.isArray(list)) judges = list;
+                    if (Array.isArray(list)) judges = list.map(normalizeJudge);
                 }
             } catch (e) {
                 console.warn('Cache de jueces no válido');
@@ -2060,6 +2126,7 @@
         let selectedModality = "Men's Physique";
         let selectedClassification = "Novato";
         let selectedPassStatus = "Sí";
+        let categoryManualOverride = false;
 
         function initRegistrationForm() {
             const modSelect = document.getElementById('modality-select');
@@ -2083,9 +2150,12 @@
                     document.getElementById('manualBib').value = a.bibNumber || '';
                     document.getElementById('modality-select').value = a.modality || selectedModality;
                     document.getElementById('paymentStatus').value = a.paymentStatus || 'Pendiente';
+                    document.getElementById('category').value = a.category || '';
+                    document.getElementById('doblajes').value = a.doblajes || '';
                     selectedModality = a.modality || selectedModality;
                     selectedClassification = a.athleteStatus || a.classification || 'Novato';
                     selectedPassStatus = a.passStatus || a.didPassWeight || 'Sí';
+                    categoryManualOverride = true;
                 }
                 document.getElementById('form-title').textContent = 'Editar Atleta';
                 document.getElementById('submit-btn-text').textContent = 'Guardar Cambios';
@@ -2093,8 +2163,11 @@
                 document.querySelectorAll('#section-1 input:not([type=hidden]), #section-1 textarea').forEach(el => { if (el.id !== 'nationality') el.value = ''; });
                 document.getElementById('nationality').value = 'Ecuatoriana';
                 document.getElementById('modality-select').value = selectedModality;
+                document.getElementById('category').value = '';
+                document.getElementById('doblajes').value = '';
                 document.getElementById('form-title').textContent = 'Registro de Atleta';
                 document.getElementById('submit-btn-text').textContent = 'Completar Inscripción';
+                categoryManualOverride = false;
             }
             selectClassification(selectedClassification);
             selectPassStatus(selectedPassStatus);
@@ -2124,18 +2197,31 @@
             }
         }
 
-        function onFormChange() {
+        function onCategoryManualEdit() {
+            categoryManualOverride = true;
+            const cat = document.getElementById('category')?.value?.trim() || 'Pendiente';
+            document.getElementById('auto-category-preview').textContent = cat;
+            onFormChange(true);
+        }
+
+        function onFormChange(skipCategoryAuto = false) {
             const birthDate = document.getElementById('birthDate')?.value;
             const height = document.getElementById('height')?.value;
             const weight = document.getElementById('weight')?.value;
             const modality = document.getElementById('modality-select')?.value || selectedModality;
             const age = calcAge(birthDate);
-            const cat = calculateAutoCategory(modality, birthDate, height, weight);
-            document.getElementById('auto-category-preview').textContent = cat;
+            const autoCat = calculateAutoCategory(modality, birthDate, height, weight);
+            const categoryInput = document.getElementById('category');
+            if (!skipCategoryAuto && !categoryManualOverride && categoryInput) {
+                categoryInput.value = autoCat;
+            }
+            const displayCat = categoryInput?.value?.trim() || autoCat;
+            document.getElementById('auto-category-preview').textContent = displayCat || 'Complete los datos para calcular';
             document.getElementById('age-preview').textContent = age != null ? age + ' años' : '—';
-            document.getElementById('category').value = cat;
+            const doblajes = document.getElementById('doblajes')?.value?.trim() || '';
+            document.getElementById('doblajes-preview').textContent = doblajes || 'Sin doblajes';
             const draft = {};
-            ['lastName','firstName','idCard','birthDate','sex','nationality','province','club','coach','phone','email','height','weight','observations'].forEach(id => {
+            ['lastName','firstName','idCard','birthDate','sex','nationality','province','club','coach','phone','email','height','weight','observations','category','doblajes'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) draft[id] = el.value;
             });
@@ -2175,7 +2261,8 @@
             const needsWeighing = !NON_WEIGHING.includes(selectedModality);
             const height = needsWeighing ? parseFloat(document.getElementById('height').value) : null;
             const weight = needsWeighing ? parseFloat(document.getElementById('weight').value) : null;
-            const category = document.getElementById('category').value;
+            const category = document.getElementById('category').value.trim() || calculateAutoCategory(selectedModality, birthDate, document.getElementById('height')?.value, document.getElementById('weight')?.value);
+            const doblajes = document.getElementById('doblajes').value.trim();
 
             const resolvedLastName = lastName || 'Sin apellido';
             const resolvedFirstName = firstName || 'Sin nombre';
@@ -2215,6 +2302,7 @@
                 email: document.getElementById('email').value.trim(),
                 modality: resolvedModality,
                 category: category || 'Pendiente',
+                doblajes,
                 height: resolvedHeight,
                 weight: resolvedWeight,
                 athleteStatus: selectedClassification, classification: selectedClassification,
@@ -2246,6 +2334,7 @@
             }
             saveAthletes();
             populateClubFilters();
+            categoryManualOverride = false;
             editingAthleteId = null; cancelEdit();
             setTimeout(() => { switchSection(2); filterAthletes(); }, 500);
         }
@@ -2829,7 +2918,7 @@
                             <button onclick="deleteAthlete('${athlete.id}')" class="w-8 h-8 flex items-center justify-center text-[#C5A85C] hover:bg-[#0F3057] rounded-lg"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
                     </div>
-                    <div class="mt-3 text-xs"><div class="font-semibold text-[#C5A85C]">${athlete.modality}</div><div class="text-[#FFEA8D]/80 mt-0.5">${athlete.category||'-'}</div></div>
+                    <div class="mt-3 text-xs"><div class="font-semibold text-[#C5A85C]">${athlete.modality}</div><div class="text-[#FFEA8D]/80 mt-0.5">${athlete.category||'-'}</div>${athlete.doblajes ? `<div class="text-[#C5A85C]/60 mt-0.5"><i class="fa-solid fa-clone mr-1"></i>${athlete.doblajes}</div>` : ''}</div>
                     <div class="mt-3 flex justify-between text-[10px] text-[#C5A85C]/60"><span>${athlete.club} • ${athlete.province}</span><span>${athlete.weight||'-'}kg / ${athlete.height||'-'}cm</span></div>
                     <div class="mt-3 flex gap-2 flex-wrap">
                         <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#C5A85C]/15 text-[#FFEA8D] border border-[#C5A85C]/30">${athlete.athleteStatus||'Novato'}</span>
@@ -2924,6 +3013,19 @@
         // ==================== JUECES ====================
         const JUDGE_HEADERS = ['Nombre Completo', 'Cédula', 'Cargo', 'Nivel de Juez', 'Modalidad', 'Categoría', 'Mesa', 'Licencia', 'Teléfono', 'Estado'];
 
+        function normalizeJudge(j) {
+            if (!j.lastName && !j.firstName && j.fullName) {
+                const parts = j.fullName.trim().split(/\s+/);
+                if (parts.length > 1) { j.lastName = parts.slice(0, -1).join(' '); j.firstName = parts[parts.length - 1]; }
+                else { j.firstName = parts[0]; j.lastName = ''; }
+            }
+            j.modality = j.modality || 'Todas';
+            j.category = j.category || 'Todas';
+            j.status = j.status || 'Activo';
+            j.role = j.role || 'Staff Técnico';
+            return j;
+        }
+
         function getJudgeFullName(j) {
             if (j.lastName || j.firstName) return `${j.lastName || ''} ${j.firstName || ''}`.trim();
             return j.fullName || '';
@@ -2991,12 +3093,18 @@
             if (editingJudgeId) {
                 const idx = judges.findIndex(j => j.id === editingJudgeId);
                 if (idx !== -1) {
-                    judges[idx] = { ...judges[idx], ...judgeData };
+                    const updatedJudge = { ...judges[idx], ...judgeData, id: editingJudgeId };
+                    judges[idx] = updatedJudge;
+                    markSocketOp('edit', editingJudgeId);
+                    emitToDiscord('editarJuezDesdeWeb', updatedJudge);
                     addLog('Edición juez', getJudgeFullName(judgeData));
                     showToast(missingJudgeFields.length ? `Juez actualizado (datos incompletos: ${missingJudgeFields.join(', ')})` : 'Juez actualizado', missingJudgeFields.length ? 'info' : 'success');
                 }
             } else {
-                judges.unshift({ id: `judge-${Date.now()}`, ...judgeData, registeredAt: Date.now() });
+                const newJudge = { id: `judge-${Date.now()}`, ...judgeData, registeredAt: Date.now() };
+                markSocketOp('add', newJudge.id);
+                judges.unshift(newJudge);
+                emitToDiscord('registrarJuezDesdeWeb', newJudge);
                 addLog('Registro juez', getJudgeFullName(judgeData));
                 showToast(missingJudgeFields.length ? `Juez registrado (datos incompletos: ${missingJudgeFields.join(', ')})` : 'Juez registrado', missingJudgeFields.length ? 'info' : 'success');
             }
@@ -3047,8 +3155,10 @@
         function deleteJudge(id) {
             const j = judges.find(x => x.id === id);
             if (!j || !confirm(`¿Eliminar a ${getJudgeFullName(j)}?`)) return;
+            markSocketOp('delete', id);
             judges = judges.filter(x => x.id !== id);
             saveJudges();
+            emitToDiscord('eliminarJuezDesdeWeb', { id });
             addLog('Eliminación juez', getJudgeFullName(j));
             renderJudgesList();
             showToast('Juez eliminado', 'success');

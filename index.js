@@ -25,7 +25,7 @@ const client = new Client({
 const DB_CHANNEL_ID = process.env.DB_CHANNEL_ID;
 const FETCH_LIMIT = 100;
 
-function parseAthleteMessage(content) {
+function parseRecordMessage(content) {
     if (!content || !content.startsWith('```json')) return null;
     const jsonString = content.replace('```json\n', '').replace('\n```', '').trim();
     try {
@@ -35,52 +35,88 @@ function parseAthleteMessage(content) {
     }
 }
 
+function isJudgeRecord(record) {
+    return record?.recordType === 'judge';
+}
+
+function formatRecordMessage(record) {
+    return `\`\`\`json\n${JSON.stringify(record)}\n\`\`\``;
+}
+
 function formatAthleteMessage(athlete) {
-    return `\`\`\`json\n${JSON.stringify(athlete)}\n\`\`\``;
+    const { recordType, ...rest } = athlete;
+    return formatRecordMessage(rest);
+}
+
+function formatJudgeMessage(judge) {
+    return formatRecordMessage({ recordType: 'judge', ...judge });
 }
 
 function getDbChannel() {
     return client.channels.cache.get(DB_CHANNEL_ID) || null;
 }
 
-async function fetchAthletesFromDiscord() {
+async function fetchRecordsFromDiscord(filterFn) {
     const dbChannel = getDbChannel();
     if (!dbChannel) return [];
 
     const messages = await dbChannel.messages.fetch({ limit: FETCH_LIMIT });
-    const athletesList = [];
+    const list = [];
     const seenIds = new Set();
 
     messages.forEach((msg) => {
         if (msg.author.id !== client.user.id) return;
-        const athlete = parseAthleteMessage(msg.content);
-        if (!athlete?.id || seenIds.has(String(athlete.id))) return;
-        seenIds.add(String(athlete.id));
-        athletesList.push(athlete);
+        const record = parseRecordMessage(msg.content);
+        if (!record?.id || !filterFn(record) || seenIds.has(String(record.id))) return;
+        seenIds.add(String(record.id));
+        list.push(record);
     });
 
-    return athletesList.reverse();
+    return list.reverse();
 }
 
-async function findAthleteMessage(athleteId) {
+async function fetchAthletesFromDiscord() {
+    return fetchRecordsFromDiscord((record) => !isJudgeRecord(record));
+}
+
+async function fetchJudgesFromDiscord() {
+    return fetchRecordsFromDiscord(isJudgeRecord);
+}
+
+async function findRecordMessage(athleteId, filterFn) {
     const dbChannel = getDbChannel();
     if (!dbChannel) return null;
 
     const messages = await dbChannel.messages.fetch({ limit: FETCH_LIMIT });
     for (const msg of messages.values()) {
         if (msg.author.id !== client.user.id) continue;
-        const athlete = parseAthleteMessage(msg.content);
-        if (athlete && String(athlete.id) === String(athleteId)) {
-            return { message: msg, athlete };
+        const record = parseRecordMessage(msg.content);
+        if (record && String(record.id) === String(athleteId) && filterFn(record)) {
+            return { message: msg, record };
         }
     }
     return null;
+}
+
+async function findAthleteMessage(athleteId) {
+    return findRecordMessage(athleteId, (record) => !isJudgeRecord(record));
+}
+
+async function findJudgeMessage(judgeId) {
+    return findRecordMessage(judgeId, isJudgeRecord);
 }
 
 async function emitAthletesList(targetSocket) {
     const list = await fetchAthletesFromDiscord();
     if (targetSocket) targetSocket.emit('cargarAtletas', list);
     else io.emit('cargarAtletas', list);
+    return list;
+}
+
+async function emitJudgesList(targetSocket) {
+    const list = await fetchJudgesFromDiscord();
+    if (targetSocket) targetSocket.emit('cargarJueces', list);
+    else io.emit('cargarJueces', list);
     return list;
 }
 
@@ -120,36 +156,48 @@ client.on('messageCreate', async (message) => {
     }
 
     if (message.content.startsWith('!eliminar')) {
-        const athleteId = message.content.replace('!eliminar', '').trim();
-        if (!athleteId) {
-            return message.reply('Formato: `!eliminar ID_DEL_ATLETA`');
+        const recordId = message.content.replace('!eliminar', '').trim();
+        if (!recordId) {
+            return message.reply('Formato: `!eliminar ID_DEL_REGISTRO`');
         }
 
-        const found = await findAthleteMessage(athleteId);
-        if (!found) {
-            return message.reply(`No encontré al atleta con ID **${athleteId}**.`);
+        const athleteFound = await findAthleteMessage(recordId);
+        if (athleteFound) {
+            await athleteFound.message.delete();
+            io.emit('atletaEliminado', { id: recordId });
+            return message.reply(`Atleta **${athleteFound.record.fullName || recordId}** eliminado.`);
         }
 
-        await found.message.delete();
-        io.emit('atletaEliminado', { id: athleteId });
-        return message.reply(`Atleta **${found.athlete.fullName || athleteId}** eliminado.`);
+        const judgeFound = await findJudgeMessage(recordId);
+        if (judgeFound) {
+            await judgeFound.message.delete();
+            io.emit('juezEliminado', { id: recordId });
+            return message.reply(`Juez **${judgeFound.record.fullName || recordId}** eliminado.`);
+        }
+
+        return message.reply(`No encontré el registro con ID **${recordId}**.`);
     }
 });
 
 client.on('messageDelete', async (message) => {
     if (!message.author || message.author.id !== client.user.id) return;
-    const athlete = parseAthleteMessage(message.content);
-    if (athlete?.id) {
-        io.emit('atletaEliminado', { id: athlete.id });
-    }
+    const record = parseRecordMessage(message.content);
+    if (!record?.id) return;
+    if (isJudgeRecord(record)) io.emit('juezEliminado', { id: record.id });
+    else io.emit('atletaEliminado', { id: record.id });
 });
 
 io.on('connection', async (socket) => {
     console.log('Nueva conexión desde la Mesa de Control Web');
     await emitAthletesList(socket);
+    await emitJudgesList(socket);
 
     socket.on('solicitarAtletas', async () => {
         await emitAthletesList(socket);
+    });
+
+    socket.on('solicitarJueces', async () => {
+        await emitJudgesList(socket);
     });
 
     socket.on('registrarDesdeWeb', async (athleteData) => {
@@ -204,11 +252,57 @@ io.on('connection', async (socket) => {
         const messages = await dbChannel.messages.fetch({ limit: FETCH_LIMIT });
         for (const msg of messages.values()) {
             if (msg.author.id !== client.user.id) continue;
-            if (!msg.content.startsWith('```json')) continue;
+            const record = parseRecordMessage(msg.content);
+            if (!record || isJudgeRecord(record)) continue;
             await msg.delete().catch(() => {});
         }
 
         io.emit('cargarAtletas', []);
+    });
+
+    socket.on('registrarJuezDesdeWeb', async (judgeData) => {
+        const dbChannel = getDbChannel();
+        if (!dbChannel || !judgeData?.id) return;
+
+        const existing = await findJudgeMessage(judgeData.id);
+        if (existing) {
+            await existing.message.edit(formatJudgeMessage(judgeData));
+            io.emit('juezActualizado', judgeData);
+            return;
+        }
+
+        await dbChannel.send(formatJudgeMessage(judgeData));
+        io.emit('nuevoJuez', judgeData);
+    });
+
+    socket.on('editarJuezDesdeWeb', async (judgeData) => {
+        if (!judgeData?.id) return;
+
+        const found = await findJudgeMessage(judgeData.id);
+        if (found) {
+            await found.message.edit(formatJudgeMessage(judgeData));
+            io.emit('juezActualizado', judgeData);
+            return;
+        }
+
+        const dbChannel = getDbChannel();
+        if (!dbChannel) return;
+        await dbChannel.send(formatJudgeMessage(judgeData));
+        io.emit('nuevoJuez', judgeData);
+    });
+
+    socket.on('eliminarJuezDesdeWeb', async (payload) => {
+        const judgeId = String(payload?.id || payload || '');
+        if (!judgeId) return;
+
+        const found = await findJudgeMessage(judgeId);
+        if (!found) {
+            io.emit('juezEliminado', { id: judgeId });
+            return;
+        }
+
+        await found.message.delete();
+        io.emit('juezEliminado', { id: judgeId });
     });
 });
 
