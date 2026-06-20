@@ -848,7 +848,7 @@
                                     </p>
                                     <div class="mt-5 flex flex-wrap gap-3 text-xs">
                                         <span class="px-3 py-1.5 bg-[#0F3057]/60 border border-[#C5A85C]/25 rounded-full"><i class="fa-solid fa-users mr-1.5 text-[#C5A85C]"></i><span id="hero-total">0</span> atletas</span>
-                                        <span class="px-3 py-1.5 bg-[#0F3057]/60 border border-[#C5A85C]/25 rounded-full"><i class="fa-solid fa-dumbbell mr-1.5 text-[#C5A85C]"></i>16 modalidades</span>
+                                        <span class="px-3 py-1.5 bg-[#0F3057]/60 border border-[#C5A85C]/25 rounded-full"><i class="fa-solid fa-dumbbell mr-1.5 text-[#C5A85C]"></i><span id="hero-modalities-count">17</span> modalidades</span>
                                         <span class="px-3 py-1.5 bg-[#0F3057]/60 border border-[#C5A85C]/25 rounded-full"><i class="fa-solid fa-cloud mr-1.5 text-[#C5A85C]"></i>Sincronizado Discord</span>
                                     </div>
                                 </div>
@@ -951,7 +951,7 @@
                                 <i class="fa-solid fa-list-check text-[#C5A85C]"></i> 
                                 <span>MODALIDADES IFBB REGISTRADAS</span>
                             </div>
-                            <span id="modalities-count" class="text-xs font-mono bg-[#C5A85C] text-[#0A1931] px-2.5 py-px rounded font-bold">16</span>
+                            <span id="modalities-count" class="text-xs font-mono bg-[#C5A85C] text-[#0A1931] px-2.5 py-px rounded font-bold">17</span>
                         </div>
                         
                         <div id="modalities-grid" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs"></div>
@@ -1734,7 +1734,7 @@
         let registrationsClosed = localStorage.getItem('mp_reg_closed') === 'true';
 
         const MODALITIES = [
-            "Fitness Coreográfico Infantil", "Fit Model", "Posing Art",
+            "Fitness Coreográfico Infantil", "Fit & Beauty", "Fit Model", "Posing Art",
             "Men's Physique", "Men's Fit", "Muscular Men's Physique", "Games Classic",
             "Culturismo Clásico", "Classic Physique", "Fisicoculturismo",
             "Bikini Fitness", "Wellness Fitness", "Body Fitness",
@@ -1744,7 +1744,7 @@
         const MODALITY_ALIASES = {
             "Bodybuilding": "Fisicoculturismo",
             "Classic Bodybuilding": "Culturismo Clásico",
-            "Fit & Beauty": "Fit Model",
+            "Fit Beauty": "Fit & Beauty",
             "Fit Model Masculino": "Men's Fit",
             "Fit Model Femenino": "Fit Model",
             "Women's Bodyfitness": "Body Fitness"
@@ -1786,7 +1786,7 @@
         };
 
         const NON_WEIGHING = [
-            "Fitness Coreográfico Infantil", "Fit Model", "Posing Art",
+            "Fitness Coreográfico Infantil", "Fit & Beauty", "Fit Model", "Posing Art",
             "Parejas Fitness", "Parejas Culturistas"
         ];
 
@@ -2398,7 +2398,7 @@
         ];
 
         const DEMO_WOMEN_MODALITIES = [
-            "Fit Model", "Bikini Fitness", "Wellness Fitness", "Body Fitness",
+            "Fit & Beauty", "Fit Model", "Bikini Fitness", "Wellness Fitness", "Body Fitness",
             "Women's Physique", "Posing Art"
         ];
 
@@ -3529,6 +3529,8 @@
             animateCounter(document.getElementById('metric-shifted'), pagados);
             const heroTotal = document.getElementById('hero-total');
             if (heroTotal) heroTotal.textContent = total;
+            const heroMods = document.getElementById('hero-modalities-count');
+            if (heroMods) heroMods.textContent = MODALITIES.length;
             const ps = document.getElementById('payment-summary');
             if (ps) ps.innerHTML = `<div class="dark-panel rounded-xl p-3"><div class="text-lg font-black text-[#FFEA8D]">${pagados}</div><div class="text-[#C5A85C]/70">Pagados</div></div><div class="dark-panel rounded-xl p-3"><div class="text-lg font-black text-[#C5A85C]">${list.filter(a=>a.paymentStatus==='Pendiente').length}</div><div class="text-[#C5A85C]/70">Pendientes</div></div><div class="dark-panel rounded-xl p-3"><div class="text-lg font-black text-[#FFEA8D]">${total}</div><div class="text-[#C5A85C]/70">Total</div></div>`;
             const tbtn = document.getElementById('toggle-reg-btn');
@@ -3536,15 +3538,17 @@
         }
 
         function renderModalitiesOverview() {
-            // Actualizar contador dinámico
             document.getElementById('modalities-count').textContent = MODALITIES.length;
 
             const container = document.getElementById('modalities-grid');
             container.innerHTML = '';
             
             const grouped = {};
-            athletes.forEach(a => {
-                grouped[a.modality] = (grouped[a.modality] || 0) + 1;
+            MODALITIES.forEach(m => { grouped[m] = 0; });
+            getAllAthleteScheduleEntries().forEach(e => {
+                if (isValidScheduleEntry(e.modality, e.category) && Object.prototype.hasOwnProperty.call(grouped, e.modality)) {
+                    grouped[e.modality]++;
+                }
             });
             
             const maxCount = Math.max(1, ...MODALITIES.map(m => grouped[m] || 0));
@@ -4599,11 +4603,7 @@
             if (!catSel) return;
             catSel.innerHTML = '<option value="Todas">Todas las categorías</option>';
             if (!mod) return;
-            const cats = new Set();
-            athletes.map(normalizeAthlete).filter(a => a.modality === mod).forEach(a => {
-                if (a.category) cats.add(a.category);
-            });
-            [...cats].sort().forEach(c => {
+            getCategoriesForModality(mod).forEach(c => {
                 const o = document.createElement('option');
                 o.value = c; o.textContent = c;
                 catSel.appendChild(o);
@@ -4618,11 +4618,7 @@
             const judgeCount = parseInt(document.getElementById('score-judge-count')?.value, 10) || 3;
             if (!modality) { showToast('Seleccione modalidad', 'error'); return; }
 
-            const athleteList = athletes.map(normalizeAthlete).filter(a => {
-                if (a.modality !== modality) return false;
-                if (category !== 'Todas' && !(a.category || '').toLowerCase().includes(category.toLowerCase())) return false;
-                return true;
-            });
+            const athleteList = getAthletesForModalityCategory(modality, category);
             if (athleteList.length === 0) { showToast('No hay competidores en esa categoría', 'error'); return; }
 
             const round = normalizeScoringRound({
@@ -5231,28 +5227,35 @@
             return APP_TO_SCHEDULE_MODALITY[canonicalMod] || canonicalMod;
         }
 
-        function parseDoblajesEntries(doblajesText) {
+        function parseDoblajesEntries(doblajesText, athlete = null) {
             if (!doblajesText?.trim()) return [];
             const raw = doblajesText.trim();
             const parts = raw
                 .split(/\s*;\s*|\n+|\s*\|\s*|(?=\btambién\b)/i)
-                .map(p => p.replace(/^también\s*/i, '').trim())
+                .map(p => p.replace(/^(?:también|doblaje)\s*:?\s*/i, '').trim())
                 .filter(Boolean);
             const entries = [];
+            const seen = new Set();
             parts.forEach(part => {
                 const match = part.match(/^(.+?)\s*[—–\-:]+\s*(.+)$/);
                 if (match) {
                     const mod = toCanonicalModality(match[1].trim());
                     const cat = match[2].trim();
-                    if (isValidScheduleEntry(mod, cat)) {
+                    const slotKey = `${mod}::${cat}`;
+                    if (isValidScheduleEntry(mod, cat) && !seen.has(slotKey)) {
+                        seen.add(slotKey);
                         entries.push({ modality: mod, category: cat });
                     }
                     return;
                 }
                 const modOnly = toCanonicalModality(part);
                 if (modOnly && MODALITIES.includes(modOnly)) {
-                    const cat = calculateAutoCategory(modOnly, null, null, null);
-                    if (isValidScheduleEntry(modOnly, cat)) {
+                    const cat = athlete
+                        ? calculateAutoCategory(modOnly, athlete.birthDate, athlete.height, athlete.weight)
+                        : calculateAutoCategory(modOnly, null, null, null);
+                    const slotKey = `${modOnly}::${cat}`;
+                    if (isValidScheduleEntry(modOnly, cat) && !seen.has(slotKey)) {
+                        seen.add(slotKey);
                         entries.push({ modality: modOnly, category: cat });
                     }
                 }
@@ -5265,25 +5268,34 @@
             const primaryMod = toCanonicalModality(athlete.modality);
             const primaryCat = (athlete.category || '').trim() || 'Sin categoría';
             const entries = [];
+            const seenSlots = new Set();
+            const addEntry = (modality, category, isDoblaje, entryKey) => {
+                const slotKey = `${modality}::${category}`;
+                if (!isValidScheduleEntry(modality, category) || seenSlots.has(slotKey)) return;
+                seenSlots.add(slotKey);
+                entries.push({
+                    athlete,
+                    modality,
+                    category,
+                    isDoblaje,
+                    entryKey
+                });
+            };
             if (isValidScheduleEntry(primaryMod, primaryCat)) {
-                entries.push({
-                    athlete,
-                    modality: primaryMod,
-                    category: primaryCat,
-                    isDoblaje: false,
-                    entryKey: `${athlete.id}::primary::${primaryMod}::${primaryCat}`
-                });
+                addEntry(
+                    primaryMod,
+                    primaryCat,
+                    false,
+                    `${athlete.id}::primary::${primaryMod}::${primaryCat}`
+                );
             }
-            parseDoblajesEntries(athlete.doblajes).forEach((d, i) => {
-                if (d.modality === primaryMod && d.category === primaryCat) return;
-                if (!isValidScheduleEntry(d.modality, d.category)) return;
-                entries.push({
-                    athlete,
-                    modality: d.modality,
-                    category: d.category,
-                    isDoblaje: true,
-                    entryKey: `${athlete.id}::doblaje::${i}::${d.modality}::${d.category}`
-                });
+            parseDoblajesEntries(athlete.doblajes, athlete).forEach((d, i) => {
+                addEntry(
+                    d.modality,
+                    d.category,
+                    true,
+                    `${athlete.id}::doblaje::${i}::${d.modality}::${d.category}`
+                );
             });
             return entries;
         }
@@ -5387,11 +5399,14 @@
                 return parseDoblajesEntries(a.doblajes).length === 0;
             });
 
+            const activeModalities = getModalitiesWithScheduleEntries().size;
             return {
                 totalRegistered: uniqueIds.size,
                 totalExpectedAppearances: allEntries.length,
                 shownAppearances,
-                totalModalities: getModalitiesWithScheduleEntries().size,
+                totalModalities: activeModalities,
+                catalogModalities: MODALITIES.length,
+                activeModalities,
                 missingAthletes,
                 unparsedDoblajes,
                 isComplete: shownAppearances === allEntries.length
@@ -5420,7 +5435,7 @@
                 banner.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i>Cobertura completa: `
                     + `<strong>${stats.shownAppearances}</strong> de <strong>${stats.totalExpectedAppearances}</strong> inscripciones visibles • `
                     + `<strong>${stats.totalRegistered}</strong> atletas únicos • `
-                    + `<strong>${stats.totalModalities}</strong> modalidades.`;
+                    + `<strong>${stats.activeModalities}</strong> de <strong>${stats.catalogModalities}</strong> modalidades.`;
                 banner.classList.remove('hidden');
                 return;
             }
@@ -5630,6 +5645,29 @@
             return getAllAthleteScheduleEntries().filter(e =>
                 e.modality === canonical && isValidScheduleEntry(e.modality, e.category)
             );
+        }
+
+        function getCategoriesForModality(modality) {
+            const canonical = toCanonicalModality(modality);
+            const cats = new Set();
+            getScheduleEntriesForModality(canonical).forEach(e => cats.add(e.category));
+            return [...cats].sort(sortScheduleCategoryNames);
+        }
+
+        function getAthletesForModalityCategory(modality, category = 'Todas') {
+            const canonical = toCanonicalModality(modality);
+            const seen = new Set();
+            return getScheduleEntriesForModality(canonical)
+                .filter(e => category === 'Todas' || e.category === category)
+                .filter(e => {
+                    if (seen.has(e.entryKey)) return false;
+                    seen.add(e.entryKey);
+                    return true;
+                })
+                .map(e => ({
+                    ...normalizeAthlete({ ...e.athlete }),
+                    _scheduleIsDoblaje: e.isDoblaje
+                }));
         }
 
         function getScheduleCategoriesForModality(scheduleMod, applySearch = true) {
@@ -6085,7 +6123,7 @@
                 labelEl.textContent = `inscripciones (${coverage.totalRegistered} atletas únicos)`;
             }
             const modEl = document.getElementById('sched-total-modalities');
-            if (modEl) modEl.textContent = `${coverage.totalModalities} modalidades`;
+            if (modEl) modEl.textContent = `${coverage.activeModalities} de ${coverage.catalogModalities} modalidades`;
             document.getElementById('sched-total-duration').textContent = `Duración: ${Math.floor(totalMin / 60)}h ${totalMin % 60}min`;
             renderScheduleCoverageBanner();
             renderScheduleLiveWidget();
