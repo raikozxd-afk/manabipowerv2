@@ -1734,7 +1734,7 @@
         let registrationsClosed = localStorage.getItem('mp_reg_closed') === 'true';
 
         const MODALITIES = [
-            "Fitness Coreográfico Infantil", "Fit & Beauty", "Posing Art",
+            "Fitness Coreográfico Infantil", "Fit Model", "Posing Art",
             "Men's Physique", "Men's Fit", "Muscular Men's Physique", "Games Classic",
             "Culturismo Clásico", "Classic Physique", "Fisicoculturismo",
             "Bikini Fitness", "Wellness Fitness", "Body Fitness",
@@ -1744,8 +1744,9 @@
         const MODALITY_ALIASES = {
             "Bodybuilding": "Fisicoculturismo",
             "Classic Bodybuilding": "Culturismo Clásico",
+            "Fit & Beauty": "Fit Model",
             "Fit Model Masculino": "Men's Fit",
-            "Fit Model Femenino": "Fit & Beauty",
+            "Fit Model Femenino": "Fit Model",
             "Women's Bodyfitness": "Body Fitness"
         };
 
@@ -1760,7 +1761,7 @@
             "Classic Bodybuilding": "Culturismo Clásico",
             "Wellness": "Wellness Fitness",
             "Women's Bodyfitness": "Body Fitness",
-            "Fit Model": "Fit & Beauty",
+            "Fit Model": "Fit Model",
             "Men's Fit Model": "Men's Fit",
             "Games Classic Bodybuilding": "Games Classic",
             "Fitness Challenge": "Posing Art"
@@ -1785,7 +1786,7 @@
         };
 
         const NON_WEIGHING = [
-            "Fitness Coreográfico Infantil", "Fit & Beauty", "Posing Art",
+            "Fitness Coreográfico Infantil", "Fit Model", "Posing Art",
             "Parejas Fitness", "Parejas Culturistas"
         ];
 
@@ -2397,7 +2398,7 @@
         ];
 
         const DEMO_WOMEN_MODALITIES = [
-            "Fit & Beauty", "Bikini Fitness", "Wellness Fitness", "Body Fitness",
+            "Fit Model", "Bikini Fitness", "Wellness Fitness", "Body Fitness",
             "Women's Physique", "Posing Art"
         ];
 
@@ -5321,6 +5322,10 @@
             };
             (eventSchedule.order || []).forEach(add);
             getAllAthleteScheduleEntries().forEach(e => add(e.modality));
+            MODALITIES.forEach(mod => {
+                if (activeModalities.has(mod)) add(mod);
+            });
+            [...activeModalities].forEach(add);
             return order;
         }
 
@@ -5448,6 +5453,9 @@
             };
             SCHEDULE_DEFAULT_ORDER.forEach(add);
             getAllAthleteScheduleEntries().forEach(e => add(e.modality));
+            MODALITIES.forEach(mod => {
+                if (modalityHasScheduleEntries(mod)) add(mod);
+            });
             const statuses = {};
             order.forEach(m => { statuses[m] = 'pendiente'; });
             return normalizeSchedule({
@@ -5461,7 +5469,33 @@
             });
         }
 
+        function migrateLegacyScheduleKeys(schedule) {
+            const migrateKey = (key) => {
+                const canonical = toCanonicalModality(key);
+                return canonical || key;
+            };
+            if (schedule.order) {
+                schedule.order = schedule.order.map(migrateKey);
+            }
+            if (schedule.statuses) {
+                const migrated = {};
+                Object.entries(schedule.statuses).forEach(([key, value]) => {
+                    migrated[migrateKey(key)] = value;
+                });
+                schedule.statuses = migrated;
+            }
+            if (schedule.categoryOrder) {
+                const migrated = {};
+                Object.entries(schedule.categoryOrder).forEach(([key, value]) => {
+                    migrated[migrateKey(key)] = value;
+                });
+                schedule.categoryOrder = migrated;
+            }
+            return schedule;
+        }
+
         function normalizeSchedule(s) {
+            s = migrateLegacyScheduleKeys(s);
             const activeModalities = getModalitiesWithScheduleEntries();
             const seen = new Set();
             const merged = [];
@@ -5473,13 +5507,18 @@
             };
             (s.order || []).forEach(add);
             getAllAthleteScheduleEntries().forEach(e => add(e.modality));
+            MODALITIES.forEach(mod => {
+                if (activeModalities.has(mod)) add(mod);
+            });
+            [...activeModalities].forEach(add);
             s.order = merged;
             s.statuses = s.statuses || {};
             s.categoryOrder = s.categoryOrder || {};
             const validStatuses = {};
             s.order.forEach(m => {
                 const c = toCanonicalModality(m);
-                validStatuses[c] = s.statuses[c] || s.statuses[m] || 'pendiente';
+                const display = getScheduleDisplayModality(c);
+                validStatuses[c] = s.statuses[c] || s.statuses[display] || s.statuses[m] || 'pendiente';
             });
             s.statuses = validStatuses;
             s.eventStart = s.eventStart || '08:00';
@@ -5598,8 +5637,9 @@
             const entries = getScheduleEntriesForModality(canonical);
             const ordered = getScheduleCategoryOrder(canonical);
             const measureLabel = getCategoryMeasureLabel(canonical);
-            return ordered.map(cat => {
-                const catEntries = entries.filter(e => (e.category || 'Sin categoría') === cat);
+            const categoryList = ordered.length ? ordered : [...new Set(entries.map(e => e.category))];
+            return categoryList.map(cat => {
+                const catEntries = entries.filter(e => e.category === cat);
                 const seenKeys = new Set();
                 const displayList = catEntries
                     .filter(e => {
