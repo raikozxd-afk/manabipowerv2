@@ -11,10 +11,12 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(__dirname));
 
+let resolvedDbChannel = null;
+
 function getServerStatus() {
     return {
         discordReady: client.isReady(),
-        dbChannel: !!getDbChannel(),
+        dbChannel: !!getDbChannelSync(),
         botTag: client.user?.tag || null,
         uptime: Math.floor(process.uptime())
     };
@@ -22,6 +24,46 @@ function getServerStatus() {
 
 app.get('/api/status', (_req, res) => {
     res.json({ ok: true, ...getServerStatus() });
+});
+
+function authenticateUser(user, pass) {
+    const normalizedUser = String(user || '').trim().toLowerCase();
+    const normalizedPass = String(pass || '').trim();
+    const account = AUTH_USERS[normalizedUser];
+
+    if (!normalizedUser || !normalizedPass) {
+        return { ok: false, error: 'Por favor complete usuario y contraseña.' };
+    }
+    if (!account || normalizedPass !== account.password) {
+        return { ok: false, error: 'Usuario o contraseña incorrectos.' };
+    }
+
+    const token = createAuthToken();
+    activeSessions.set(token, {
+        user: normalizedUser,
+        role: account.role,
+        judgeSlot: account.judgeSlot ?? null,
+        label: account.label,
+        createdAt: Date.now()
+    });
+
+    return {
+        ok: true,
+        token,
+        user: normalizedUser,
+        role: account.role,
+        judgeSlot: account.judgeSlot ?? null,
+        label: account.label
+    };
+}
+
+app.post('/api/login', (req, res) => {
+    const result = authenticateUser(req.body?.user, req.body?.pass);
+    if (!result.ok) {
+        res.status(result.error?.includes('complete') ? 400 : 401).json(result);
+        return;
+    }
+    res.json(result);
 });
 
 const server = http.createServer(app);
@@ -144,8 +186,29 @@ function formatScheduleMessage(schedule) {
     return formatRecordMessage({ recordType: 'schedule', ...schedule });
 }
 
-function getDbChannel() {
-    return client.channels.cache.get(DB_CHANNEL_ID) || null;
+function getDbChannelSync() {
+    return client.channels.cache.get(DB_CHANNEL_ID) || resolvedDbChannel || null;
+}
+
+async function getDbChannel() {
+    if (!DB_CHANNEL_ID || !client.isReady()) return null;
+
+    const cached = client.channels.cache.get(DB_CHANNEL_ID);
+    if (cached) {
+        resolvedDbChannel = cached;
+        return cached;
+    }
+    if (resolvedDbChannel) return resolvedDbChannel;
+
+    try {
+        const channel = await client.channels.fetch(DB_CHANNEL_ID);
+        resolvedDbChannel = channel;
+        console.log(`Discord: canal BD resuelto (#${channel.name || channel.id})`);
+        return channel;
+    } catch (err) {
+        console.warn(`Discord: no se pudo obtener canal ${DB_CHANNEL_ID}:`, err.message);
+        return null;
+    }
 }
 
 async function fetchAllBotMessages(dbChannel, maxMessages = FETCH_MAX_MESSAGES) {
@@ -171,7 +234,7 @@ async function fetchAllBotMessages(dbChannel, maxMessages = FETCH_MAX_MESSAGES) 
 }
 
 async function fetchRecordsFromDiscord(filterFn) {
-    const dbChannel = getDbChannel();
+    const dbChannel = await getDbChannel();
     if (!dbChannel) {
         console.warn('Discord: canal de BD no disponible (revisar DB_CHANNEL_ID y conexión del bot).');
         return [];
@@ -212,7 +275,7 @@ async function fetchScoringRoundsFromDiscord() {
 }
 
 async function findRecordMessage(recordId, filterFn) {
-    const dbChannel = getDbChannel();
+    const dbChannel = await getDbChannel();
     if (!dbChannel) return null;
 
     const messages = await fetchAllBotMessages(dbChannel);
@@ -277,6 +340,7 @@ async function emitSchedule(targetSocket) {
 }
 
 async function fetchFullSyncPayload() {
+    const dbChannel = await getDbChannel();
     const [athletes, judges, scoring, schedule] = await Promise.all([
         fetchAthletesFromDiscord(),
         fetchJudgesFromDiscord(),
@@ -290,7 +354,7 @@ async function fetchFullSyncPayload() {
         schedule,
         syncedAt: Date.now(),
         discordReady: client.isReady(),
-        dbChannel: !!getDbChannel()
+        dbChannel: !!dbChannel
     };
 }
 
@@ -307,9 +371,10 @@ async function emitFullSync(targetSocket) {
     return payload;
 }
 
-client.on('ready', () => {
+client.on('ready', async () => {
     console.log(`Bot encendido: ${client.user.tag}`);
     console.log(`Servidor Web escuchando en el puerto ${process.env.PORT || 3000}`);
+    await getDbChannel();
     const status = getServerStatus();
     if (!status.dbChannel) {
         console.warn('Discord: DB_CHANNEL_ID no válido o canal no accesible. Revise .env');
@@ -337,7 +402,7 @@ client.on('messageCreate', async (message) => {
             timestamp: new Date().toISOString()
         };
 
-        const dbChannel = getDbChannel();
+        const dbChannel = await getDbChannel();
         if (!dbChannel) {
             return message.reply('Error: No encuentro el canal de la Base de Datos.');
         }
@@ -383,46 +448,12 @@ client.on('messageDelete', async (message) => {
     else if (isAthleteRecord(record)) io.emit('atletaEliminado', { id: record.id });
 });
 
-io.on('connection', async (socket) => {
+io.on('connection', (socket) => {
     console.log('Nueva conexión desde la Mesa de Control Web');
     socket.emit('estadoServidor', getServerStatus());
-    try {
-        await emitFullSync(socket);
-    } catch (err) {
-        console.error('Error al sincronizar cliente nuevo:', err.message);
-    }
 
     socket.on('intentarLogin', (payload, callback) => {
-        const user = String(payload?.user || '').trim().toLowerCase();
-        const pass = String(payload?.pass || '').trim();
-        const account = AUTH_USERS[user];
-
-        if (!user || !pass) {
-            callback?.({ ok: false, error: 'Por favor complete usuario y contraseña.' });
-            return;
-        }
-        if (!account || pass !== account.password) {
-            callback?.({ ok: false, error: 'Usuario o contraseña incorrectos.' });
-            return;
-        }
-
-        const token = createAuthToken();
-        activeSessions.set(token, {
-            user,
-            role: account.role,
-            judgeSlot: account.judgeSlot ?? null,
-            label: account.label,
-            createdAt: Date.now()
-        });
-
-        callback?.({
-            ok: true,
-            token,
-            user,
-            role: account.role,
-            judgeSlot: account.judgeSlot ?? null,
-            label: account.label
-        });
+        callback?.(authenticateUser(payload?.user, payload?.pass));
     });
 
     socket.on('cerrarSesion', (payload) => {
@@ -482,7 +513,7 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('guardarCronogramaDesdeWeb', async (scheduleData) => {
-        const dbChannel = getDbChannel();
+        const dbChannel = await getDbChannel();
         if (!dbChannel || !scheduleData?.id) return;
 
         const existing = await findScheduleMessage(scheduleData.id);
@@ -495,7 +526,7 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('registrarDesdeWeb', async (athleteData, callback) => {
-        const dbChannel = getDbChannel();
+        const dbChannel = await getDbChannel();
         if (!dbChannel || !athleteData?.id) {
             callback?.({ ok: false, error: 'Sin conexión con Discord.' });
             return;
@@ -552,7 +583,7 @@ io.on('connection', async (socket) => {
             return;
         }
 
-        const dbChannel = getDbChannel();
+        const dbChannel = await getDbChannel();
         if (!dbChannel) {
             callback?.({ ok: false, error: 'Sin conexión con Discord.' });
             return;
@@ -577,7 +608,7 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('vaciarDesdeWeb', async () => {
-        const dbChannel = getDbChannel();
+        const dbChannel = await getDbChannel();
         if (!dbChannel) return;
 
         const messages = await fetchAllBotMessages(dbChannel);
@@ -591,7 +622,7 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('subirRespaldoDesdeWeb', async (payload, callback) => {
-        const dbChannel = getDbChannel();
+        const dbChannel = await getDbChannel();
         if (!client.isReady()) {
             callback?.({ ok: false, error: 'El bot de Discord aún no está listo. Espere unos segundos e intente de nuevo.' });
             return;
@@ -672,7 +703,7 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('registrarJuezDesdeWeb', async (judgeData) => {
-        const dbChannel = getDbChannel();
+        const dbChannel = await getDbChannel();
         if (!dbChannel || !judgeData?.id) return;
 
         const existing = await findJudgeMessage(judgeData.id);
@@ -696,7 +727,7 @@ io.on('connection', async (socket) => {
             return;
         }
 
-        const dbChannel = getDbChannel();
+        const dbChannel = await getDbChannel();
         if (!dbChannel) return;
         await dbChannel.send(formatJudgeMessage(judgeData));
         io.emit('nuevoJuez', judgeData);
@@ -717,7 +748,7 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('reordenarJuecesDesdeWeb', async (payload, callback) => {
-        const dbChannel = getDbChannel();
+        const dbChannel = await getDbChannel();
         if (!dbChannel) {
             callback?.({ ok: false, error: 'Sin conexión con el canal de Discord.' });
             return;
@@ -768,7 +799,7 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('guardarRondaDesdeWeb', async (roundData) => {
-        const dbChannel = getDbChannel();
+        const dbChannel = await getDbChannel();
         if (!dbChannel || !roundData?.id) return;
 
         const existing = await findScoringMessage(roundData.id);
@@ -794,6 +825,10 @@ io.on('connection', async (socket) => {
 
         await found.message.delete();
         io.emit('rondaEliminada', { id: roundId });
+    });
+
+    emitFullSync(socket).catch((err) => {
+        console.error('Error al sincronizar cliente nuevo:', err.message);
     });
 });
 
