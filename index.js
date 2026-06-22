@@ -24,7 +24,9 @@ app.use(express.static(__dirname, {
 
 let resolvedDbChannel = null;
 let lastSyncCounts = { athletes: 0, judges: 0, scoring: 0, hasSchedule: false };
+let registrationsClosed = false;
 const DB_GUIDE_MARKER = 'MANABI_POWER_DB_GUIDE_V1';
+const SETTINGS_ID = 'mp-event-settings';
 
 function getServerStatus() {
     const dbChannel = getDbChannelSync();
@@ -36,6 +38,7 @@ function getServerStatus() {
         loginChannel: !!LOGIN_CHANNEL_ID,
         botTag: client.user?.tag || null,
         uptime: Math.floor(process.uptime()),
+        registrationsClosed,
         counts: { ...lastSyncCounts }
     };
 }
@@ -44,8 +47,116 @@ app.get('/', (_req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.get('/inscripcion', (_req, res) => {
+    res.sendFile(path.join(__dirname, 'inscripcion.html'));
+});
+
 app.get('/api/status', (_req, res) => {
     res.json({ ok: true, ...getServerStatus() });
+});
+
+app.get('/api/inscripciones/status', (_req, res) => {
+    res.json({
+        ok: true,
+        closed: registrationsClosed,
+        discordReady: client.isReady(),
+        dbChannel: !!getDbChannelSync()
+    });
+});
+
+app.post('/api/inscripciones', async (req, res) => {
+    try {
+        if (registrationsClosed) {
+            res.status(403).json({ ok: false, error: 'Inscripciones cerradas. Contacte a la organización del evento.' });
+            return;
+        }
+
+        const dbChannel = await getDbChannel();
+        if (!dbChannel) {
+            res.status(503).json({ ok: false, error: 'Servicio temporalmente no disponible. Intente más tarde.' });
+            return;
+        }
+
+        const body = req.body || {};
+        const lastName = String(body.lastName || '').trim();
+        const firstName = String(body.firstName || '').trim();
+        const idCard = String(body.idCard || '').trim();
+        const birthDate = String(body.birthDate || '').trim();
+        const sex = String(body.sex || '').trim();
+        const modality = String(body.modality || '').trim();
+
+        const missing = [];
+        if (!lastName) missing.push('apellidos');
+        if (!firstName) missing.push('nombres');
+        if (!idCard) missing.push('cédula');
+        if (!birthDate) missing.push('fecha de nacimiento');
+        if (!sex) missing.push('sexo');
+        if (!modality) missing.push('modalidad');
+        if (missing.length) {
+            res.status(400).json({ ok: false, error: `Complete los campos obligatorios: ${missing.join(', ')}.` });
+            return;
+        }
+
+        const athletes = await fetchAthletesFromDiscord();
+        const nextBib = Math.max(0, ...athletes.map((a) => parseInt(a.bibNumber, 10) || 0)) + 1;
+        const athleteData = {
+            id: `pre-${Date.now()}`,
+            bibNumber: nextBib,
+            lastName,
+            firstName,
+            fullName: `${lastName} ${firstName}`.trim(),
+            idCard,
+            birthDate,
+            sex,
+            nationality: String(body.nationality || 'Ecuatoriana').trim() || 'Ecuatoriana',
+            province: String(body.province || 'Manabí').trim() || 'Manabí',
+            club: String(body.club || 'Independiente').trim() || 'Independiente',
+            coach: String(body.coach || '').trim(),
+            phone: String(body.phone || '').trim(),
+            email: String(body.email || '').trim(),
+            modality,
+            height: body.height != null && body.height !== '' ? parseFloat(body.height) : null,
+            weight: body.weight != null && body.weight !== '' ? parseFloat(body.weight) : null,
+            category: String(body.category || 'Pendiente').trim() || 'Pendiente',
+            doblajes: String(body.doblajes || '').trim(),
+            athleteStatus: String(body.athleteStatus || 'Novato').trim() || 'Novato',
+            classification: String(body.athleteStatus || 'Novato').trim() || 'Novato',
+            passStatus: 'Sí',
+            didPassWeight: 'Sí',
+            paymentStatus: 'Pendiente',
+            participationStatus: 'Pendiente',
+            status: 'Pendiente',
+            observations: String(body.observations || '').trim(),
+            registrationTimestamp: Date.now(),
+            source: 'pre-inscripcion'
+        };
+
+        const conflicts = findAthleteDuplicatesInList(athletes, athleteData);
+        if (conflicts.length) {
+            const msg = conflicts.map((c) => {
+                const name = c.existing.fullName || c.existing.firstName || 'otro atleta';
+                return c.type === 'bib'
+                    ? `Ficha #${c.bibNumber} ya usada por ${name}`
+                    : `Cédula ${c.idCard} ya registrada (${name})`;
+            }).join('. ');
+            res.status(409).json({ ok: false, error: msg });
+            return;
+        }
+
+        await dbChannel.send(formatAthleteMessage(athleteData));
+        io.emit('nuevoAtleta', athleteData);
+        lastSyncCounts.athletes = athletes.length + 1;
+
+        res.json({
+            ok: true,
+            bibNumber: athleteData.bibNumber,
+            fullName: athleteData.fullName,
+            category: athleteData.category
+        });
+    } catch (err) {
+        console.error('POST /api/inscripciones:', err);
+        res.status(500).json({ ok: false, error: 'Error al registrar. Intente de nuevo.' });
+    }
 });
 
 function envPass(key, fallback) {
@@ -309,8 +420,12 @@ function isScheduleRecord(record) {
     return record?.recordType === 'schedule';
 }
 
+function isSettingsRecord(record) {
+    return record?.recordType === 'settings';
+}
+
 function isAthleteRecord(record) {
-    return record?.id && !isJudgeRecord(record) && !isScoringRecord(record) && !isScheduleRecord(record);
+    return record?.id && !isJudgeRecord(record) && !isScoringRecord(record) && !isScheduleRecord(record) && !isSettingsRecord(record);
 }
 
 function formatRecordMessage(record) {
@@ -332,6 +447,40 @@ function formatScoringMessage(round) {
 
 function formatScheduleMessage(schedule) {
     return formatRecordMessage({ recordType: 'schedule', ...schedule });
+}
+
+function formatSettingsMessage(settings) {
+    return formatRecordMessage({ recordType: 'settings', ...settings });
+}
+
+async function fetchSettingsFromDiscord() {
+    const list = await fetchRecordsFromDiscord(isSettingsRecord);
+    return list.find((s) => String(s.id) === SETTINGS_ID) || null;
+}
+
+async function saveSettingsToDiscord(settings) {
+    const dbChannel = await getDbChannel();
+    if (!dbChannel) return false;
+
+    const existing = await findRecordMessage(SETTINGS_ID, isSettingsRecord);
+    const payload = { id: SETTINGS_ID, ...settings, updatedAt: Date.now() };
+    const message = formatSettingsMessage(payload);
+
+    if (existing) await existing.message.edit(message);
+    else await dbChannel.send(message);
+    return true;
+}
+
+async function loadRegistrationSettings() {
+    const settings = await fetchSettingsFromDiscord();
+    if (settings && typeof settings.registrationsClosed === 'boolean') {
+        registrationsClosed = settings.registrationsClosed;
+    }
+    return registrationsClosed;
+}
+
+function broadcastRegistrationStatus() {
+    io.emit('inscripcionesEstado', { closed: registrationsClosed });
 }
 
 function getDbChannelSync() {
@@ -507,6 +656,7 @@ async function fetchFullSyncPayload() {
         judges,
         scoring,
         schedule,
+        registrationsClosed,
         syncedAt: Date.now(),
         discordReady: client.isReady(),
         dbChannel: !!dbChannel,
@@ -561,6 +711,9 @@ async function onDiscordClientReady() {
         console.warn('Discord: revise permisos del bot en el canal de base de datos.');
     }
     io.emit('estadoServidor', status);
+    loadRegistrationSettings()
+        .then(() => broadcastRegistrationStatus())
+        .catch((err) => console.warn('No se pudo cargar estado de inscripciones:', err.message));
     emitFullSync(null, { logToDiscord: true }).catch((err) => console.error('Error en sincronización inicial:', err.message));
 }
 
@@ -680,6 +833,7 @@ client.on('messageDelete', async (message) => {
 io.on('connection', (socket) => {
     console.log('Nueva conexión desde la Mesa de Control Web');
     socket.emit('estadoServidor', getServerStatus());
+    socket.emit('inscripcionesEstado', { closed: registrationsClosed });
 
     socket.on('intentarLogin', async (payload, callback) => {
         const result = authenticateUser(payload?.user, payload?.pass);
@@ -781,6 +935,23 @@ io.on('connection', (socket) => {
             await dbChannel.send(formatScheduleMessage(scheduleData));
         }
         io.emit('cronogramaActualizado', scheduleData);
+    });
+
+    socket.on('actualizarEstadoInscripciones', async (payload, callback) => {
+        if (typeof payload?.closed !== 'boolean') {
+            callback?.({ ok: false, error: 'Estado de inscripciones inválido.' });
+            return;
+        }
+
+        registrationsClosed = payload.closed;
+        const saved = await saveSettingsToDiscord({ registrationsClosed });
+        if (!saved) {
+            callback?.({ ok: false, error: 'No se pudo guardar en Discord.' });
+            return;
+        }
+
+        broadcastRegistrationStatus();
+        callback?.({ ok: true, closed: registrationsClosed });
     });
 
     socket.on('registrarDesdeWeb', async (athleteData, callback) => {

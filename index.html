@@ -2476,6 +2476,11 @@
 
             if (payload.discordReady !== undefined) discordBotReady = !!payload.discordReady;
             if (payload.dbChannel !== undefined) discordDbChannelReady = !!payload.dbChannel;
+            if (typeof payload.registrationsClosed === 'boolean') {
+                registrationsClosed = payload.registrationsClosed;
+                localStorage.setItem('mp_reg_closed', registrationsClosed);
+                updateRegClosedUI();
+            }
             if (payload.counts) {
                 serverStatusCache = { ...(serverStatusCache || {}), counts: payload.counts };
             }
@@ -2662,7 +2667,20 @@
                 serverStatusCache = { ...(serverStatusCache || {}), ...status };
                 discordBotReady = !!status?.discordReady;
                 discordDbChannelReady = !!status?.dbChannel;
+                if (typeof status?.registrationsClosed === 'boolean') {
+                    registrationsClosed = status.registrationsClosed;
+                    localStorage.setItem('mp_reg_closed', registrationsClosed);
+                    updateRegClosedUI();
+                }
                 updateConnectionStatus(sock.connected);
+            });
+
+            sock.on('inscripcionesEstado', (data) => {
+                if (data && typeof data.closed === 'boolean') {
+                    registrationsClosed = data.closed;
+                    localStorage.setItem('mp_reg_closed', registrationsClosed);
+                    updateRegClosedUI();
+                }
             });
 
             sock.on('sincronizacionCompleta', (payload) => {
@@ -3675,6 +3693,13 @@
             registrationsClosed = !registrationsClosed;
             localStorage.setItem('mp_reg_closed', registrationsClosed);
             updateRegClosedUI();
+            if (socket?.connected) {
+                socket.emit('actualizarEstadoInscripciones', { closed: registrationsClosed }, (res) => {
+                    if (res?.ok === false) {
+                        showToast(res.error || 'No se pudo sincronizar estado de inscripciones', 'error');
+                    }
+                });
+            }
             addLog(registrationsClosed ? 'Cierre inscripciones' : 'Apertura inscripciones', registrationsClosed ? 'Inscripciones bloqueadas' : 'Inscripciones abiertas');
             showToast(registrationsClosed ? 'Inscripciones cerradas' : 'Inscripciones abiertas', 'info');
         }
