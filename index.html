@@ -982,6 +982,7 @@
                 <nav class="flex-1 space-y-1 px-2">
                     <button onclick="switchSection(0)" id="nav-0" class="sidebar-link active w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-chart-pie w-4"></i>Dashboard</button>
                     <button onclick="switchSection(1)" id="nav-1" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-user-plus w-4"></i>Registro</button>
+                    <button onclick="switchSection(8)" id="nav-8" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-clipboard-list w-4"></i>Pre-inscripciones <span id="nav-pre-count" class="hidden ml-auto text-[10px] font-bold bg-[#C5A85C] text-[#0A1931] px-2 py-0.5 rounded-full">0</span></button>
                     <button onclick="switchSection(2)" id="nav-2" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-users w-4"></i>Atletas</button>
                     <button onclick="switchSection(3)" id="nav-3" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-file-export w-4"></i>Exportaciones</button>
                     <button onclick="switchSection(5)" id="nav-5" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-gavel w-4"></i>Jueces</button>
@@ -1717,6 +1718,31 @@
                 </div>
             </div>
 
+            <div id="section-8" class="section">
+                <div class="max-w-screen-2xl mx-auto">
+                    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-5">
+                        <div>
+                            <h2 class="brand-font text-2xl md:text-3xl text-[#FFEA8D]">Pre-inscripciones Web</h2>
+                            <p class="text-sm text-[#C5A85C]/80 mt-1">Solicitudes desde <a href="/inscripcion" target="_blank" rel="noopener" class="text-[#FFEA8D] underline">manabipower.com/inscripcion</a> — sincronizadas con Discord (#pre-inscripciones)</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <a href="/inscripcion" target="_blank" rel="noopener" class="text-xs font-bold px-4 py-2.5 bg-[#C5A85C] text-[#0A1931] rounded-xl flex items-center gap-2"><i class="fa-solid fa-link"></i>Abrir formulario público</a>
+                            <button onclick="requestDiscordSync()" class="text-xs font-bold px-4 py-2.5 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-brands fa-discord mr-1"></i>Sincronizar</button>
+                        </div>
+                    </div>
+                    <div class="dark-panel rounded-2xl p-4 mb-5 flex flex-wrap items-center justify-between gap-3">
+                        <div class="text-sm font-bold text-[#FFEA8D]"><span id="pre-inscriptions-count">0</span> pre-inscripciones pendientes</div>
+                        <div class="text-[10px] text-[#C5A85C]/60">Los datos se guardan en Discord y se actualizan en tiempo real</div>
+                    </div>
+                    <div id="pre-inscriptions-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                    <div id="pre-inscriptions-empty" class="hidden text-center py-16">
+                        <i class="fa-solid fa-clipboard-list text-5xl text-[#C5A85C]/30 mb-3"></i>
+                        <p class="font-bold text-[#C5A85C]/60">No hay pre-inscripciones pendientes</p>
+                        <p class="text-xs text-[#C5A85C]/40 mt-2">Comparta el enlace <strong class="text-[#FFEA8D]">manabipower.com/inscripcion</strong> con los deportistas</p>
+                    </div>
+                </div>
+            </div>
+
             <div id="section-4" class="section">
                 <div class="max-w-4xl mx-auto space-y-5">
                     <div class="dark-panel rounded-2xl p-6 flex flex-wrap justify-between items-center gap-4">
@@ -1791,7 +1817,9 @@
                             <div>Servidor: <span id="sync-server-url" class="font-mono text-[#FFEA8D]">—</span></div>
                             <div>Estado Discord: <span id="sync-discord-status" class="font-mono text-[#FFEA8D]">—</span></div>
                             <div>Canal BD: <span id="sync-discord-channel" class="font-mono text-[#FFEA8D]">—</span></div>
+                            <div>Canal pre-inscripciones: <span id="sync-pre-channel" class="font-mono text-[#FFEA8D]">—</span></div>
                             <div>Registros en Discord: <span id="sync-discord-counts" class="font-mono text-[#FFEA8D]">—</span></div>
+                            <div>Enlace público: <a href="/inscripcion" target="_blank" rel="noopener" class="font-mono text-[#FFEA8D] underline">manabipower.com/inscripcion</a></div>
                             <div>Última sincronización: <span id="last-discord-sync" class="font-mono text-[#FFEA8D]">—</span></div>
                         </div>
                     </div>
@@ -1899,6 +1927,7 @@
 
         // ==================== DATA & STATE & SOCKET ====================
         let athletes = [];
+        let preInscriptions = [];
         let judges = [];
         let editingJudgeId = null;
         let deletedAthleteIds = (() => {
@@ -2375,6 +2404,7 @@
             const syncServerEl = document.getElementById('sync-server-url');
             const syncDiscordEl = document.getElementById('sync-discord-status');
             const syncChannelEl = document.getElementById('sync-discord-channel');
+            const syncPreChannelEl = document.getElementById('sync-pre-channel');
             const syncCountsEl = document.getElementById('sync-discord-counts');
             const lastSyncEl = document.getElementById('last-discord-sync');
             if (syncServerEl) syncServerEl.textContent = activeSocketUrl;
@@ -2388,11 +2418,16 @@
                     ? `#${serverStatusCache.dbChannelName}`
                     : (discordDbChannelReady ? 'configurado' : 'no disponible');
             }
+            if (syncPreChannelEl) {
+                syncPreChannelEl.textContent = serverStatusCache?.preInscriptionChannelName
+                    ? `#${serverStatusCache.preInscriptionChannelName}`
+                    : (serverStatusCache?.preInscriptionChannel ? 'configurado' : 'no disponible');
+            }
             if (syncCountsEl) {
                 const c = serverStatusCache?.counts;
                 syncCountsEl.textContent = c
-                    ? `${c.athletes} atletas · ${c.judges} jueces · ${c.scoring} rondas · cronograma ${c.hasSchedule ? 'sí' : 'no'}`
-                    : `${athletes.length} atletas · ${judges.length} jueces (local)`;
+                    ? `${c.athletes} atletas · ${c.preInscriptions || 0} pre-inscripciones · ${c.judges} jueces · ${c.scoring} rondas`
+                    : `${athletes.length} atletas · ${preInscriptions.length} pre-inscripciones · ${judges.length} jueces (local)`;
             }
             if (lastSyncEl && syncState.lastSync) {
                 lastSyncEl.textContent = new Date(syncState.lastSync).toLocaleString('es-ES');
@@ -2411,7 +2446,7 @@
                 return;
             }
             if (syncState.syncing) text.textContent = 'Sincronizando con Discord...';
-            else text.textContent = `Discord OK • ${athletes.length} atletas • ${judges.length} jueces`;
+            else text.textContent = `Discord OK • ${athletes.length} atletas • ${preInscriptions.length} pre-inscripciones • ${judges.length} jueces`;
         }
 
         function refreshEntireAppFromDiscord() {
@@ -2472,6 +2507,11 @@
                 if (payload.schedule) eventSchedule = normalizeSchedule(payload.schedule);
                 else if (!eventSchedule) eventSchedule = createDefaultSchedule();
                 saveScheduleLocal();
+            }
+
+            if (payload.preInscriptions) {
+                preInscriptions = (payload.preInscriptions || []).map(normalizePreInscription);
+                savePreInscriptions();
             }
 
             if (payload.discordReady !== undefined) discordBotReady = !!payload.discordReady;
@@ -2672,6 +2712,9 @@
                     localStorage.setItem('mp_reg_closed', registrationsClosed);
                     updateRegClosedUI();
                 }
+                if (status?.preInscriptionChannelName) {
+                    serverStatusCache = { ...(serverStatusCache || {}), preInscriptionChannelName: status.preInscriptionChannelName };
+                }
                 updateConnectionStatus(sock.connected);
             });
 
@@ -2714,6 +2757,27 @@
                 if (!id) return;
                 const silent = consumeSocketOp('delete', id);
                 removeAthleteFromRemote(id, !silent);
+            });
+
+            sock.on('cargarPreInscripciones', (datosDeDiscord) => {
+                if (!localDataReady) return;
+                applyRemotePreInscriptionsList(datosDeDiscord);
+            });
+
+            sock.on('nuevaPreInscripcion', (data) => {
+                if (!data?.id) return;
+                upsertPreInscriptionFromRemote(data, true);
+            });
+
+            sock.on('preInscripcionActualizada', (data) => {
+                if (!data?.id) return;
+                upsertPreInscriptionFromRemote(data, false);
+            });
+
+            sock.on('preInscripcionEliminada', (payload) => {
+                const id = String(payload?.id || payload || '');
+                if (!id) return;
+                removePreInscriptionFromRemote(id, true);
             });
 
             sock.on('cargarJueces', (datosDeDiscord) => {
@@ -2827,7 +2891,9 @@
             updateDashboardMetrics();
             renderModalitiesOverview();
             renderScheduleLiveWidget();
+            updatePreInscriptionsBadge();
             if (currentSection === 2) filterAthletes();
+            if (currentSection === 8) renderPreInscriptionsList();
             if (currentSection === 3) { renderPlanillasList(); updateExportPreview(); }
             if (currentSection === 5) renderJudgesList();
             if (currentSection === 6) renderScoringSection();
@@ -2963,6 +3029,7 @@
 
             loadDeletedAthletes();
             loadAthletesFromCache();
+            loadPreInscriptionsFromCache();
             loadJudgesFromCache();
             loadScoringFromCache();
             loadScheduleFromCache();
@@ -3044,6 +3111,168 @@
 
         function saveAthletes() {
             localStorage.setItem('mp_athletes_cache', JSON.stringify(athletes));
+        }
+
+        function normalizePreInscription(p) {
+            const item = { ...p };
+            item.recordType = 'preInscription';
+            item.preInscriptionStatus = item.preInscriptionStatus || 'Pendiente';
+            item.source = item.source || 'pre-inscripcion';
+            if (!item.fullName && (item.lastName || item.firstName)) {
+                item.fullName = `${item.lastName || ''} ${item.firstName || ''}`.trim();
+            }
+            if (item.modality) {
+                const canonical = toCanonicalModality?.(item.modality);
+                if (canonical) item.modality = canonical;
+            }
+            if (!item.category && item.modality) {
+                item.category = calculateAutoCategory(item.modality, item.birthDate, item.height, item.weight);
+            }
+            return item;
+        }
+
+        function loadPreInscriptionsFromCache() {
+            try {
+                const cached = localStorage.getItem('mp_pre_inscriptions_cache');
+                if (cached) {
+                    const list = JSON.parse(cached);
+                    if (Array.isArray(list)) preInscriptions = list.map(normalizePreInscription);
+                }
+            } catch (e) {
+                console.warn('Cache de pre-inscripciones no válido');
+            }
+        }
+
+        function savePreInscriptions() {
+            localStorage.setItem('mp_pre_inscriptions_cache', JSON.stringify(preInscriptions));
+        }
+
+        function applyRemotePreInscriptionsList(list) {
+            preInscriptions = (list || []).map(normalizePreInscription);
+            savePreInscriptions();
+            syncState.syncing = false;
+            syncState.lastSync = Date.now();
+            updateConnectionStatus(true);
+            updateLastSync();
+            refreshAllViews();
+        }
+
+        function upsertPreInscriptionFromRemote(raw, notify = true) {
+            const item = normalizePreInscription(raw);
+            const idx = preInscriptions.findIndex(p => String(p.id) === String(item.id));
+            if (idx !== -1) preInscriptions[idx] = { ...preInscriptions[idx], ...item };
+            else preInscriptions.unshift(item);
+            savePreInscriptions();
+            updateConnectionStatus(true);
+            refreshAllViews();
+            if (notify && currentUser) showToast(`Nueva pre-inscripción: ${item.fullName || getFullName(item)}`, 'info');
+        }
+
+        function removePreInscriptionFromRemote(id, notify = true) {
+            const strId = String(id);
+            const existing = preInscriptions.find(p => String(p.id) === strId);
+            preInscriptions = preInscriptions.filter(p => String(p.id) !== strId);
+            savePreInscriptions();
+            updateConnectionStatus(true);
+            refreshAllViews();
+            if (notify && existing && currentUser) showToast(`Pre-inscripción eliminada: ${existing.fullName || getFullName(existing)}`, 'info');
+        }
+
+        function updatePreInscriptionsBadge() {
+            const pending = preInscriptions.filter(p => (p.preInscriptionStatus || 'Pendiente') === 'Pendiente').length;
+            const badge = document.getElementById('nav-pre-count');
+            const countEl = document.getElementById('pre-inscriptions-count');
+            if (badge) {
+                badge.textContent = pending;
+                badge.classList.toggle('hidden', pending === 0);
+            }
+            if (countEl) countEl.textContent = pending;
+        }
+
+        function renderPreInscriptionsList() {
+            const container = document.getElementById('pre-inscriptions-list');
+            const empty = document.getElementById('pre-inscriptions-empty');
+            if (!container) return;
+
+            const pending = preInscriptions.filter(p => (p.preInscriptionStatus || 'Pendiente') !== 'Descartada');
+            container.innerHTML = '';
+            if (!pending.length) {
+                empty?.classList.remove('hidden');
+                updatePreInscriptionsBadge();
+                return;
+            }
+            empty?.classList.add('hidden');
+
+            pending.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'dark-panel rounded-2xl p-5 flex flex-col gap-3';
+                const status = p.preInscriptionStatus || 'Pendiente';
+                const statusColor = status === 'Confirmada' ? 'text-green-400' : 'text-[#FFEA8D]';
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <div class="font-bold text-[#FFEA8D]">${escapeHtml(p.fullName || getFullName(p))}</div>
+                            <div class="text-xs text-[#C5A85C]/70 mt-1">${escapeHtml(p.modality || '—')}</div>
+                        </div>
+                        <span class="text-[10px] font-bold ${statusColor} bg-[#0A1931] px-2 py-1 rounded-lg border border-[#C5A85C]/25">${escapeHtml(status)}</span>
+                    </div>
+                    <div class="text-xs text-[#C5A85C]/80 space-y-1">
+                        <div><i class="fa-solid fa-id-card w-4 text-[#C5A85C]"></i> ${escapeHtml(p.idCard || '—')}</div>
+                        <div><i class="fa-solid fa-phone w-4 text-[#C5A85C]"></i> ${escapeHtml(p.phone || '—')}</div>
+                        <div><i class="fa-solid fa-tags w-4 text-[#C5A85C]"></i> ${escapeHtml(p.category || 'Pendiente')}</div>
+                        <div><i class="fa-solid fa-dumbbell w-4 text-[#C5A85C]"></i> ${escapeHtml(p.club || '—')}</div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 pt-1">
+                        <button type="button" data-action="register" class="flex-1 text-xs font-bold px-3 py-2 bg-[#C5A85C] text-[#0A1931] rounded-xl">Inscribir oficialmente</button>
+                        <button type="button" data-action="discard" class="text-xs font-bold px-3 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl">Descartar</button>
+                    </div>`;
+                card.querySelector('[data-action="register"]')?.addEventListener('click', () => registerFromPreInscription(p.id));
+                card.querySelector('[data-action="discard"]')?.addEventListener('click', () => discardPreInscription(p.id));
+                container.appendChild(card);
+            });
+            updatePreInscriptionsBadge();
+        }
+
+        function registerFromPreInscription(id) {
+            const p = preInscriptions.find(x => String(x.id) === String(id));
+            if (!p) return;
+            editingAthleteId = null;
+            switchSection(1);
+            setTimeout(() => {
+                ['lastName','firstName','idCard','birthDate','club','province','coach','phone','email','height','weight','observations','doblajes'].forEach(f => {
+                    const el = document.getElementById(f);
+                    if (el) el.value = p[f] ?? '';
+                });
+                document.getElementById('sex').value = p.sex || '';
+                document.getElementById('nationality').value = p.nationality || 'Ecuatoriana';
+                document.getElementById('modality-select').value = p.modality || selectedModality;
+                document.getElementById('category').value = p.category || '';
+                document.getElementById('paymentStatus').value = 'Pendiente';
+                document.getElementById('participationStatus').value = 'Pendiente';
+                selectedModality = p.modality || selectedModality;
+                selectedClassification = p.athleteStatus || p.classification || 'Novato';
+                selectClassification(selectedClassification);
+                onModalityChange();
+                onFormChange();
+                showToast(`Datos cargados de pre-inscripción: ${p.fullName || getFullName(p)}`, 'info');
+            }, 80);
+        }
+
+        function discardPreInscription(id) {
+            const p = preInscriptions.find(x => String(x.id) === String(id));
+            if (!p) return;
+            if (!confirm(`¿Descartar la pre-inscripción de ${p.fullName || getFullName(p)}?`)) return;
+            if (!socket?.connected) {
+                showToast('Sin conexión al servidor.', 'error');
+                return;
+            }
+            socket.emit('eliminarPreInscripcionDesdeWeb', { id }, (res) => {
+                if (res?.ok === false) showToast(res.error || 'No se pudo eliminar en Discord', 'error');
+                else {
+                    addLog('Pre-inscripción', `Descartada: ${p.fullName || getFullName(p)}`);
+                    showToast('Pre-inscripción eliminada de Discord', 'success');
+                }
+            });
         }
 
         const DEMO_MEN_NAMES = [
@@ -3412,6 +3641,10 @@
             }
             if (section === 2) {
                 filterAthletes();
+            }
+            if (section === 8) {
+                renderPreInscriptionsList();
+                if (socket?.connected) socket.emit('solicitarPreInscripciones');
             }
             if (section === 3) {
                 populateClubFilters();

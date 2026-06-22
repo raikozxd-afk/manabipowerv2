@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 
 let resolvedDbChannel = null;
 let resolvedPreInscriptionChannel = null;
-let lastSyncCounts = { athletes: 0, judges: 0, scoring: 0, hasSchedule: false };
+let lastSyncCounts = { athletes: 0, judges: 0, scoring: 0, hasSchedule: false, preInscriptions: 0 };
 let registrationsClosed = false;
 const DB_GUIDE_MARKER = 'MANABI_POWER_DB_GUIDE_V1';
 const SETTINGS_ID = 'mp-event-settings';
@@ -147,6 +147,8 @@ app.post('/api/inscripciones', async (req, res) => {
 
         await preChannel.send(formatPreInscriptionMessage(athleteData));
         await preChannel.send(formatPreInscriptionSummary(athleteData)).catch(() => {});
+        io.emit('nuevaPreInscripcion', athleteData);
+        lastSyncCounts.preInscriptions = preInscriptions.length + 1;
 
         res.json({
             ok: true,
@@ -679,6 +681,24 @@ async function findAthleteMessage(athleteId) {
     return findRecordMessage(athleteId, isAthleteRecord);
 }
 
+async function findRecordInChannel(channel, recordId, filterFn) {
+    if (!channel) return null;
+
+    const messages = await fetchAllBotMessages(channel);
+    for (const msg of messages) {
+        const record = parseRecordMessage(msg.content);
+        if (record && String(record.id) === String(recordId) && filterFn(record)) {
+            return { message: msg, record };
+        }
+    }
+    return null;
+}
+
+async function findPreInscriptionMessage(recordId) {
+    const channel = await getPreInscriptionChannel();
+    return findRecordInChannel(channel, recordId, isPreInscriptionRecord);
+}
+
 async function findJudgeMessage(judgeId) {
     return findRecordMessage(judgeId, isJudgeRecord);
 }
@@ -726,19 +746,29 @@ async function emitSchedule(targetSocket) {
     return schedule;
 }
 
+async function emitPreInscriptionsList(targetSocket) {
+    const list = await fetchPreInscriptionsFromDiscord();
+    console.log(`Discord sync: ${list.length} pre-inscripción(es) cargada(s)`);
+    if (targetSocket) targetSocket.emit('cargarPreInscripciones', list);
+    else io.emit('cargarPreInscripciones', list);
+    return list;
+}
+
 async function fetchFullSyncPayload() {
     const dbChannel = await getDbChannel();
-    const [athletes, judges, scoring, schedule] = await Promise.all([
+    const [athletes, judges, scoring, schedule, preInscriptions] = await Promise.all([
         fetchAthletesFromDiscord(),
         fetchJudgesFromDiscord(),
         fetchScoringRoundsFromDiscord(),
-        fetchScheduleFromDiscord()
+        fetchScheduleFromDiscord(),
+        fetchPreInscriptionsFromDiscord()
     ]);
     lastSyncCounts = {
         athletes: athletes.length,
         judges: judges.length,
         scoring: scoring.length,
-        hasSchedule: !!schedule
+        hasSchedule: !!schedule,
+        preInscriptions: preInscriptions.length
     };
 
     return {
@@ -746,10 +776,12 @@ async function fetchFullSyncPayload() {
         judges,
         scoring,
         schedule,
+        preInscriptions,
         registrationsClosed,
         syncedAt: Date.now(),
         discordReady: client.isReady(),
         dbChannel: !!dbChannel,
+        preInscriptionChannel: !!getPreInscriptionChannelSync(),
         counts: { ...lastSyncCounts }
     };
 }
@@ -770,7 +802,7 @@ let lastDiscordLogAt = 0;
 async function emitFullSync(targetSocket, options = {}) {
     const { logToDiscord = false } = options;
     const payload = await fetchFullSyncPayload();
-    const summary = `Discord sync: ${payload.athletes.length} atletas, ${payload.judges.length} jueces, ${payload.scoring.length} rondas, cronograma ${payload.schedule ? 'sí' : 'no'}`;
+    const summary = `Discord sync: ${payload.athletes.length} atletas, ${payload.preInscriptions?.length || 0} pre-inscripciones, ${payload.judges.length} jueces, ${payload.scoring.length} rondas, cronograma ${payload.schedule ? 'sí' : 'no'}`;
     console.log(summary);
     if (logToDiscord && Date.now() - lastDiscordLogAt > 15000) {
         lastDiscordLogAt = Date.now();
@@ -918,6 +950,7 @@ client.on('messageDelete', async (message) => {
     if (isScheduleRecord(record)) io.emit('cronogramaActualizado', null);
     else if (isScoringRecord(record)) io.emit('rondaEliminada', { id: record.id });
     else if (isJudgeRecord(record)) io.emit('juezEliminado', { id: record.id });
+    else if (isPreInscriptionRecord(record)) io.emit('preInscripcionEliminada', { id: record.id });
     else if (isAthleteRecord(record)) io.emit('atletaEliminado', { id: record.id });
 });
 
@@ -997,6 +1030,58 @@ io.on('connection', (socket) => {
 
     socket.on('solicitarCronograma', async () => {
         await emitSchedule(socket);
+    });
+
+    socket.on('solicitarPreInscripciones', async () => {
+        await emitPreInscriptionsList(socket);
+    });
+
+    socket.on('eliminarPreInscripcionDesdeWeb', async (payload, callback) => {
+        const recordId = String(payload?.id || '');
+        if (!recordId) {
+            callback?.({ ok: false, error: 'ID inválido.' });
+            return;
+        }
+
+        const found = await findPreInscriptionMessage(recordId);
+        if (!found) {
+            io.emit('preInscripcionEliminada', { id: recordId });
+            callback?.({ ok: true });
+            return;
+        }
+
+        await found.message.delete();
+        io.emit('preInscripcionEliminada', { id: recordId });
+        const remaining = await fetchPreInscriptionsFromDiscord();
+        lastSyncCounts.preInscriptions = remaining.length;
+        callback?.({ ok: true });
+    });
+
+    socket.on('actualizarPreInscripcionDesdeWeb', async (payload, callback) => {
+        const recordId = String(payload?.id || '');
+        if (!recordId) {
+            callback?.({ ok: false, error: 'ID inválido.' });
+            return;
+        }
+
+        const found = await findPreInscriptionMessage(recordId);
+        if (!found) {
+            callback?.({ ok: false, error: 'Pre-inscripción no encontrada en Discord.' });
+            return;
+        }
+
+        const updated = {
+            ...found.record,
+            ...payload,
+            id: recordId,
+            recordType: 'preInscription',
+            updatedAt: Date.now()
+        };
+        delete updated.recordType;
+
+        await found.message.edit(formatPreInscriptionMessage(updated));
+        io.emit('preInscripcionActualizada', updated);
+        callback?.({ ok: true });
     });
 
     socket.on('solicitarSincronizacionCompleta', async (_payload, callback) => {
