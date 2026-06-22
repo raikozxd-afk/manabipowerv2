@@ -14,6 +14,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 let resolvedDbChannel = null;
+let resolvedPreInscriptionChannel = null;
 let lastSyncCounts = { athletes: 0, judges: 0, scoring: 0, hasSchedule: false };
 let registrationsClosed = false;
 const DB_GUIDE_MARKER = 'MANABI_POWER_DB_GUIDE_V1';
@@ -30,6 +31,8 @@ function getServerStatus() {
         botTag: client.user?.tag || null,
         uptime: Math.floor(process.uptime()),
         registrationsClosed,
+        preInscriptionChannel: !!getPreInscriptionChannelSync(),
+        preInscriptionChannelName: getPreInscriptionChannelSync()?.name || null,
         counts: { ...lastSyncCounts }
     };
 }
@@ -62,9 +65,9 @@ app.post('/api/inscripciones', async (req, res) => {
             return;
         }
 
-        const dbChannel = await getDbChannel();
-        if (!dbChannel) {
-            res.status(503).json({ ok: false, error: 'Servicio temporalmente no disponible. Intente más tarde.' });
+        const preChannel = await getPreInscriptionChannel();
+        if (!preChannel) {
+            res.status(503).json({ ok: false, error: 'Canal de pre-inscripciones no configurado. Contacte a la organización.' });
             return;
         }
 
@@ -88,11 +91,14 @@ app.post('/api/inscripciones', async (req, res) => {
             return;
         }
 
-        const athletes = await fetchAthletesFromDiscord();
-        const nextBib = Math.max(0, ...athletes.map((a) => parseInt(a.bibNumber, 10) || 0)) + 1;
+        const [preInscriptions, officialAthletes] = await Promise.all([
+            fetchPreInscriptionsFromDiscord(),
+            fetchAthletesFromDiscord()
+        ]);
+
         const athleteData = {
             id: `pre-${Date.now()}`,
-            bibNumber: nextBib,
+            bibNumber: null,
             lastName,
             firstName,
             fullName: `${lastName} ${firstName}`.trim(),
@@ -119,30 +125,35 @@ app.post('/api/inscripciones', async (req, res) => {
             status: 'Pendiente',
             observations: String(body.observations || '').trim(),
             registrationTimestamp: Date.now(),
-            source: 'pre-inscripcion'
+            source: 'pre-inscripcion',
+            preInscriptionStatus: 'Pendiente'
         };
 
-        const conflicts = findAthleteDuplicatesInList(athletes, athleteData);
+        const preConflicts = findAthleteDuplicatesInList(preInscriptions, athleteData);
+        const officialConflicts = findAthleteDuplicatesInList(officialAthletes, athleteData);
+        const conflicts = [...preConflicts, ...officialConflicts.filter((c) => c.type === 'idCard')];
         if (conflicts.length) {
             const msg = conflicts.map((c) => {
                 const name = c.existing.fullName || c.existing.firstName || 'otro atleta';
-                return c.type === 'bib'
-                    ? `Ficha #${c.bibNumber} ya usada por ${name}`
-                    : `Cédula ${c.idCard} ya registrada (${name})`;
+                if (c.type === 'bib') return `Ficha #${c.bibNumber} ya usada por ${name}`;
+                const where = c.existing?.source === 'pre-inscripcion' || c.existing?.recordType === 'preInscription'
+                    ? 'ya tiene una pre-inscripción pendiente'
+                    : 'ya está inscrito oficialmente';
+                return `Cédula ${c.idCard} ${where}${name ? ` (${name})` : ''}`;
             }).join('. ');
             res.status(409).json({ ok: false, error: msg });
             return;
         }
 
-        await dbChannel.send(formatAthleteMessage(athleteData));
-        io.emit('nuevoAtleta', athleteData);
-        lastSyncCounts.athletes = athletes.length + 1;
+        await preChannel.send(formatPreInscriptionMessage(athleteData));
+        await preChannel.send(formatPreInscriptionSummary(athleteData)).catch(() => {});
 
         res.json({
             ok: true,
-            bibNumber: athleteData.bibNumber,
+            bibNumber: null,
             fullName: athleteData.fullName,
-            category: athleteData.category
+            category: athleteData.category,
+            message: 'Pre-inscripción recibida. La organización confirmará su participación.'
         });
     } catch (err) {
         console.error('POST /api/inscripciones:', err);
@@ -264,6 +275,7 @@ const client = new Client({
 });
 
 const DB_CHANNEL_ID = process.env.DB_CHANNEL_ID;
+const PRE_INSCRIPTION_CHANNEL_ID = process.env.PRE_INSCRIPTION_CHANNEL_ID;
 const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID;
 const LOGIN_CHANNEL_ID = process.env.LOGIN_CHANNEL_ID;
 const FETCH_LIMIT = 100;
@@ -425,8 +437,12 @@ function isSettingsRecord(record) {
     return record?.recordType === 'settings';
 }
 
+function isPreInscriptionRecord(record) {
+    return record?.recordType === 'preInscription';
+}
+
 function isAthleteRecord(record) {
-    return record?.id && !isJudgeRecord(record) && !isScoringRecord(record) && !isScheduleRecord(record) && !isSettingsRecord(record);
+    return record?.id && !isJudgeRecord(record) && !isScoringRecord(record) && !isScheduleRecord(record) && !isSettingsRecord(record) && !isPreInscriptionRecord(record);
 }
 
 function formatRecordMessage(record) {
@@ -448,6 +464,31 @@ function formatScoringMessage(round) {
 
 function formatScheduleMessage(schedule) {
     return formatRecordMessage({ recordType: 'schedule', ...schedule });
+}
+
+function formatPreInscriptionMessage(data) {
+    const { recordType, ...rest } = data;
+    return formatRecordMessage({ recordType: 'preInscription', ...rest });
+}
+
+function formatPreInscriptionSummary(data) {
+    const lines = [
+        '📝 **Nueva pre-inscripción** — ' + new Date().toLocaleString('es-ES'),
+        `**Nombre:** ${data.fullName || '—'}`,
+        `**Cédula:** ${data.idCard || '—'}`,
+        `**Teléfono:** ${data.phone || '—'}`,
+        `**Modalidad:** ${data.modality || '—'}`,
+        `**Categoría:** ${data.category || 'Pendiente'}`,
+        `**Club:** ${data.club || '—'} · **Provincia:** ${data.province || '—'}`,
+        `**Estado:** ${data.athleteStatus || 'Novato'}`,
+        data.doblajes ? `**Doblajes:** ${data.doblajes}` : null,
+        data.email ? `**Email:** ${data.email}` : null,
+        data.coach ? `**Entrenador:** ${data.coach}` : null,
+        `**ID:** \`${data.id}\``,
+        '',
+        '_Pendiente de confirmación — registrar en Mesa de Control cuando se confirme el pago._'
+    ].filter(Boolean);
+    return lines.join('\n');
 }
 
 function formatSettingsMessage(settings) {
@@ -486,6 +527,31 @@ function broadcastRegistrationStatus() {
 
 function getDbChannelSync() {
     return client.channels.cache.get(DB_CHANNEL_ID) || resolvedDbChannel || null;
+}
+
+function getPreInscriptionChannelSync() {
+    return client.channels.cache.get(PRE_INSCRIPTION_CHANNEL_ID) || resolvedPreInscriptionChannel || null;
+}
+
+async function getPreInscriptionChannel() {
+    if (!PRE_INSCRIPTION_CHANNEL_ID || !client.isReady()) return null;
+
+    const cached = client.channels.cache.get(PRE_INSCRIPTION_CHANNEL_ID);
+    if (cached) {
+        resolvedPreInscriptionChannel = cached;
+        return cached;
+    }
+    if (resolvedPreInscriptionChannel) return resolvedPreInscriptionChannel;
+
+    try {
+        const channel = await client.channels.fetch(PRE_INSCRIPTION_CHANNEL_ID);
+        resolvedPreInscriptionChannel = channel;
+        console.log(`Discord: canal pre-inscripciones resuelto (#${channel.name || channel.id})`);
+        return channel;
+    } catch (err) {
+        console.warn(`Discord: no se pudo obtener canal pre-inscripciones ${PRE_INSCRIPTION_CHANNEL_ID}:`, err.message);
+        return null;
+    }
 }
 
 async function getDbChannel() {
@@ -554,6 +620,29 @@ async function fetchRecordsFromDiscord(filterFn) {
 
 async function fetchAthletesFromDiscord() {
     return fetchRecordsFromDiscord(isAthleteRecord);
+}
+
+async function fetchRecordsFromChannel(channel, filterFn, maxMessages = FETCH_MAX_MESSAGES) {
+    if (!channel) return [];
+
+    const messages = await fetchAllBotMessages(channel, maxMessages);
+    const list = [];
+    const seenIds = new Set();
+
+    [...messages].reverse().forEach((msg) => {
+        const record = parseRecordMessage(msg.content);
+        if (!record?.id || !filterFn(record) || seenIds.has(String(record.id))) return;
+        seenIds.add(String(record.id));
+        list.push(record);
+    });
+
+    return list;
+}
+
+async function fetchPreInscriptionsFromDiscord() {
+    const channel = await getPreInscriptionChannel();
+    if (!channel) return [];
+    return fetchRecordsFromChannel(channel, isPreInscriptionRecord);
 }
 
 async function fetchJudgesFromDiscord() {
@@ -704,6 +793,7 @@ async function onDiscordClientReady() {
     discordStartupDone = true;
     console.log(`Bot encendido: ${client.user.tag}`);
     await getDbChannel();
+    await getPreInscriptionChannel();
     const setupOk = await ensureDiscordChannelSetup();
     const status = getServerStatus();
     if (!status.dbChannel) {

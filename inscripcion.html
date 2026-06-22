@@ -77,6 +77,99 @@
             background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(15,48,87,0.9));
             border: 1px solid rgba(239,68,68,0.35);
         }
+        .instagram-cta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto;
+            padding: 14px 22px;
+            border-radius: 18px;
+            text-decoration: none;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f58529 0%, #dd2a7b 38%, #8134af 68%, #515bd4 100%);
+            border: 1px solid rgba(255,234,141,0.35);
+            box-shadow:
+                0 12px 32px -8px rgba(221,42,123,0.55),
+                0 0 0 1px rgba(255,255,255,0.08) inset,
+                0 1px 0 rgba(255,255,255,0.15) inset;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+        }
+        .instagram-cta::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
+            transform: translateX(-120%);
+            transition: transform 0.6s ease;
+        }
+        .instagram-cta:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow:
+                0 18px 40px -10px rgba(221,42,123,0.65),
+                0 0 24px -4px rgba(197,168,92,0.35);
+            filter: brightness(1.06);
+        }
+        .instagram-cta:hover::before { transform: translateX(120%); }
+        .instagram-cta:active { transform: translateY(-1px) scale(1.01); }
+        .instagram-cta__icon {
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.18);
+            font-size: 22px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+        }
+        .instagram-cta__text { text-align: left; line-height: 1.2; }
+        .instagram-cta__label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            opacity: 0.92;
+        }
+        .instagram-cta__handle {
+            display: block;
+            font-family: 'Outfit', sans-serif;
+            font-size: 17px;
+            font-weight: 800;
+            color: #FFEA8D;
+            letter-spacing: 0.02em;
+        }
+        .instagram-cta--compact {
+            max-width: none;
+            width: auto;
+            padding: 8px 14px;
+            gap: 8px;
+            border-radius: 12px;
+        }
+        .instagram-cta--compact .instagram-cta__icon {
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            border-radius: 9px;
+        }
+        .instagram-cta--compact .instagram-cta__label { font-size: 9px; }
+        .instagram-cta--compact .instagram-cta__handle { font-size: 12px; }
+        .instagram-section {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(197,168,92,0.15);
+            text-align: center;
+        }
+        .instagram-section p {
+            font-size: 12px;
+            color: rgba(197,168,92,0.65);
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -89,10 +182,13 @@
                     <div class="text-[10px] text-[#C5A85C]/70 font-bold tracking-widest">PRE-INSCRIPCIÓN 2026</div>
                 </div>
             </div>
-            <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener"
-               class="text-xs font-bold text-[#C5A85C] hover:text-[#FFEA8D] flex items-center gap-1.5">
-                <i class="fa-brands fa-instagram"></i>
-                <span class="hidden sm:inline">@manabi_power</span>
+            <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer"
+               class="instagram-cta instagram-cta--compact" aria-label="Síguenos en Instagram @manabi_power">
+                <span class="instagram-cta__icon"><i class="fa-brands fa-instagram"></i></span>
+                <span class="instagram-cta__text">
+                    <span class="instagram-cta__label">Instagram</span>
+                    <span class="instagram-cta__handle">@manabi_power</span>
+                </span>
             </a>
         </div>
     </header>
@@ -111,10 +207,16 @@
                     Las pre-inscripciones no están disponibles en este momento.
                     Síguenos en Instagram para novedades del evento.
                 </p>
-                <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener"
-                   class="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-xl bg-[#C5A85C] text-[#0A1931] font-bold text-sm">
-                    <i class="fa-brands fa-instagram"></i> @manabi_power
-                </a>
+                <div class="mt-6">
+                    <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer"
+                       class="instagram-cta" aria-label="Síguenos en Instagram @manabi_power">
+                        <span class="instagram-cta__icon"><i class="fa-brands fa-instagram"></i></span>
+                        <span class="instagram-cta__text">
+                            <span class="instagram-cta__label">Síguenos en Instagram</span>
+                            <span class="instagram-cta__handle">@manabi_power</span>
+                        </span>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -193,8 +295,20 @@
                 </button>
 
                 <p class="text-[10px] text-[#C5A85C]/50 text-center mt-4">
-                    Al enviar, sus datos quedan registrados oficialmente. Recibirá confirmación en pantalla.
+                    Al enviar, su pre-inscripción queda registrada. La organización confirmará su participación.
                 </p>
+
+                <div class="instagram-section">
+                    <p>¿Dudas sobre modalidades, fechas o pagos? Escríbenos por Instagram</p>
+                    <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer"
+                       class="instagram-cta" aria-label="Síguenos en Instagram @manabi_power">
+                        <span class="instagram-cta__icon"><i class="fa-brands fa-instagram"></i></span>
+                        <span class="instagram-cta__text">
+                            <span class="instagram-cta__label">Síguenos en Instagram</span>
+                            <span class="instagram-cta__handle">@manabi_power</span>
+                        </span>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -204,11 +318,21 @@
                     <i class="fa-solid fa-check text-3xl text-green-400"></i>
                 </div>
                 <h1 class="brand-font text-2xl font-extrabold text-[#FFEA8D] mb-2">¡Pre-inscripción enviada!</h1>
-                <p class="text-[#C5A85C]/80 text-sm mb-6">Sus datos fueron registrados correctamente.</p>
+                <p id="success-message" class="text-[#C5A85C]/80 text-sm mb-6">Su pre-inscripción fue recibida. La organización confirmará su participación.</p>
                 <div class="dark-panel rounded-xl p-5 text-left max-w-sm mx-auto space-y-2 text-sm">
                     <div><span class="text-[#C5A85C]/70">Nombre:</span> <span id="success-name" class="font-bold text-[#FFEA8D]"></span></div>
-                    <div><span class="text-[#C5A85C]/70">Ficha #:</span> <span id="success-bib" class="font-bold text-[#C5A85C]"></span></div>
+                    <div><span class="text-[#C5A85C]/70">Estado:</span> <span id="success-bib" class="font-bold text-[#C5A85C]">Pendiente de confirmación</span></div>
                     <div><span class="text-[#C5A85C]/70">Categoría:</span> <span id="success-category" class="font-bold text-[#FFEA8D]"></span></div>
+                </div>
+                <div class="mt-6">
+                    <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer"
+                       class="instagram-cta" aria-label="Síguenos en Instagram @manabi_power">
+                        <span class="instagram-cta__icon"><i class="fa-brands fa-instagram"></i></span>
+                        <span class="instagram-cta__text">
+                            <span class="instagram-cta__label">Mantente al día</span>
+                            <span class="instagram-cta__handle">@manabi_power</span>
+                        </span>
+                    </a>
                 </div>
                 <button type="button" onclick="resetForm()" class="mt-6 px-6 py-3 rounded-xl border border-[#C5A85C]/40 text-[#C5A85C] font-bold text-sm hover:bg-[#C5A85C]/10">
                     Registrar otro atleta
@@ -409,8 +533,10 @@
                     return;
                 }
                 document.getElementById('success-name').textContent = data.fullName || `${lastName} ${firstName}`;
-                document.getElementById('success-bib').textContent = data.bibNumber || '—';
+                document.getElementById('success-bib').textContent = 'Pendiente de confirmación';
                 document.getElementById('success-category').textContent = data.category || payload.category;
+                const successMsg = document.getElementById('success-message');
+                if (successMsg) successMsg.textContent = data.message || 'Su pre-inscripción fue recibida. La organización confirmará su participación.';
                 showView('success-view');
             } catch {
                 showError('Error de conexión. Verifique su internet e intente de nuevo.');

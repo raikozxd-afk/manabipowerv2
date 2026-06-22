@@ -64,6 +64,18 @@ const SERVER_LAYOUT = [
                 envKey: 'LOGIN_CHANNEL_ID',
                 everyoneCanSend: false,
             },
+            {
+                name: 'pre-inscripciones',
+                topic: 'Pre-inscripciones web — manabipower.com/inscripcion (pendientes de confirmación)',
+                pin: [
+                    '📝 **Canal de pre-inscripciones**',
+                    'Los deportistas que envían el formulario en **https://manabipower.com/inscripcion** aparecen aquí.',
+                    '**No se mezclan** con los atletas oficiales de #base-de-datos.',
+                    'Cuando confirme pago o datos, regístrelo en la Mesa de Control web.',
+                ],
+                envKey: 'PRE_INSCRIPTION_CHANNEL_ID',
+                everyoneCanSend: false,
+            },
         ],
     },
     {
@@ -378,6 +390,7 @@ async function main() {
     if (createdMap.__dbChannelId) envUpdates.DB_CHANNEL_ID = createdMap.__dbChannelId;
     if (createdMap.LOG_CHANNEL_ID) envUpdates.LOG_CHANNEL_ID = createdMap.LOG_CHANNEL_ID;
     if (createdMap.LOGIN_CHANNEL_ID) envUpdates.LOGIN_CHANNEL_ID = createdMap.LOGIN_CHANNEL_ID;
+    if (createdMap.PRE_INSCRIPTION_CHANNEL_ID) envUpdates.PRE_INSCRIPTION_CHANNEL_ID = createdMap.PRE_INSCRIPTION_CHANNEL_ID;
     if (createdMap.ANNOUNCE_CHANNEL_ID) envUpdates.ANNOUNCE_CHANNEL_ID = createdMap.ANNOUNCE_CHANNEL_ID;
     updateEnvFile(envUpdates);
 
@@ -393,6 +406,9 @@ async function main() {
     }
     if (createdMap.LOGIN_CHANNEL_ID) {
         console.log(`  LOGIN_CHANNEL_ID (env)   ${createdMap.LOGIN_CHANNEL_ID}`);
+    }
+    if (createdMap.PRE_INSCRIPTION_CHANNEL_ID) {
+        console.log(`  PRE_INSCRIPTION_CHANNEL_ID ${createdMap.PRE_INSCRIPTION_CHANNEL_ID}`);
     }
     console.log('\nListo. Abra Discord y revise las categorías creadas.');
     console.log('Luego: npm start → http://localhost:3000\n');
