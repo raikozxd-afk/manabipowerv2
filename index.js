@@ -72,24 +72,12 @@ app.post('/api/inscripciones', async (req, res) => {
         }
 
         const body = req.body || {};
-        const lastName = String(body.lastName || '').trim();
-        const firstName = String(body.firstName || '').trim();
-        const idCard = String(body.idCard || '').trim();
+        const lastName = String(body.lastName || '').trim() || 'Sin apellido';
+        const firstName = String(body.firstName || '').trim() || 'Sin nombre';
+        const idCard = String(body.idCard || '').trim() || 'Pendiente';
         const birthDate = String(body.birthDate || '').trim();
-        const sex = String(body.sex || '').trim();
-        const modality = String(body.modality || '').trim();
-
-        const missing = [];
-        if (!lastName) missing.push('apellidos');
-        if (!firstName) missing.push('nombres');
-        if (!idCard) missing.push('cédula');
-        if (!birthDate) missing.push('fecha de nacimiento');
-        if (!sex) missing.push('sexo');
-        if (!modality) missing.push('modalidad');
-        if (missing.length) {
-            res.status(400).json({ ok: false, error: `Complete los campos obligatorios: ${missing.join(', ')}.` });
-            return;
-        }
+        const sex = String(body.sex || '').trim() || 'Pendiente';
+        const modality = String(body.modality || '').trim() || 'Pendiente';
 
         const [preInscriptions, officialAthletes] = await Promise.all([
             fetchPreInscriptionsFromDiscord(),

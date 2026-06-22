@@ -159,17 +159,6 @@
         }
         .instagram-cta--compact .instagram-cta__label { font-size: 9px; }
         .instagram-cta--compact .instagram-cta__handle { font-size: 12px; }
-        .instagram-section {
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid rgba(197,168,92,0.15);
-            text-align: center;
-        }
-        .instagram-section p {
-            font-size: 12px;
-            color: rgba(197,168,92,0.65);
-            margin-bottom: 1rem;
-        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -207,16 +196,6 @@
                     Las pre-inscripciones no están disponibles en este momento.
                     Síguenos en Instagram para novedades del evento.
                 </p>
-                <div class="mt-6">
-                    <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer"
-                       class="instagram-cta" aria-label="Síguenos en Instagram @manabi_power">
-                        <span class="instagram-cta__icon"><i class="fa-brands fa-instagram"></i></span>
-                        <span class="instagram-cta__text">
-                            <span class="instagram-cta__label">Síguenos en Instagram</span>
-                            <span class="instagram-cta__handle">@manabi_power</span>
-                        </span>
-                    </a>
-                </div>
             </div>
         </div>
 
@@ -249,12 +228,12 @@
                 </div>
 
                 <form id="pre-form" class="grid grid-cols-1 md:grid-cols-2 gap-4" novalidate>
-                    <div><label class="lbl" for="lastName">Apellidos *</label><input id="lastName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" required placeholder="Pérez Mendoza"></div>
-                    <div><label class="lbl" for="firstName">Nombres *</label><input id="firstName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" required placeholder="Carlos Francisco"></div>
-                    <div><label class="lbl" for="idCard">Cédula / Pasaporte *</label><input id="idCard" class="dark-input w-full rounded-xl px-4 py-3 text-sm" required placeholder="1312345678"></div>
-                    <div><label class="lbl" for="birthDate">Fecha de Nacimiento *</label><input id="birthDate" type="date" class="dark-input w-full rounded-xl px-4 py-3 text-sm" required></div>
-                    <div><label class="lbl" for="sex">Sexo *</label>
-                        <select id="sex" class="dark-input w-full rounded-xl px-4 py-3 text-sm" required>
+                    <div><label class="lbl" for="lastName">Apellidos</label><input id="lastName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Pérez Mendoza"></div>
+                    <div><label class="lbl" for="firstName">Nombres</label><input id="firstName" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Carlos Francisco"></div>
+                    <div><label class="lbl" for="idCard">Cédula / Pasaporte</label><input id="idCard" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="1312345678"></div>
+                    <div><label class="lbl" for="birthDate">Fecha de Nacimiento</label><input id="birthDate" type="date" class="dark-input w-full rounded-xl px-4 py-3 text-sm"></div>
+                    <div><label class="lbl" for="sex">Sexo</label>
+                        <select id="sex" class="dark-input w-full rounded-xl px-4 py-3 text-sm">
                             <option value="">Seleccionar</option>
                             <option value="Masculino">Masculino</option>
                             <option value="Femenino">Femenino</option>
@@ -264,14 +243,12 @@
                     <div><label class="lbl" for="province">Provincia / Ciudad</label><input id="province" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Manabí"></div>
                     <div><label class="lbl" for="club">Club / Gimnasio</label><input id="club" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Manta Fitness Club"></div>
                     <div><label class="lbl" for="coach">Entrenador</label><input id="coach" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Nombre del entrenador"></div>
-                    <div><label class="lbl" for="phone">Teléfono *</label><input id="phone" type="tel" class="dark-input w-full rounded-xl px-4 py-3 text-sm" required placeholder="0999999999"></div>
+                    <div><label class="lbl" for="phone">Teléfono</label><input id="phone" type="tel" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="0999999999"></div>
                     <div><label class="lbl" for="email">Correo electrónico</label><input id="email" type="email" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="atleta@email.com"></div>
-                    <div class="md:col-span-2"><label class="lbl" for="modality-select">Modalidad IFBB *</label><select id="modality-select" class="dark-input w-full rounded-xl px-4 py-3 text-sm" required></select></div>
-                    <div id="field-height"><label class="lbl" for="height">Estatura (cm) *</label><input id="height" type="number" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="175"></div>
-                    <div id="field-weight"><label class="lbl" for="weight">Peso (kg) *</label><input id="weight" type="number" step="0.1" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="72.5"></div>
+                    <div class="md:col-span-2"><label class="lbl" for="modality-select">Modalidad IFBB</label><select id="modality-select" class="dark-input w-full rounded-xl px-4 py-3 text-sm"></select></div>
                     <div class="md:col-span-2"><label class="lbl" for="doblajes">Doblajes (opcional)</label><input id="doblajes" class="dark-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Ej: también Men's Physique — Senior"></div>
                     <div class="md:col-span-2">
-                        <label class="lbl">Estado del Atleta *</label>
+                        <label class="lbl">Estado del Atleta</label>
                         <div class="flex gap-3 mt-1">
                             <button type="button" id="class-novato" class="class-btn active flex-1 rounded-xl p-3 text-center text-sm font-bold">
                                 <i class="fa-solid fa-star text-[#C5A85C]"></i><div class="mt-1">Novato</div>
@@ -297,18 +274,6 @@
                 <p class="text-[10px] text-[#C5A85C]/50 text-center mt-4">
                     Al enviar, su pre-inscripción queda registrada. La organización confirmará su participación.
                 </p>
-
-                <div class="instagram-section">
-                    <p>¿Dudas sobre modalidades, fechas o pagos? Escríbenos por Instagram</p>
-                    <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer"
-                       class="instagram-cta" aria-label="Síguenos en Instagram @manabi_power">
-                        <span class="instagram-cta__icon"><i class="fa-brands fa-instagram"></i></span>
-                        <span class="instagram-cta__text">
-                            <span class="instagram-cta__label">Síguenos en Instagram</span>
-                            <span class="instagram-cta__handle">@manabi_power</span>
-                        </span>
-                    </a>
-                </div>
             </div>
         </div>
 
@@ -323,16 +288,6 @@
                     <div><span class="text-[#C5A85C]/70">Nombre:</span> <span id="success-name" class="font-bold text-[#FFEA8D]"></span></div>
                     <div><span class="text-[#C5A85C]/70">Estado:</span> <span id="success-bib" class="font-bold text-[#C5A85C]">Pendiente de confirmación</span></div>
                     <div><span class="text-[#C5A85C]/70">Categoría:</span> <span id="success-category" class="font-bold text-[#FFEA8D]"></span></div>
-                </div>
-                <div class="mt-6">
-                    <a href="https://www.instagram.com/manabi_power/" target="_blank" rel="noopener noreferrer"
-                       class="instagram-cta" aria-label="Síguenos en Instagram @manabi_power">
-                        <span class="instagram-cta__icon"><i class="fa-brands fa-instagram"></i></span>
-                        <span class="instagram-cta__text">
-                            <span class="instagram-cta__label">Mantente al día</span>
-                            <span class="instagram-cta__handle">@manabi_power</span>
-                        </span>
-                    </a>
                 </div>
                 <button type="button" onclick="resetForm()" class="mt-6 px-6 py-3 rounded-xl border border-[#C5A85C]/40 text-[#C5A85C] font-bold text-sm hover:bg-[#C5A85C]/10">
                     Registrar otro atleta
@@ -352,10 +307,6 @@
             "Culturismo Clásico", "Classic Physique", "Fisicoculturismo",
             "Bikini Fitness", "Wellness Fitness", "Body Fitness",
             "Women's Physique", "Parejas Fitness", "Parejas Culturistas"
-        ];
-        const NON_WEIGHING = [
-            "Fitness Coreográfico Infantil", "Fit & Beauty", "Fit Model", "Posing Art",
-            "Parejas Fitness", "Parejas Culturistas"
         ];
         const HEIGHT_RULES = {
             "Men's Physique": [170,173,176,179,182],
@@ -423,25 +374,11 @@
             });
         }
 
-        function toggleBiometricFields() {
-            const needs = !NON_WEIGHING.includes(selectedModality);
-            ['field-height', 'field-weight'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.style.display = needs ? '' : 'none';
-            });
-            if (!needs) {
-                document.getElementById('height').value = '';
-                document.getElementById('weight').value = '';
-            }
-        }
-
         function onFormChange() {
             const birthDate = document.getElementById('birthDate').value;
-            const height = document.getElementById('height').value;
-            const weight = document.getElementById('weight').value;
             const modality = document.getElementById('modality-select').value || selectedModality;
             const age = calcAge(birthDate);
-            const autoCat = calculateAutoCategory(modality, birthDate, height, weight);
+            const autoCat = calculateAutoCategory(modality, birthDate, null, null);
             document.getElementById('auto-category-preview').textContent = autoCat || 'Complete los datos';
             document.getElementById('age-preview').textContent = age != null ? age + ' años' : '—';
             document.getElementById('doblajes-preview').textContent = document.getElementById('doblajes').value.trim() || 'Sin doblajes';
@@ -480,37 +417,22 @@
             const birthDate = document.getElementById('birthDate').value;
             const sex = document.getElementById('sex').value;
             const phone = document.getElementById('phone').value.trim();
-            selectedModality = document.getElementById('modality-select').value;
-            const needsWeighing = !NON_WEIGHING.includes(selectedModality);
-            const height = document.getElementById('height').value;
-            const weight = document.getElementById('weight').value;
-
-            const missing = [];
-            if (!lastName) missing.push('apellidos');
-            if (!firstName) missing.push('nombres');
-            if (!idCard) missing.push('cédula');
-            if (!birthDate) missing.push('fecha de nacimiento');
-            if (!sex) missing.push('sexo');
-            if (!phone) missing.push('teléfono');
-            if (!selectedModality) missing.push('modalidad');
-            if (needsWeighing && !height) missing.push('estatura');
-            if (needsWeighing && !weight) missing.push('peso');
-            if (missing.length) {
-                showError('Complete los campos obligatorios: ' + missing.join(', ') + '.');
-                return;
-            }
+            selectedModality = document.getElementById('modality-select').value || selectedModality;
 
             const payload = {
-                lastName, firstName, idCard, birthDate, sex, phone,
+                lastName: lastName || 'Sin apellido',
+                firstName: firstName || 'Sin nombre',
+                idCard: idCard || 'Pendiente',
+                birthDate: birthDate || '',
+                sex: sex || 'Pendiente',
+                phone,
                 nationality: document.getElementById('nationality').value.trim() || 'Ecuatoriana',
                 province: document.getElementById('province').value.trim() || 'Manabí',
                 club: document.getElementById('club').value.trim() || 'Independiente',
                 coach: document.getElementById('coach').value.trim(),
                 email: document.getElementById('email').value.trim(),
-                modality: selectedModality,
-                height: needsWeighing ? parseFloat(height) : null,
-                weight: needsWeighing ? parseFloat(weight) : null,
-                category: calculateAutoCategory(selectedModality, birthDate, height, weight),
+                modality: selectedModality || 'Pendiente',
+                category: calculateAutoCategory(selectedModality, birthDate, null, null),
                 doblajes: document.getElementById('doblajes').value.trim(),
                 athleteStatus: selectedClassification,
                 observations: document.getElementById('observations').value.trim()
@@ -554,7 +476,6 @@
             selectClassification('Novato');
             selectedModality = "Men's Physique";
             document.getElementById('modality-select').value = selectedModality;
-            toggleBiometricFields();
             onFormChange();
             showView('form-view');
         }
@@ -571,11 +492,10 @@
 
             modSelect.addEventListener('change', () => {
                 selectedModality = modSelect.value;
-                toggleBiometricFields();
                 onFormChange();
             });
 
-            ['lastName','firstName','idCard','birthDate','sex','height','weight','doblajes'].forEach(id => {
+            ['lastName','firstName','idCard','birthDate','sex','doblajes'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('input', onFormChange);
                 if (el && el.tagName === 'SELECT') el.addEventListener('change', onFormChange);
@@ -585,7 +505,6 @@
             document.getElementById('class-clasificado').addEventListener('click', () => selectClassification('Clasificado'));
             document.getElementById('submit-btn').addEventListener('click', submitRegistration);
 
-            toggleBiometricFields();
             onFormChange();
             checkStatus();
             setInterval(checkStatus, 60000);
