@@ -982,7 +982,7 @@
                 <nav class="flex-1 space-y-1 px-2">
                     <button onclick="switchSection(0)" id="nav-0" class="sidebar-link active w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-chart-pie w-4"></i>Dashboard</button>
                     <button onclick="switchSection(1)" id="nav-1" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-user-plus w-4"></i>Registro</button>
-                    <button onclick="switchSection(8)" id="nav-8" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-clipboard-list w-4"></i>Pre-inscripciones <span id="nav-pre-count" class="hidden ml-auto text-[10px] font-bold bg-[#C5A85C] text-[#0A1931] px-2 py-0.5 rounded-full">0</span></button>
+                    <button onclick="switchSection(8)" id="nav-8" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-clipboard-list w-4"></i>Pre-inscritos <span id="nav-pre-count" class="hidden ml-auto text-[10px] font-bold bg-[#C5A85C] text-[#0A1931] px-2 py-0.5 rounded-full">0</span></button>
                     <button onclick="switchSection(2)" id="nav-2" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-users w-4"></i>Atletas</button>
                     <button onclick="switchSection(3)" id="nav-3" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-file-export w-4"></i>Exportaciones</button>
                     <button onclick="switchSection(5)" id="nav-5" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold"><i class="fa-solid fa-gavel w-4"></i>Jueces</button>
@@ -1036,6 +1036,7 @@
                                     <div class="mt-5 flex flex-wrap gap-3 text-xs">
                                         <span class="px-3 py-1.5 bg-[#0F3057]/60 border border-[#C5A85C]/25 rounded-full"><i class="fa-solid fa-users mr-1.5 text-[#C5A85C]"></i><span id="hero-total">0</span> atletas</span>
                                         <span class="px-3 py-1.5 bg-[#0F3057]/60 border border-[#C5A85C]/25 rounded-full"><i class="fa-solid fa-dumbbell mr-1.5 text-[#C5A85C]"></i><span id="hero-modalities-count">17</span> modalidades</span>
+                                        <span class="px-3 py-1.5 bg-[#0F3057]/60 border border-[#C5A85C]/25 rounded-full"><i class="fa-solid fa-clipboard-list mr-1.5 text-[#C5A85C]"></i><span id="hero-pre-count">0</span> pre-inscritos</span>
                                         <span class="px-3 py-1.5 bg-[#0F3057]/60 border border-[#C5A85C]/25 rounded-full"><i class="fa-solid fa-cloud mr-1.5 text-[#C5A85C]"></i>Sincronizado Discord</span>
                                     </div>
                                 </div>
@@ -1109,6 +1110,10 @@
                                 <div class="flex items-center gap-x-3"><i class="fa-solid fa-user-plus text-[#C5A85C]"></i> <span>Registrar nuevo atleta</span></div>
                                 <i class="fa-solid fa-chevron-right text-xs text-[#C5A85C]"></i>
                             </button>
+                            <button onclick="switchSection(8)" class="w-full flex items-center justify-between px-5 py-3.5 bg-[#0A1931] hover:bg-[#0F3057] border border-[#C5A85C]/20 hover:border-[#C5A85C]/50 text-[#FFEA8D] transition rounded-2xl text-sm font-bold group">
+                                <div class="flex items-center gap-x-3"><i class="fa-solid fa-clipboard-list text-[#C5A85C]"></i> <span>Ver pre-inscritos <span id="dash-pre-count" class="text-[10px] bg-[#C5A85C] text-[#0A1931] px-2 py-0.5 rounded-full ml-1 hidden">0</span></span></div>
+                                <i class="fa-solid fa-chevron-right text-xs text-[#C5A85C]"></i>
+                            </button>
                             <button onclick="switchSection(2)" class="w-full flex items-center justify-between px-5 py-3.5 bg-[#0A1931] hover:bg-[#0F3057] border border-[#C5A85C]/20 hover:border-[#C5A85C]/50 text-[#FFEA8D] transition rounded-2xl text-sm font-bold group">
                                 <div class="flex items-center gap-x-3"><i class="fa-solid fa-search text-[#C5A85C]"></i> <span>Buscar atletas</span></div>
                                 <i class="fa-solid fa-chevron-right text-xs text-[#C5A85C]"></i>
@@ -1156,6 +1161,10 @@
                         <button onclick="cancelEdit()" id="cancel-edit-btn" class="hidden items-center gap-2 text-sm font-bold px-4 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-times"></i>Cancelar</button>
                     </div>
                     <div id="reg-closed-banner" class="hidden mb-4 p-4 bg-[#0F3057] border border-[#C5A85C]/40 rounded-xl text-[#FFEA8D] text-sm font-bold text-center"><i class="fa-solid fa-lock mr-2 text-[#C5A85C]"></i>Inscripciones cerradas — no se permiten nuevos registros</div>
+                    <div id="pre-from-banner" class="hidden mb-4 p-4 bg-[#0F3057] border border-[#C5A85C]/40 rounded-xl text-sm">
+                        <div class="font-bold text-[#FFEA8D] flex items-center gap-2"><i class="fa-solid fa-clipboard-list text-[#C5A85C]"></i> Pre-inscrito → Inscripción oficial</div>
+                        <p class="text-[#C5A85C]/80 mt-1 text-xs">Complete estatura, peso y control de pesaje. Al guardar, el atleta pasa a <strong class="text-[#FFEA8D]">Inscritos</strong> y se quita de pre-inscritos.</p>
+                    </div>
 
                     <div class="dark-panel rounded-2xl p-6 md:p-8">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
@@ -1722,8 +1731,8 @@
                 <div class="max-w-screen-2xl mx-auto">
                     <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-5">
                         <div>
-                            <h2 class="brand-font text-2xl md:text-3xl text-[#FFEA8D]">Pre-inscripciones Web</h2>
-                            <p class="text-sm text-[#C5A85C]/80 mt-1">Solicitudes desde <a href="/inscripcion" target="_blank" rel="noopener" class="text-[#FFEA8D] underline">manabipower.com/inscripcion</a> — sincronizadas con Discord (#pre-inscripciones)</p>
+                            <h2 class="brand-font text-2xl md:text-3xl text-[#FFEA8D]">Pre-inscritos</h2>
+                            <p class="text-sm text-[#C5A85C]/80 mt-1">Todos los que se pre-inscriben en <a href="/inscripcion" target="_blank" rel="noopener" class="text-[#FFEA8D] underline">manabipower.com/inscripcion</a> aparecen aquí. El día del evento, cuando paguen y vayan al pesaje, use <strong class="text-[#FFEA8D]">Pasar a inscritos</strong>.</p>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <a href="/inscripcion" target="_blank" rel="noopener" class="text-xs font-bold px-4 py-2.5 bg-[#C5A85C] text-[#0A1931] rounded-xl flex items-center gap-2"><i class="fa-solid fa-link"></i>Abrir formulario público</a>
@@ -1731,13 +1740,13 @@
                         </div>
                     </div>
                     <div class="dark-panel rounded-2xl p-4 mb-5 flex flex-wrap items-center justify-between gap-3">
-                        <div class="text-sm font-bold text-[#FFEA8D]"><span id="pre-inscriptions-count">0</span> pre-inscripciones pendientes</div>
-                        <div class="text-[10px] text-[#C5A85C]/60">Los datos se guardan en Discord y se actualizan en tiempo real</div>
+                        <div class="text-sm font-bold text-[#FFEA8D]"><span id="pre-inscriptions-count">0</span> pre-inscritos pendientes</div>
+                        <div class="text-[10px] text-[#C5A85C]/60">Sincronizado con Discord · Al inscribir oficialmente se mueven a Atletas</div>
                     </div>
                     <div id="pre-inscriptions-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                     <div id="pre-inscriptions-empty" class="hidden text-center py-16">
                         <i class="fa-solid fa-clipboard-list text-5xl text-[#C5A85C]/30 mb-3"></i>
-                        <p class="font-bold text-[#C5A85C]/60">No hay pre-inscripciones pendientes</p>
+                        <p class="font-bold text-[#C5A85C]/60">No hay pre-inscritos pendientes</p>
                         <p class="text-xs text-[#C5A85C]/40 mt-2">Comparta el enlace <strong class="text-[#FFEA8D]">manabipower.com/inscripcion</strong> con los deportistas</p>
                     </div>
                 </div>
@@ -1862,6 +1871,7 @@
         <nav class="mobile-nav md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-around py-2 px-1 backdrop-blur-md bg-[#0A1931]/95 border-t border-[#C5A85C]/20">
             <button onclick="switchSection(0)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1 transition"><i class="fa-solid fa-chart-pie text-base mb-0.5"></i>Inicio</button>
             <button onclick="switchSection(1)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-user-plus text-base mb-0.5"></i>Registro</button>
+            <button onclick="switchSection(8)" class="flex flex-col items-center text-[10px] text-gray-400 px-1 py-1 relative"><i class="fa-solid fa-clipboard-list text-base mb-0.5"></i>Pre-insc.<span id="mobile-pre-count" class="hidden absolute -top-0.5 right-0 text-[8px] font-bold bg-[#C5A85C] text-[#0A1931] w-4 h-4 rounded-full flex items-center justify-center">0</span></button>
             <button onclick="switchSection(2)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-users text-base mb-0.5"></i>Atletas</button>
             <button onclick="switchSection(3)" class="flex flex-col items-center text-[10px] text-gray-400 px-2 py-1"><i class="fa-solid fa-file-export text-base mb-0.5"></i>Exportar</button>
             <button onclick="switchSection(5)" class="flex flex-col items-center text-[10px] text-gray-400 px-1 py-1"><i class="fa-solid fa-gavel text-base mb-0.5"></i>Jueces</button>
@@ -1928,6 +1938,7 @@
         // ==================== DATA & STATE & SOCKET ====================
         let athletes = [];
         let preInscriptions = [];
+        let pendingPreInscriptionId = null;
         let judges = [];
         let editingJudgeId = null;
         let deletedAthleteIds = (() => {
@@ -3182,11 +3193,28 @@
             const pending = preInscriptions.filter(p => (p.preInscriptionStatus || 'Pendiente') === 'Pendiente').length;
             const badge = document.getElementById('nav-pre-count');
             const countEl = document.getElementById('pre-inscriptions-count');
+            const heroCount = document.getElementById('hero-pre-count');
+            const dashCount = document.getElementById('dash-pre-count');
+            const mobileCount = document.getElementById('mobile-pre-count');
             if (badge) {
                 badge.textContent = pending;
                 badge.classList.toggle('hidden', pending === 0);
             }
             if (countEl) countEl.textContent = pending;
+            if (heroCount) heroCount.textContent = pending;
+            if (dashCount) {
+                dashCount.textContent = pending;
+                dashCount.classList.toggle('hidden', pending === 0);
+            }
+            if (mobileCount) {
+                mobileCount.textContent = pending > 9 ? '9+' : pending;
+                mobileCount.classList.toggle('hidden', pending === 0);
+            }
+        }
+
+        function updatePreInscriptionBanner() {
+            const banner = document.getElementById('pre-from-banner');
+            if (banner) banner.classList.toggle('hidden', !pendingPreInscriptionId || !!editingAthleteId);
         }
 
         function renderPreInscriptionsList() {
@@ -3223,7 +3251,7 @@
                         <div><i class="fa-solid fa-dumbbell w-4 text-[#C5A85C]"></i> ${escapeHtml(p.club || '—')}</div>
                     </div>
                     <div class="flex flex-wrap gap-2 pt-1">
-                        <button type="button" data-action="register" class="flex-1 text-xs font-bold px-3 py-2 bg-[#C5A85C] text-[#0A1931] rounded-xl">Inscribir oficialmente</button>
+                        <button type="button" data-action="register" class="flex-1 text-xs font-bold px-3 py-2 bg-[#C5A85C] text-[#0A1931] rounded-xl"><i class="fa-solid fa-weight-scale mr-1"></i>Pasar a inscritos (pesaje)</button>
                         <button type="button" data-action="discard" class="text-xs font-bold px-3 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl">Descartar</button>
                     </div>`;
                 card.querySelector('[data-action="register"]')?.addEventListener('click', () => registerFromPreInscription(p.id));
@@ -3237,25 +3265,50 @@
             const p = preInscriptions.find(x => String(x.id) === String(id));
             if (!p) return;
             editingAthleteId = null;
+            pendingPreInscriptionId = String(p.id);
             switchSection(1);
             setTimeout(() => {
                 ['lastName','firstName','idCard','birthDate','club','province','coach','phone','email','height','weight','observations','doblajes'].forEach(f => {
                     const el = document.getElementById(f);
                     if (el) el.value = p[f] ?? '';
                 });
-                document.getElementById('sex').value = p.sex || '';
+                document.getElementById('sex').value = p.sex && p.sex !== 'Pendiente' ? p.sex : '';
                 document.getElementById('nationality').value = p.nationality || 'Ecuatoriana';
-                document.getElementById('modality-select').value = p.modality || selectedModality;
+                document.getElementById('modality-select').value = p.modality && p.modality !== 'Pendiente' ? p.modality : selectedModality;
                 document.getElementById('category').value = p.category || '';
-                document.getElementById('paymentStatus').value = 'Pendiente';
+                document.getElementById('paymentStatus').value = 'Pagado';
                 document.getElementById('participationStatus').value = 'Pendiente';
-                selectedModality = p.modality || selectedModality;
+                document.getElementById('form-title').textContent = 'Inscribir desde pre-inscrito';
+                document.getElementById('submit-btn-text').textContent = 'Completar inscripción y pesaje';
+                selectedModality = p.modality && p.modality !== 'Pendiente' ? p.modality : selectedModality;
                 selectedClassification = p.athleteStatus || p.classification || 'Novato';
+                selectedPassStatus = 'Sí';
                 selectClassification(selectedClassification);
+                selectPassStatus(selectedPassStatus);
                 onModalityChange();
                 onFormChange();
-                showToast(`Datos cargados de pre-inscripción: ${p.fullName || getFullName(p)}`, 'info');
+                updatePreInscriptionBanner();
+                showToast(`Complete pesaje y guarde para inscribir a ${p.fullName || getFullName(p)}`, 'info');
             }, 80);
+        }
+
+        function clearPendingPreInscription(onDone) {
+            if (!pendingPreInscriptionId) {
+                onDone?.();
+                return;
+            }
+            const preId = pendingPreInscriptionId;
+            pendingPreInscriptionId = null;
+            updatePreInscriptionBanner();
+            if (!socket?.connected) {
+                onDone?.();
+                return;
+            }
+            socket.emit('eliminarPreInscripcionDesdeWeb', { id: preId }, (res) => {
+                if (res?.ok === false) showToast(res.error || 'Atleta inscrito, pero no se pudo quitar de pre-inscritos', 'error');
+                else addLog('Pre-inscrito', `Pasó a inscritos oficialmente`);
+                onDone?.();
+            });
         }
 
         function discardPreInscription(id) {
@@ -3725,6 +3778,7 @@
             toggleBiometricFields();
             document.getElementById('cancel-edit-btn').classList.toggle('hidden', !editingAthleteId);
             document.getElementById('cancel-edit-btn').classList.toggle('flex', !!editingAthleteId);
+            updatePreInscriptionBanner();
             onFormChange();
         }
 
@@ -3888,8 +3942,29 @@
                 athletes.unshift(newAthlete);
                 emitAthleteToDiscord('registrarDesdeWeb', newAthlete);
                 addLog('Registro', `#${finalBib} ${athleteData.fullName}`);
-                showToast(missingAthleteFields.length ? `Atleta #${finalBib} registrado (incompleto: ${missingAthleteFields.join(', ')})` : `Atleta #${finalBib} registrado`, missingAthleteFields.length ? 'info' : 'success');
-                localStorage.removeItem('mp_form_draft');
+                const fromPre = !!pendingPreInscriptionId;
+                const finishRegister = () => {
+                    showToast(
+                        fromPre
+                            ? `Atleta #${finalBib} inscrito oficialmente (desde pre-inscrito)`
+                            : (missingAthleteFields.length ? `Atleta #${finalBib} registrado (incompleto: ${missingAthleteFields.join(', ')})` : `Atleta #${finalBib} registrado`),
+                        missingAthleteFields.length && !fromPre ? 'info' : 'success'
+                    );
+                    localStorage.removeItem('mp_form_draft');
+                    saveAthletes();
+                    populateClubFilters();
+                    updateDashboardMetrics();
+                    renderModalitiesOverview();
+                    renderScheduleLiveWidget();
+                    if (currentSection === 7) renderScheduleSection();
+                    categoryManualOverride = false;
+                    editingAthleteId = null;
+                    cancelEdit();
+                    setTimeout(() => { switchSection(2); filterAthletes(); }, 500);
+                };
+                if (fromPre) clearPendingPreInscription(finishRegister);
+                else finishRegister();
+                return;
             }
             saveAthletes();
             populateClubFilters();
@@ -3910,8 +3985,10 @@
 
         function cancelEdit() {
             editingAthleteId = null;
+            pendingPreInscriptionId = null;
             initRegistrationForm();
             document.getElementById('form-warning').classList.add('hidden');
+            updatePreInscriptionBanner();
         }
 
         function updateRegClosedUI() {
