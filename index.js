@@ -60,8 +60,18 @@ app.get('/api/inscripciones/status', (_req, res) => {
 
 app.post('/api/inscripciones', async (req, res) => {
     try {
+        if (!checkInscriptionRateLimit(req)) {
+            res.status(429).json({ ok: false, error: 'Demasiados intentos. Espere un minuto e intente de nuevo.' });
+            return;
+        }
         if (registrationsClosed) {
             res.status(403).json({ ok: false, error: 'Inscripciones cerradas. Contacte a la organización del evento.' });
+            return;
+        }
+
+        const validationErrors = validatePublicPreInscription(req.body);
+        if (validationErrors.length) {
+            res.status(400).json({ ok: false, error: validationErrors.join('. ') });
             return;
         }
 
@@ -134,7 +144,6 @@ app.post('/api/inscripciones', async (req, res) => {
         }
 
         await preChannel.send(formatPreInscriptionMessage(athleteData));
-        await preChannel.send(formatPreInscriptionSummary(athleteData)).catch(() => {});
         io.emit('nuevaPreInscripcion', athleteData);
         lastSyncCounts.preInscriptions = preInscriptions.length + 1;
 
@@ -272,6 +281,7 @@ const FETCH_LIMIT = 100;
 const FETCH_MAX_MESSAGES = 5000;
 const SESSION_MAX_MS = 8 * 60 * 60 * 1000;
 const JUDGE_PASS = envPass('AUTH_JUDGE_PASS', 'juez2026');
+const DEFAULT_AUTH_IN_USE = !process.env.AUTH_ADMIN_PASS || !process.env.AUTH_SCRUT_PASS || !process.env.AUTH_JUDGE_PASS;
 
 const AUTH_USERS = {
     admin: { password: envPass('AUTH_ADMIN_PASS', 'raikoz7841'), role: 'admin', label: 'Administrador' },
@@ -288,6 +298,57 @@ const AUTH_USERS = {
 };
 
 const activeSessions = new Map();
+const STAFF_WRITE_ROLES = ['admin', 'scrutineer'];
+const SCORING_WRITE_ROLES = ['admin', 'scrutineer', 'judge'];
+const inscriptionRateLimit = new Map();
+const INSCRIPTION_RATE_WINDOW_MS = 60 * 1000;
+const INSCRIPTION_RATE_MAX = 8;
+
+function checkInscriptionRateLimit(req) {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+    const now = Date.now();
+    let entry = inscriptionRateLimit.get(ip);
+    if (!entry || now - entry.start > INSCRIPTION_RATE_WINDOW_MS) {
+        entry = { start: now, count: 0 };
+    }
+    entry.count += 1;
+    inscriptionRateLimit.set(ip, entry);
+    return entry.count <= INSCRIPTION_RATE_MAX;
+}
+
+function validatePublicPreInscription(body) {
+    const errors = [];
+    if (!String(body?.lastName || '').trim()) errors.push('Apellidos requeridos');
+    if (!String(body?.firstName || '').trim()) errors.push('Nombres requeridos');
+    const idCard = String(body?.idCard || '').trim();
+    if (!idCard || idCard.length < 6) errors.push('Cédula o pasaporte requerido (mínimo 6 caracteres)');
+    if (!String(body?.birthDate || '').trim()) errors.push('Fecha de nacimiento requerida');
+    if (!String(body?.sex || '').trim()) errors.push('Sexo requerido');
+    const phone = String(body?.phone || '').trim();
+    if (!/^09\d{8}$/.test(phone)) errors.push('Teléfono ecuatoriano válido requerido (09xxxxxxxx)');
+    if (!String(body?.modality || '').trim()) errors.push('Modalidad requerida');
+    return errors;
+}
+
+function extractAuthToken(payload) {
+    if (!payload || typeof payload !== 'object') return null;
+    return payload.authToken || payload.token || null;
+}
+
+function requireSocketAuth(payload, allowedRoles = STAFF_WRITE_ROLES) {
+    const session = getValidSession(extractAuthToken(payload));
+    if (!session) return { ok: false, error: 'Sesión inválida o expirada. Vuelva a iniciar sesión.' };
+    if (allowedRoles?.length && !allowedRoles.includes(session.role)) {
+        return { ok: false, error: 'No tiene permiso para esta acción.' };
+    }
+    return { ok: true, session };
+}
+
+function stripAuthFields(obj) {
+    if (!obj || typeof obj !== 'object') return obj;
+    const { authToken, token, ...rest } = obj;
+    return rest;
+}
 
 function createAuthToken() {
     return crypto.randomUUID ? crypto.randomUUID() : `tok-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
@@ -687,6 +748,32 @@ async function findPreInscriptionMessage(recordId) {
     return findRecordInChannel(channel, recordId, isPreInscriptionRecord);
 }
 
+function isPreInscriptionSummaryMessage(content, recordId) {
+    if (!content || typeof content !== 'string') return false;
+    const idStr = String(recordId);
+    return content.includes('**ID:**') && (content.includes(`\`${idStr}\``) || content.includes(idStr));
+}
+
+async function deletePreInscriptionRelatedMessages(recordId) {
+    const channel = await getPreInscriptionChannel();
+    if (!channel) return 0;
+
+    const messages = await fetchAllBotMessages(channel);
+    let deleted = 0;
+    const idStr = String(recordId);
+
+    for (const msg of messages) {
+        if (msg.author.id !== client.user.id) continue;
+        const record = parseRecordMessage(msg.content);
+        const isJsonRecord = record && isPreInscriptionRecord(record) && String(record.id) === idStr;
+        const isSummary = !record && isPreInscriptionSummaryMessage(msg.content, idStr);
+        if (!isJsonRecord && !isSummary) continue;
+        await msg.delete().catch(() => {});
+        deleted++;
+    }
+    return deleted;
+}
+
 async function findJudgeMessage(judgeId) {
     return findRecordMessage(judgeId, isJudgeRecord);
 }
@@ -1020,25 +1107,30 @@ io.on('connection', (socket) => {
         await emitSchedule(socket);
     });
 
-    socket.on('solicitarPreInscripciones', async () => {
+    socket.on('solicitarPreInscripciones', async (payload, callback) => {
+        const auth = requireSocketAuth(payload || {});
+        if (!auth.ok) { callback?.(auth); return; }
         await emitPreInscriptionsList(socket);
+        callback?.({ ok: true });
     });
 
     socket.on('eliminarPreInscripcionDesdeWeb', async (payload, callback) => {
+        const auth = requireSocketAuth(payload);
+        if (!auth.ok) { callback?.(auth); return; }
+
         const recordId = String(payload?.id || '');
         if (!recordId) {
             callback?.({ ok: false, error: 'ID inválido.' });
             return;
         }
 
-        const found = await findPreInscriptionMessage(recordId);
-        if (!found) {
+        const deleted = await deletePreInscriptionRelatedMessages(recordId);
+        if (!deleted) {
             io.emit('preInscripcionEliminada', { id: recordId });
             callback?.({ ok: true });
             return;
         }
 
-        await found.message.delete();
         io.emit('preInscripcionEliminada', { id: recordId });
         const remaining = await fetchPreInscriptionsFromDiscord();
         lastSyncCounts.preInscriptions = remaining.length;
@@ -1046,6 +1138,9 @@ io.on('connection', (socket) => {
     });
 
     socket.on('actualizarPreInscripcionDesdeWeb', async (payload, callback) => {
+        const auth = requireSocketAuth(payload);
+        if (!auth.ok) { callback?.(auth); return; }
+
         const recordId = String(payload?.id || '');
         if (!recordId) {
             callback?.({ ok: false, error: 'ID inválido.' });
@@ -1058,21 +1153,23 @@ io.on('connection', (socket) => {
             return;
         }
 
+        const clean = stripAuthFields(payload);
         const updated = {
             ...found.record,
-            ...payload,
+            ...clean,
             id: recordId,
-            recordType: 'preInscription',
+            fullName: `${String(clean.lastName || found.record.lastName || '').trim()} ${String(clean.firstName || found.record.firstName || '').trim()}`.trim(),
             updatedAt: Date.now()
         };
-        delete updated.recordType;
 
         await found.message.edit(formatPreInscriptionMessage(updated));
         io.emit('preInscripcionActualizada', updated);
         callback?.({ ok: true });
     });
 
-    socket.on('solicitarSincronizacionCompleta', async (_payload, callback) => {
+    socket.on('solicitarSincronizacionCompleta', async (payload, callback) => {
+        const auth = requireSocketAuth(payload || {});
+        if (!auth.ok) { callback?.(auth); return; }
         try {
             const payload = await emitFullSync(socket);
             callback?.({
@@ -1088,20 +1185,36 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('guardarCronogramaDesdeWeb', async (scheduleData) => {
-        const dbChannel = await getDbChannel();
-        if (!dbChannel || !scheduleData?.id) return;
+    socket.on('guardarCronogramaDesdeWeb', async (scheduleData, callback) => {
+        const auth = requireSocketAuth(scheduleData, ['admin']);
+        if (!auth.ok) { callback?.(auth); return; }
 
-        const existing = await findScheduleMessage(scheduleData.id);
-        if (existing) {
-            await existing.message.edit(formatScheduleMessage(scheduleData));
-        } else {
-            await dbChannel.send(formatScheduleMessage(scheduleData));
+        const schedule = stripAuthFields(scheduleData);
+        const dbChannel = await getDbChannel();
+        if (!dbChannel || !schedule?.id) {
+            callback?.({ ok: false, error: 'Sin conexión con Discord o cronograma inválido.' });
+            return;
         }
-        io.emit('cronogramaActualizado', scheduleData);
+
+        try {
+            const existing = await findScheduleMessage(schedule.id);
+            if (existing) {
+                await existing.message.edit(formatScheduleMessage(schedule));
+            } else {
+                await dbChannel.send(formatScheduleMessage(schedule));
+            }
+            io.emit('cronogramaActualizado', schedule);
+            callback?.({ ok: true });
+        } catch (err) {
+            console.error('guardarCronogramaDesdeWeb:', err);
+            callback?.({ ok: false, error: 'No se pudo guardar el cronograma en Discord.' });
+        }
     });
 
     socket.on('actualizarEstadoInscripciones', async (payload, callback) => {
+        const auth = requireSocketAuth(payload, ['admin']);
+        if (!auth.ok) { callback?.(auth); return; }
+
         if (typeof payload?.closed !== 'boolean') {
             callback?.({ ok: false, error: 'Estado de inscripciones inválido.' });
             return;
@@ -1119,13 +1232,17 @@ io.on('connection', (socket) => {
     });
 
     socket.on('registrarDesdeWeb', async (athleteData, callback) => {
+        const auth = requireSocketAuth(athleteData);
+        if (!auth.ok) { callback?.(auth); return; }
+
+        const athlete = stripAuthFields(athleteData);
         const dbChannel = await getDbChannel();
-        if (!dbChannel || !athleteData?.id) {
+        if (!dbChannel || !athlete?.id) {
             callback?.({ ok: false, error: 'Sin conexión con Discord.' });
             return;
         }
 
-        const conflicts = await validateAthleteDuplicates(athleteData);
+        const conflicts = await validateAthleteDuplicates(athlete);
         if (conflicts.length) {
             const msg = conflicts.map((c) => {
                 const name = c.existing.fullName || c.existing.firstName || 'otro atleta';
@@ -1137,26 +1254,30 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const existing = await findAthleteMessage(athleteData.id);
+        const existing = await findAthleteMessage(athlete.id);
         if (existing) {
-            await existing.message.edit(formatAthleteMessage(athleteData));
-            io.emit('atletaActualizado', athleteData);
+            await existing.message.edit(formatAthleteMessage(athlete));
+            io.emit('atletaActualizado', athlete);
             callback?.({ ok: true });
             return;
         }
 
-        await dbChannel.send(formatAthleteMessage(athleteData));
-        io.emit('nuevoAtleta', athleteData);
+        await dbChannel.send(formatAthleteMessage(athlete));
+        io.emit('nuevoAtleta', athlete);
         callback?.({ ok: true });
     });
 
     socket.on('editarDesdeWeb', async (athleteData, callback) => {
-        if (!athleteData?.id) {
+        const auth = requireSocketAuth(athleteData);
+        if (!auth.ok) { callback?.(auth); return; }
+
+        const athlete = stripAuthFields(athleteData);
+        if (!athlete?.id) {
             callback?.({ ok: false, error: 'Datos de atleta inválidos.' });
             return;
         }
 
-        const conflicts = await validateAthleteDuplicates(athleteData);
+        const conflicts = await validateAthleteDuplicates(athlete);
         if (conflicts.length) {
             const msg = conflicts.map((c) => {
                 const name = c.existing.fullName || c.existing.firstName || 'otro atleta';
@@ -1168,10 +1289,10 @@ io.on('connection', (socket) => {
             return;
         }
 
-        const found = await findAthleteMessage(athleteData.id);
+        const found = await findAthleteMessage(athlete.id);
         if (found) {
-            await found.message.edit(formatAthleteMessage(athleteData));
-            io.emit('atletaActualizado', athleteData);
+            await found.message.edit(formatAthleteMessage(athlete));
+            io.emit('atletaActualizado', athlete);
             callback?.({ ok: true });
             return;
         }
@@ -1181,28 +1302,42 @@ io.on('connection', (socket) => {
             callback?.({ ok: false, error: 'Sin conexión con Discord.' });
             return;
         }
-        await dbChannel.send(formatAthleteMessage(athleteData));
-        io.emit('nuevoAtleta', athleteData);
+        await dbChannel.send(formatAthleteMessage(athlete));
+        io.emit('nuevoAtleta', athlete);
         callback?.({ ok: true });
     });
 
-    socket.on('eliminarDesdeWeb', async (payload) => {
+    socket.on('eliminarDesdeWeb', async (payload, callback) => {
+        const auth = requireSocketAuth(payload);
+        if (!auth.ok) { callback?.(auth); return; }
+
         const athleteId = String(payload?.id || payload || '');
-        if (!athleteId) return;
+        if (!athleteId) {
+            callback?.({ ok: false, error: 'ID inválido.' });
+            return;
+        }
 
         const found = await findAthleteMessage(athleteId);
         if (!found) {
             io.emit('atletaEliminado', { id: athleteId });
+            callback?.({ ok: true });
             return;
         }
 
         await found.message.delete();
         io.emit('atletaEliminado', { id: athleteId });
+        callback?.({ ok: true });
     });
 
-    socket.on('vaciarDesdeWeb', async () => {
+    socket.on('vaciarDesdeWeb', async (payload, callback) => {
+        const auth = requireSocketAuth(payload || {}, ['admin']);
+        if (!auth.ok) { callback?.(auth); return; }
+
         const dbChannel = await getDbChannel();
-        if (!dbChannel) return;
+        if (!dbChannel) {
+            callback?.({ ok: false, error: 'Sin conexión con Discord.' });
+            return;
+        }
 
         const messages = await fetchAllBotMessages(dbChannel);
         for (const msg of messages) {
@@ -1212,9 +1347,13 @@ io.on('connection', (socket) => {
         }
 
         io.emit('cargarAtletas', []);
+        callback?.({ ok: true });
     });
 
     socket.on('subirRespaldoDesdeWeb', async (payload, callback) => {
+        const auth = requireSocketAuth(payload, ['admin']);
+        if (!auth.ok) { callback?.(auth); return; }
+
         const dbChannel = await getDbChannel();
         if (!client.isReady()) {
             callback?.({ ok: false, error: 'El bot de Discord aún no está listo. Espere unos segundos e intente de nuevo.' });
@@ -1295,52 +1434,84 @@ io.on('connection', (socket) => {
         });
     });
 
-    socket.on('registrarJuezDesdeWeb', async (judgeData) => {
-        const dbChannel = await getDbChannel();
-        if (!dbChannel || !judgeData?.id) return;
+    socket.on('registrarJuezDesdeWeb', async (judgeData, callback) => {
+        const auth = requireSocketAuth(judgeData);
+        if (!auth.ok) { callback?.(auth); return; }
 
-        const existing = await findJudgeMessage(judgeData.id);
+        const judge = stripAuthFields(judgeData);
+        const dbChannel = await getDbChannel();
+        if (!dbChannel || !judge?.id) {
+            callback?.({ ok: false, error: 'Sin conexión con Discord.' });
+            return;
+        }
+
+        const existing = await findJudgeMessage(judge.id);
         if (existing) {
-            await existing.message.edit(formatJudgeMessage(judgeData));
-            io.emit('juezActualizado', judgeData);
+            await existing.message.edit(formatJudgeMessage(judge));
+            io.emit('juezActualizado', judge);
+            callback?.({ ok: true });
             return;
         }
 
-        await dbChannel.send(formatJudgeMessage(judgeData));
-        io.emit('nuevoJuez', judgeData);
+        await dbChannel.send(formatJudgeMessage(judge));
+        io.emit('nuevoJuez', judge);
+        callback?.({ ok: true });
     });
 
-    socket.on('editarJuezDesdeWeb', async (judgeData) => {
-        if (!judgeData?.id) return;
+    socket.on('editarJuezDesdeWeb', async (judgeData, callback) => {
+        const auth = requireSocketAuth(judgeData);
+        if (!auth.ok) { callback?.(auth); return; }
 
-        const found = await findJudgeMessage(judgeData.id);
+        const judge = stripAuthFields(judgeData);
+        if (!judge?.id) {
+            callback?.({ ok: false, error: 'Datos de juez inválidos.' });
+            return;
+        }
+
+        const found = await findJudgeMessage(judge.id);
         if (found) {
-            await found.message.edit(formatJudgeMessage(judgeData));
-            io.emit('juezActualizado', judgeData);
+            await found.message.edit(formatJudgeMessage(judge));
+            io.emit('juezActualizado', judge);
+            callback?.({ ok: true });
             return;
         }
 
         const dbChannel = await getDbChannel();
-        if (!dbChannel) return;
-        await dbChannel.send(formatJudgeMessage(judgeData));
-        io.emit('nuevoJuez', judgeData);
+        if (!dbChannel) {
+            callback?.({ ok: false, error: 'Sin conexión con Discord.' });
+            return;
+        }
+        await dbChannel.send(formatJudgeMessage(judge));
+        io.emit('nuevoJuez', judge);
+        callback?.({ ok: true });
     });
 
-    socket.on('eliminarJuezDesdeWeb', async (payload) => {
+    socket.on('eliminarJuezDesdeWeb', async (payload, callback) => {
+        const auth = requireSocketAuth(payload);
+        if (!auth.ok) { callback?.(auth); return; }
+
         const judgeId = String(payload?.id || payload || '');
-        if (!judgeId) return;
+        if (!judgeId) {
+            callback?.({ ok: false, error: 'ID inválido.' });
+            return;
+        }
 
         const found = await findJudgeMessage(judgeId);
         if (!found) {
             io.emit('juezEliminado', { id: judgeId });
+            callback?.({ ok: true });
             return;
         }
 
         await found.message.delete();
         io.emit('juezEliminado', { id: judgeId });
+        callback?.({ ok: true });
     });
 
     socket.on('reordenarJuecesDesdeWeb', async (payload, callback) => {
+        const auth = requireSocketAuth(payload);
+        if (!auth.ok) { callback?.(auth); return; }
+
         const dbChannel = await getDbChannel();
         if (!dbChannel) {
             callback?.({ ok: false, error: 'Sin conexión con el canal de Discord.' });
@@ -1391,33 +1562,50 @@ io.on('connection', (socket) => {
         });
     });
 
-    socket.on('guardarRondaDesdeWeb', async (roundData) => {
-        const dbChannel = await getDbChannel();
-        if (!dbChannel || !roundData?.id) return;
+    socket.on('guardarRondaDesdeWeb', async (roundData, callback) => {
+        const auth = requireSocketAuth(roundData, SCORING_WRITE_ROLES);
+        if (!auth.ok) { callback?.(auth); return; }
 
-        const existing = await findScoringMessage(roundData.id);
-        if (existing) {
-            await existing.message.edit(formatScoringMessage(roundData));
-            io.emit('rondaActualizada', roundData);
+        const round = stripAuthFields(roundData);
+        const dbChannel = await getDbChannel();
+        if (!dbChannel || !round?.id) {
+            callback?.({ ok: false, error: 'Sin conexión con Discord.' });
             return;
         }
 
-        await dbChannel.send(formatScoringMessage(roundData));
-        io.emit('nuevaRonda', roundData);
+        const existing = await findScoringMessage(round.id);
+        if (existing) {
+            await existing.message.edit(formatScoringMessage(round));
+            io.emit('rondaActualizada', round);
+            callback?.({ ok: true });
+            return;
+        }
+
+        await dbChannel.send(formatScoringMessage(round));
+        io.emit('nuevaRonda', round);
+        callback?.({ ok: true });
     });
 
-    socket.on('eliminarRondaDesdeWeb', async (payload) => {
+    socket.on('eliminarRondaDesdeWeb', async (payload, callback) => {
+        const auth = requireSocketAuth(payload, SCORING_WRITE_ROLES);
+        if (!auth.ok) { callback?.(auth); return; }
+
         const roundId = String(payload?.id || payload || '');
-        if (!roundId) return;
+        if (!roundId) {
+            callback?.({ ok: false, error: 'ID inválido.' });
+            return;
+        }
 
         const found = await findScoringMessage(roundId);
         if (!found) {
             io.emit('rondaEliminada', { id: roundId });
+            callback?.({ ok: true });
             return;
         }
 
         await found.message.delete();
         io.emit('rondaEliminada', { id: roundId });
+        callback?.({ ok: true });
     });
 
     emitFullSync(socket).catch((err) => {
@@ -1429,6 +1617,9 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Servidor Web escuchando en el puerto ${PORT}`);
     console.log(`Mesa de control: http://localhost:${PORT}`);
+    if (DEFAULT_AUTH_IN_USE) {
+        console.warn('⚠ Seguridad: configure AUTH_ADMIN_PASS, AUTH_SCRUT_PASS y AUTH_JUDGE_PASS en .env antes del evento.');
+    }
 });
 
 setInterval(() => {

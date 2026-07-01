@@ -1694,7 +1694,7 @@
                     <div class="grid grid-cols-1 lg:grid-cols-4 gap-5 mb-5">
                         <div class="lg:col-span-3 dark-panel rounded-2xl p-5">
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div><label class="lbl">Hora de inicio del evento</label><input id="sched-event-start" type="time" class="dark-input w-full rounded-xl px-4 py-3 text-sm" value="08:00" onchange="onScheduleSettingsChange()"></div>
+                                <div><label class="lbl">Hora de inicio del evento</label><input id="sched-event-start" type="time" class="dark-input w-full rounded-xl px-4 py-3 text-sm" value="08:00" oninput="captureScheduleSettingsFromInputs()" onchange="onScheduleSettingsChange()"></div>
                                 <div><label class="lbl">Minutos por atleta</label><input id="sched-min-per-athlete" type="number" min="1" max="15" class="dark-input w-full rounded-xl px-4 py-3 text-sm" value="4" onchange="onScheduleSettingsChange()"></div>
                                 <div><label class="lbl">Minutos base por modalidad</label><input id="sched-base-minutes" type="number" min="5" max="60" class="dark-input w-full rounded-xl px-4 py-3 text-sm" value="12" onchange="onScheduleSettingsChange()"></div>
                             </div>
@@ -1735,13 +1735,17 @@
                             <p class="text-sm text-[#C5A85C]/80 mt-1">Todos los que se pre-inscriben en <a href="/inscripcion" target="_blank" rel="noopener" class="text-[#FFEA8D] underline">manabipower.com/inscripcion</a> aparecen aquí. El día del evento, cuando paguen y vayan al pesaje, use <strong class="text-[#FFEA8D]">Pasar a inscritos</strong>.</p>
                         </div>
                         <div class="flex flex-wrap gap-2">
-                            <a href="/inscripcion" target="_blank" rel="noopener" class="text-xs font-bold px-4 py-2.5 bg-[#C5A85C] text-[#0A1931] rounded-xl flex items-center gap-2"><i class="fa-solid fa-link"></i>Abrir formulario público</a>
+                            <a href="/inscripcion" target="_blank" rel="noopener" class="text-xs font-bold px-4 py-2.5 bg-[#C5A85C] text-[#0A1931] rounded-xl flex items-center gap-2"><i class="fa-solid fa-link"></i>Formulario público</a>
+                            <button onclick="exportPreInscriptionsCsv()" class="text-xs font-bold px-4 py-2.5 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-file-csv mr-1"></i>Exportar CSV</button>
                             <button onclick="requestDiscordSync()" class="text-xs font-bold px-4 py-2.5 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-brands fa-discord mr-1"></i>Sincronizar</button>
                         </div>
                     </div>
-                    <div class="dark-panel rounded-2xl p-4 mb-5 flex flex-wrap items-center justify-between gap-3">
-                        <div class="text-sm font-bold text-[#FFEA8D]"><span id="pre-inscriptions-count">0</span> pre-inscritos pendientes</div>
-                        <div class="text-[10px] text-[#C5A85C]/60">Sincronizado con Discord · Al inscribir oficialmente se mueven a Atletas</div>
+                    <div class="dark-panel rounded-2xl p-4 mb-5 flex flex-wrap items-center gap-3">
+                        <div class="flex-1 min-w-[200px]">
+                            <input id="pre-search" type="search" placeholder="Buscar por nombre, cédula, club o teléfono..." class="dark-input w-full rounded-xl px-4 py-2.5 text-sm" oninput="renderPreInscriptionsList()">
+                        </div>
+                        <div class="text-sm font-bold text-[#FFEA8D]"><span id="pre-inscriptions-count">0</span> pendientes</div>
+                        <div class="text-[10px] text-[#C5A85C]/60">Discord · Pasar a inscritos al confirmar pago y pesaje</div>
                     </div>
                     <div id="pre-inscriptions-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                     <div id="pre-inscriptions-empty" class="hidden text-center py-16">
@@ -1884,6 +1888,29 @@
         </nav>
     </div>
 
+    <div id="pre-edit-modal" class="hidden fixed inset-0 z-[200] bg-black/80 flex items-center justify-center p-4">
+        <div class="bg-[#0F2238] border-2 border-[#C5A85C] rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="p-5 border-b border-[#C5A85C]/30">
+                <div class="text-[10px] text-[#C5A85C] font-bold tracking-widest">EDITAR PRE-INSCRIPCIÓN</div>
+                <div id="pre-edit-title" class="text-lg font-bold text-[#FFEA8D] mt-1">—</div>
+            </div>
+            <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div><label class="lbl">Apellidos</label><input id="pre-edit-lastName" class="dark-input w-full rounded-xl px-3 py-2.5 text-sm"></div>
+                <div><label class="lbl">Nombres</label><input id="pre-edit-firstName" class="dark-input w-full rounded-xl px-3 py-2.5 text-sm"></div>
+                <div><label class="lbl">Cédula</label><input id="pre-edit-idCard" class="dark-input w-full rounded-xl px-3 py-2.5 text-sm"></div>
+                <div><label class="lbl">Teléfono</label><input id="pre-edit-phone" class="dark-input w-full rounded-xl px-3 py-2.5 text-sm"></div>
+                <div><label class="lbl">Modalidad</label><select id="pre-edit-modality" class="dark-input w-full rounded-xl px-3 py-2.5 text-sm"></select></div>
+                <div><label class="lbl">Club</label><input id="pre-edit-club" class="dark-input w-full rounded-xl px-3 py-2.5 text-sm"></div>
+                <div class="sm:col-span-2"><label class="lbl">Email</label><input id="pre-edit-email" type="email" class="dark-input w-full rounded-xl px-3 py-2.5 text-sm"></div>
+                <div class="sm:col-span-2"><label class="lbl">Observaciones</label><textarea id="pre-edit-observations" rows="2" class="dark-input w-full rounded-xl px-3 py-2.5 text-sm"></textarea></div>
+            </div>
+            <div class="flex gap-2 p-4 border-t border-[#C5A85C]/30 bg-[#0A1931]">
+                <button type="button" onclick="savePreInscriptionEdit()" class="flex-1 bg-[#C5A85C] text-[#0A1931] font-bold py-2.5 rounded-xl text-sm"><i class="fa-solid fa-save mr-1"></i>Guardar cambios</button>
+                <button type="button" onclick="closePreEditModal()" class="flex-1 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 font-bold py-2.5 rounded-xl text-sm">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="credential-modal" class="hidden fixed inset-0 z-[200] bg-black/80 flex items-center justify-center p-4">
         <div class="bg-[#0F2238] border-2 border-[#C5A85C] rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl">
             <div id="credential-content" class="p-6 text-center text-[#FFEA8D]"></div>
@@ -1939,6 +1966,7 @@
         let athletes = [];
         let preInscriptions = [];
         let pendingPreInscriptionId = null;
+        let editingPreInscriptionId = null;
         let judges = [];
         let editingJudgeId = null;
         let deletedAthleteIds = (() => {
@@ -2104,25 +2132,50 @@
                     conflicts.push({ type: 'idCard', message: `Cédula ya registrada: ${getFullName(a)}` });
                 }
             });
+            preInscriptions.forEach(p => {
+                if (pendingPreInscriptionId && String(p.id) === String(pendingPreInscriptionId)) return;
+                if (card && card !== 'Pendiente' && String(p.idCard || '').trim() === card) {
+                    conflicts.push({ type: 'idCard', message: `Cédula ya tiene pre-inscripción pendiente: ${p.fullName || getFullName(p)}` });
+                }
+            });
             return conflicts;
         }
 
+        function withAuth(payload) {
+            const token = getSessionToken();
+            if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+                return { ...payload, authToken: token };
+            }
+            return { authToken: token };
+        }
+
         function emitAthleteToDiscord(event, athlete, onError) {
-            if (!socket?.connected) {
-                showToast('Sin conexión al servidor. Cambio guardado solo en este navegador. Use Sincronizar o ejecute npm start.', 'error');
-                reconnectDiscord();
-                return;
-            }
-            if (!isDiscordFullyReady()) {
-                showToast('Discord no está listo en el servidor. El cambio quedó solo en este navegador.', 'error');
-                return;
-            }
-            socket.emit(event, athlete, (res) => {
-                if (res && res.ok === false) {
-                    showToast(res.error || 'Error al sincronizar con Discord', 'error');
-                    requestDiscordSync(true);
-                    if (onError) onError(res);
+            return new Promise((resolve) => {
+                if (!socket?.connected) {
+                    const err = { ok: false, error: 'Sin conexión al servidor.' };
+                    showToast('Sin conexión al servidor. Use Sincronizar o ejecute npm start.', 'error');
+                    reconnectDiscord();
+                    if (onError) onError(err);
+                    resolve(err);
+                    return;
                 }
+                if (!isDiscordFullyReady()) {
+                    const err = { ok: false, error: 'Discord no está listo en el servidor.' };
+                    showToast('Discord no está listo en el servidor.', 'error');
+                    if (onError) onError(err);
+                    resolve(err);
+                    return;
+                }
+                socket.emit(event, withAuth(athlete), (res) => {
+                    if (res && res.ok === false) {
+                        showToast(res.error || 'Error al sincronizar con Discord', 'error');
+                        requestDiscordSync(true);
+                        if (onError) onError(res);
+                        resolve(res);
+                    } else {
+                        resolve({ ok: true, ...res });
+                    }
+                });
             });
         }
 
@@ -2469,7 +2522,7 @@
             renderScheduleLiveWidget();
             syncScheduleSettingsInputs();
             applyScoreTabVisibility();
-            if (currentSection === 1) initRegistrationForm();
+            if (currentSection === 1 && !pendingPreInscriptionId) initRegistrationForm();
             if (currentSection === 4) {
                 renderActivityLog();
                 updateLastSync();
@@ -2558,7 +2611,7 @@
             }
             syncState.syncing = true;
             updateConnectionStatus(true);
-            socket.emit('solicitarSincronizacionCompleta', (res) => {
+            socket.emit('solicitarSincronizacionCompleta', withAuth({}), (res) => {
                 syncState.syncing = false;
                 updateConnectionStatus(true);
                 if (res?.ok === false && !silent) {
@@ -2679,17 +2732,22 @@
             if (notify && existing) showToast(`Juez eliminado en Discord: ${getJudgeFullName(existing)}`, 'info');
         }
 
-        function emitToDiscord(event, payload) {
+        function emitToDiscord(event, payload, callback) {
             if (!socket?.connected) {
                 showToast('Sin conexión al servidor. Cambio guardado solo en este navegador.', 'error');
                 reconnectDiscord();
+                callback?.({ ok: false, error: 'Sin conexión al servidor.' });
                 return false;
             }
             if (!isDiscordFullyReady()) {
                 showToast('Discord no está listo en el servidor. Cambio guardado solo localmente.', 'error');
+                callback?.({ ok: false, error: 'Discord no está listo.' });
                 return false;
             }
-            socket.emit(event, payload);
+            socket.emit(event, withAuth(payload), (res) => {
+                if (res?.ok === false) showToast(res.error || 'Error al sincronizar con Discord', 'error');
+                callback?.(res);
+            });
             return true;
         }
 
@@ -2788,7 +2846,8 @@
             sock.on('preInscripcionEliminada', (payload) => {
                 const id = String(payload?.id || payload || '');
                 if (!id) return;
-                removePreInscriptionFromRemote(id, true);
+                const silent = consumeSocketOp('delete', id);
+                removePreInscriptionFromRemote(id, !silent);
             });
 
             sock.on('cargarJueces', (datosDeDiscord) => {
@@ -3024,7 +3083,7 @@
             deletedAthleteIds = new Set();
             saveDeletedAthletes();
             saveAthletes();
-            emitToDiscord('vaciarDesdeWeb');
+            emitToDiscord('vaciarDesdeWeb', {});
             refreshAllViews();
             updateDashboardMetrics();
             renderModalitiesOverview();
@@ -3217,15 +3276,29 @@
             if (banner) banner.classList.toggle('hidden', !pendingPreInscriptionId || !!editingAthleteId);
         }
 
+        function matchesPreInscriptionSearch(p, query) {
+            if (!query) return true;
+            const hay = [
+                p.fullName, p.lastName, p.firstName, p.idCard, p.phone, p.club, p.modality, p.email, p.coach
+            ].filter(Boolean).join(' ').toLowerCase();
+            return hay.includes(query);
+        }
+
         function renderPreInscriptionsList() {
             const container = document.getElementById('pre-inscriptions-list');
             const empty = document.getElementById('pre-inscriptions-empty');
             if (!container) return;
 
-            const pending = preInscriptions.filter(p => (p.preInscriptionStatus || 'Pendiente') !== 'Descartada');
+            const query = document.getElementById('pre-search')?.value?.trim().toLowerCase() || '';
+            const pending = preInscriptions.filter(p => {
+                if ((p.preInscriptionStatus || 'Pendiente') === 'Descartada') return false;
+                return matchesPreInscriptionSearch(p, query);
+            });
             container.innerHTML = '';
             if (!pending.length) {
                 empty?.classList.remove('hidden');
+                const emptyMsg = empty?.querySelector('p.font-bold');
+                if (emptyMsg) emptyMsg.textContent = query ? 'Sin resultados para la búsqueda' : 'No hay pre-inscritos pendientes';
                 updatePreInscriptionsBadge();
                 return;
             }
@@ -3236,6 +3309,7 @@
                 card.className = 'dark-panel rounded-2xl p-5 flex flex-col gap-3';
                 const status = p.preInscriptionStatus || 'Pendiente';
                 const statusColor = status === 'Confirmada' ? 'text-green-400' : 'text-[#FFEA8D]';
+                const regDate = p.registrationTimestamp ? new Date(p.registrationTimestamp).toLocaleDateString('es-EC') : '—';
                 card.innerHTML = `
                     <div class="flex items-start justify-between gap-2">
                         <div>
@@ -3249,16 +3323,132 @@
                         <div><i class="fa-solid fa-phone w-4 text-[#C5A85C]"></i> ${escapeHtml(p.phone || '—')}</div>
                         <div><i class="fa-solid fa-tags w-4 text-[#C5A85C]"></i> ${escapeHtml(p.category || 'Pendiente')}</div>
                         <div><i class="fa-solid fa-dumbbell w-4 text-[#C5A85C]"></i> ${escapeHtml(p.club || '—')}</div>
+                        <div><i class="fa-solid fa-calendar w-4 text-[#C5A85C]"></i> ${escapeHtml(regDate)}</div>
                     </div>
                     <div class="flex flex-wrap gap-2 pt-1">
-                        <button type="button" data-action="register" class="flex-1 text-xs font-bold px-3 py-2 bg-[#C5A85C] text-[#0A1931] rounded-xl"><i class="fa-solid fa-weight-scale mr-1"></i>Pasar a inscritos (pesaje)</button>
-                        <button type="button" data-action="discard" class="text-xs font-bold px-3 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl">Descartar</button>
+                        <button type="button" data-action="register" class="flex-1 text-xs font-bold px-3 py-2 bg-[#C5A85C] text-[#0A1931] rounded-xl"><i class="fa-solid fa-weight-scale mr-1"></i>Pasar a inscritos</button>
+                        <button type="button" data-action="edit" class="text-xs font-bold px-3 py-2 bg-[#0F3057] text-[#FFEA8D] border border-[#C5A85C]/40 rounded-xl"><i class="fa-solid fa-pen mr-1"></i>Editar</button>
+                        <button type="button" data-action="discard" class="text-xs font-bold px-3 py-2 bg-[#0F3057] text-red-300 border border-red-500/30 rounded-xl">Descartar</button>
                     </div>`;
                 card.querySelector('[data-action="register"]')?.addEventListener('click', () => registerFromPreInscription(p.id));
+                card.querySelector('[data-action="edit"]')?.addEventListener('click', () => openPreEditModal(p.id));
                 card.querySelector('[data-action="discard"]')?.addEventListener('click', () => discardPreInscription(p.id));
                 container.appendChild(card);
             });
             updatePreInscriptionsBadge();
+        }
+
+        function openPreEditModal(id) {
+            const p = preInscriptions.find(x => String(x.id) === String(id));
+            if (!p) return;
+            editingPreInscriptionId = String(p.id);
+            const modSel = document.getElementById('pre-edit-modality');
+            if (modSel && !modSel.options.length) {
+                MODALITIES.forEach(mod => {
+                    const o = document.createElement('option');
+                    o.value = mod; o.textContent = mod;
+                    modSel.appendChild(o);
+                });
+            }
+            document.getElementById('pre-edit-title').textContent = p.fullName || getFullName(p);
+            document.getElementById('pre-edit-lastName').value = p.lastName || '';
+            document.getElementById('pre-edit-firstName').value = p.firstName || '';
+            document.getElementById('pre-edit-idCard').value = p.idCard || '';
+            document.getElementById('pre-edit-phone').value = p.phone || '';
+            document.getElementById('pre-edit-modality').value = p.modality && p.modality !== 'Pendiente' ? p.modality : MODALITIES[0];
+            document.getElementById('pre-edit-club').value = p.club || '';
+            document.getElementById('pre-edit-email').value = p.email || '';
+            document.getElementById('pre-edit-observations').value = p.observations || '';
+            document.getElementById('pre-edit-modal').classList.remove('hidden');
+        }
+
+        function closePreEditModal() {
+            editingPreInscriptionId = null;
+            document.getElementById('pre-edit-modal').classList.add('hidden');
+        }
+
+        function savePreInscriptionEdit() {
+            if (!editingPreInscriptionId) return;
+            if (!socket?.connected) {
+                showToast('Sin conexión al servidor.', 'error');
+                return;
+            }
+            const payload = withAuth({
+                id: editingPreInscriptionId,
+                lastName: document.getElementById('pre-edit-lastName').value.trim(),
+                firstName: document.getElementById('pre-edit-firstName').value.trim(),
+                idCard: document.getElementById('pre-edit-idCard').value.trim(),
+                phone: document.getElementById('pre-edit-phone').value.trim(),
+                modality: document.getElementById('pre-edit-modality').value,
+                club: document.getElementById('pre-edit-club').value.trim(),
+                email: document.getElementById('pre-edit-email').value.trim(),
+                observations: document.getElementById('pre-edit-observations').value.trim()
+            });
+            socket.emit('actualizarPreInscripcionDesdeWeb', payload, (res) => {
+                if (res?.ok === false) {
+                    showToast(res.error || 'No se pudo guardar en Discord', 'error');
+                    return;
+                }
+                const { authToken, ...clean } = payload;
+                upsertPreInscriptionFromRemote({ ...clean, id: editingPreInscriptionId }, false);
+                addLog('Pre-inscripción', `Editó pre-inscrito: ${payload.lastName} ${payload.firstName}`);
+                showToast('Pre-inscripción actualizada', 'success');
+                closePreEditModal();
+                renderPreInscriptionsList();
+            });
+        }
+
+        function exportPreInscriptionsCsv() {
+            const list = preInscriptions.filter(p => (p.preInscriptionStatus || 'Pendiente') !== 'Descartada');
+            if (!list.length) {
+                showToast('No hay pre-inscritos para exportar', 'error');
+                return;
+            }
+            const headers = ['Nombre', 'Cédula', 'Teléfono', 'Modalidad', 'Categoría', 'Club', 'Provincia', 'Email', 'Estado', 'Fecha'];
+            const rows = list.map(p => [
+                p.fullName || getFullName(p),
+                p.idCard || '',
+                p.phone || '',
+                p.modality || '',
+                p.category || '',
+                p.club || '',
+                p.province || '',
+                p.email || '',
+                p.preInscriptionStatus || 'Pendiente',
+                p.registrationTimestamp ? new Date(p.registrationTimestamp).toLocaleDateString('es-EC') : ''
+            ]);
+            const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `PreInscritos_ManabiPower_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+            showToast(`Exportados ${list.length} pre-inscritos`, 'success');
+        }
+
+        function fillFormFromPreInscription(p) {
+            if (!p) return;
+            ['lastName','firstName','idCard','birthDate','club','province','coach','phone','email','height','weight','observations','doblajes'].forEach(f => {
+                const el = document.getElementById(f);
+                if (el) el.value = p[f] ?? '';
+            });
+            document.getElementById('sex').value = p.sex && p.sex !== 'Pendiente' ? p.sex : '';
+            document.getElementById('nationality').value = p.nationality || 'Ecuatoriana';
+            document.getElementById('modality-select').value = p.modality && p.modality !== 'Pendiente' ? p.modality : selectedModality;
+            document.getElementById('category').value = p.category || '';
+            document.getElementById('paymentStatus').value = 'Pagado';
+            document.getElementById('participationStatus').value = 'Pendiente';
+            document.getElementById('form-title').textContent = 'Inscribir desde pre-inscrito';
+            document.getElementById('submit-btn-text').textContent = 'Completar inscripción y pesaje';
+            selectedModality = p.modality && p.modality !== 'Pendiente' ? p.modality : selectedModality;
+            selectedClassification = p.athleteStatus || p.classification || 'Novato';
+            selectedPassStatus = 'Sí';
+            categoryManualOverride = !!(p.category && p.category !== 'Pendiente');
+            selectClassification(selectedClassification);
+            selectPassStatus(selectedPassStatus);
+            toggleBiometricFields();
+            onFormChange();
+            updatePreInscriptionBanner();
         }
 
         function registerFromPreInscription(id) {
@@ -3267,29 +3457,7 @@
             editingAthleteId = null;
             pendingPreInscriptionId = String(p.id);
             switchSection(1);
-            setTimeout(() => {
-                ['lastName','firstName','idCard','birthDate','club','province','coach','phone','email','height','weight','observations','doblajes'].forEach(f => {
-                    const el = document.getElementById(f);
-                    if (el) el.value = p[f] ?? '';
-                });
-                document.getElementById('sex').value = p.sex && p.sex !== 'Pendiente' ? p.sex : '';
-                document.getElementById('nationality').value = p.nationality || 'Ecuatoriana';
-                document.getElementById('modality-select').value = p.modality && p.modality !== 'Pendiente' ? p.modality : selectedModality;
-                document.getElementById('category').value = p.category || '';
-                document.getElementById('paymentStatus').value = 'Pagado';
-                document.getElementById('participationStatus').value = 'Pendiente';
-                document.getElementById('form-title').textContent = 'Inscribir desde pre-inscrito';
-                document.getElementById('submit-btn-text').textContent = 'Completar inscripción y pesaje';
-                selectedModality = p.modality && p.modality !== 'Pendiente' ? p.modality : selectedModality;
-                selectedClassification = p.athleteStatus || p.classification || 'Novato';
-                selectedPassStatus = 'Sí';
-                selectClassification(selectedClassification);
-                selectPassStatus(selectedPassStatus);
-                onModalityChange();
-                onFormChange();
-                updatePreInscriptionBanner();
-                showToast(`Complete pesaje y guarde para inscribir a ${p.fullName || getFullName(p)}`, 'info');
-            }, 80);
+            showToast(`Complete pesaje y guarde para inscribir a ${p.fullName || getFullName(p)}`, 'info');
         }
 
         function clearPendingPreInscription(onDone) {
@@ -3304,7 +3472,8 @@
                 onDone?.();
                 return;
             }
-            socket.emit('eliminarPreInscripcionDesdeWeb', { id: preId }, (res) => {
+            markSocketOp('delete', preId);
+            socket.emit('eliminarPreInscripcionDesdeWeb', withAuth({ id: preId }), (res) => {
                 if (res?.ok === false) showToast(res.error || 'Atleta inscrito, pero no se pudo quitar de pre-inscritos', 'error');
                 else addLog('Pre-inscrito', `Pasó a inscritos oficialmente`);
                 onDone?.();
@@ -3319,7 +3488,7 @@
                 showToast('Sin conexión al servidor.', 'error');
                 return;
             }
-            socket.emit('eliminarPreInscripcionDesdeWeb', { id }, (res) => {
+            socket.emit('eliminarPreInscripcionDesdeWeb', withAuth({ id }), (res) => {
                 if (res?.ok === false) showToast(res.error || 'No se pudo eliminar en Discord', 'error');
                 else {
                     addLog('Pre-inscripción', `Descartada: ${p.fullName || getFullName(p)}`);
@@ -3697,7 +3866,7 @@
             }
             if (section === 8) {
                 renderPreInscriptionsList();
-                if (socket?.connected) socket.emit('solicitarPreInscripciones');
+                if (socket?.connected) socket.emit('solicitarPreInscripciones', withAuth({}));
             }
             if (section === 3) {
                 populateClubFilters();
@@ -3762,16 +3931,42 @@
                 }
                 document.getElementById('form-title').textContent = 'Editar Atleta';
                 document.getElementById('submit-btn-text').textContent = 'Guardar Cambios';
+            } else if (pendingPreInscriptionId) {
+                const p = preInscriptions.find(x => String(x.id) === String(pendingPreInscriptionId));
+                fillFormFromPreInscription(p);
             } else {
-                document.querySelectorAll('#section-1 input:not([type=hidden]), #section-1 textarea').forEach(el => { if (el.id !== 'nationality') el.value = ''; });
-                document.getElementById('nationality').value = 'Ecuatoriana';
-                document.getElementById('modality-select').value = selectedModality;
-                document.getElementById('participationStatus').value = 'Pendiente';
-                document.getElementById('category').value = '';
-                document.getElementById('doblajes').value = '';
-                document.getElementById('form-title').textContent = 'Registro de Atleta';
+                let restoredDraft = false;
+                try {
+                    const draftRaw = localStorage.getItem('mp_form_draft');
+                    if (draftRaw) {
+                        const draft = JSON.parse(draftRaw);
+                        if (draft && (draft.lastName || draft.firstName || draft.idCard)) {
+                            ['lastName','firstName','idCard','birthDate','sex','nationality','province','club','coach','phone','email','height','weight','observations','category','doblajes'].forEach(id => {
+                                const el = document.getElementById(id);
+                                if (el && draft[id] != null) el.value = draft[id];
+                            });
+                            if (draft.modality) {
+                                selectedModality = draft.modality;
+                                document.getElementById('modality-select').value = draft.modality;
+                            }
+                            categoryManualOverride = !!(draft.category && draft.category.trim());
+                            restoredDraft = true;
+                        }
+                    }
+                } catch (e) { /* ignore invalid draft */ }
+                if (!restoredDraft) {
+                    document.querySelectorAll('#section-1 input:not([type=hidden]), #section-1 textarea').forEach(el => { if (el.id !== 'nationality') el.value = ''; });
+                    document.getElementById('nationality').value = 'Ecuatoriana';
+                    document.getElementById('modality-select').value = selectedModality;
+                    document.getElementById('participationStatus').value = 'Pendiente';
+                    document.getElementById('category').value = '';
+                    document.getElementById('doblajes').value = '';
+                    categoryManualOverride = false;
+                } else {
+                    document.getElementById('participationStatus').value = 'Pendiente';
+                }
+                document.getElementById('form-title').textContent = restoredDraft ? 'Registro de Atleta (borrador restaurado)' : 'Registro de Atleta';
                 document.getElementById('submit-btn-text').textContent = 'Completar Inscripción';
-                categoryManualOverride = false;
             }
             selectClassification(selectedClassification);
             selectPassStatus(selectedPassStatus);
@@ -3825,12 +4020,14 @@
             document.getElementById('age-preview').textContent = age != null ? age + ' años' : '—';
             const doblajes = document.getElementById('doblajes')?.value?.trim() || '';
             document.getElementById('doblajes-preview').textContent = doblajes || 'Sin doblajes';
-            const draft = {};
+            const draft = { modality: document.getElementById('modality-select')?.value || selectedModality };
             ['lastName','firstName','idCard','birthDate','sex','nationality','province','club','coach','phone','email','height','weight','observations','category','doblajes'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) draft[id] = el.value;
             });
-            localStorage.setItem('mp_form_draft', JSON.stringify(draft));
+            if (!pendingPreInscriptionId && !editingAthleteId) {
+                localStorage.setItem('mp_form_draft', JSON.stringify(draft));
+            }
         }
 
         function selectClassification(type) {
@@ -3938,11 +4135,8 @@
                 }
             } else {
                 const newAthlete = { id: Date.now().toString(), ...athleteData };
-                markSocketOp('add', newAthlete.id);
-                athletes.unshift(newAthlete);
-                emitAthleteToDiscord('registrarDesdeWeb', newAthlete);
-                addLog('Registro', `#${finalBib} ${athleteData.fullName}`);
                 const fromPre = !!pendingPreInscriptionId;
+                markSocketOp('add', newAthlete.id);
                 const finishRegister = () => {
                     showToast(
                         fromPre
@@ -3962,8 +4156,16 @@
                     cancelEdit();
                     setTimeout(() => { switchSection(2); filterAthletes(); }, 500);
                 };
-                if (fromPre) clearPendingPreInscription(finishRegister);
-                else finishRegister();
+                emitAthleteToDiscord('registrarDesdeWeb', newAthlete).then((res) => {
+                    if (res?.ok === false) {
+                        if (fromPre) showToast('No se pudo inscribir en Discord. La pre-inscripción se mantiene pendiente.', 'error');
+                        return;
+                    }
+                    athletes.unshift(newAthlete);
+                    addLog('Registro', `#${finalBib} ${athleteData.fullName}`);
+                    if (fromPre) clearPendingPreInscription(finishRegister);
+                    else finishRegister();
+                });
                 return;
             }
             saveAthletes();
@@ -4004,7 +4206,7 @@
             localStorage.setItem('mp_reg_closed', registrationsClosed);
             updateRegClosedUI();
             if (socket?.connected) {
-                socket.emit('actualizarEstadoInscripciones', { closed: registrationsClosed }, (res) => {
+                socket.emit('actualizarEstadoInscripciones', withAuth({ closed: registrationsClosed }), (res) => {
                     if (res?.ok === false) {
                         showToast(res.error || 'No se pudo sincronizar estado de inscripciones', 'error');
                     }
@@ -4724,7 +4926,7 @@
             }
 
             showJudgeSyncStatus(true);
-            socket.emit('reordenarJuecesDesdeWeb', { judges: sorted }, (res) => {
+            socket.emit('reordenarJuecesDesdeWeb', withAuth({ judges: sorted }), (res) => {
                 showJudgeSyncStatus(false);
                 if (res?.ok === false) {
                     showToast(res.error || 'Error al guardar orden de jueces en Discord', 'error');
@@ -5468,17 +5670,21 @@
                 user: currentUser,
                 athletes: athletes,
                 judges: judges,
-                version: "Manabí Power Web V2"
+                preInscriptions: preInscriptions,
+                schedule: eventSchedule,
+                scoring: scoringRounds,
+                registrationsClosed,
+                version: 'Manabí Power Web V2.1'
             };
-            
+
             const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = `Manabi_Power_Backup_${new Date().toISOString().slice(0,10)}.json`;
             link.click();
-            
-            addLog("Respaldo", `Creó respaldo local con ${athletes.length} atletas`);
-            showToast('Respaldo descargado correctamente', 'success');
+
+            addLog('Respaldo', `Respaldo completo: ${athletes.length} atletas, ${preInscriptions.length} pre-inscritos`);
+            showToast('Respaldo completo descargado', 'success');
         }
 
         function pushLocalDataToDiscord(notify = true) {
@@ -5496,12 +5702,13 @@
                 return;
             }
             refreshScheduleFromAthletes();
-            socket.emit('subirRespaldoDesdeWeb', {
+            socket.emit('subirRespaldoDesdeWeb', withAuth({
                 athletes,
                 judges,
                 schedule: eventSchedule,
-                scoring: scoringRounds
-            }, (res) => {
+                scoring: scoringRounds,
+                preInscriptions
+            }), (res) => {
                 if (res?.ok === false) {
                     showToast(res.error || 'Error al subir datos a Discord', 'error');
                     return;
@@ -5527,9 +5734,23 @@
                 try {
                     const backup = JSON.parse(e.target.result);
                     
-                    if (confirm(`¿Restaurar ${backup.athletes ? backup.athletes.length : 0} atletas y ${backup.judges ? backup.judges.length : 0} jueces del respaldo del ${new Date(backup.timestamp).toLocaleDateString()}? Esto reemplazará los datos actuales y los subirá a Discord.`)) {
+                    const preCount = backup.preInscriptions?.length || 0;
+                    const schedLabel = backup.schedule ? 'sí' : 'no';
+                    if (confirm(`¿Restaurar respaldo del ${new Date(backup.timestamp).toLocaleDateString()}?\n\n• ${backup.athletes?.length || 0} atletas\n• ${backup.judges?.length || 0} jueces\n• ${preCount} pre-inscritos\n• Cronograma: ${schedLabel}\n\nSe fusionará con los datos actuales y se subirá a Discord.`)) {
                         athletes = (backup.athletes || []).map(normalizeAthlete);
                         judges = (backup.judges || []).map(normalizeJudge);
+                        if (backup.preInscriptions) {
+                            preInscriptions = backup.preInscriptions.map(normalizePreInscription);
+                            savePreInscriptions();
+                        }
+                        if (backup.schedule) {
+                            eventSchedule = normalizeSchedule(backup.schedule);
+                            saveScheduleLocal();
+                        }
+                        if (backup.scoring) {
+                            scoringRounds = backup.scoring.map(normalizeScoringRound);
+                            saveScoringRounds();
+                        }
                         ensureJudgeSortOrder();
                         deletedAthleteIds = new Set();
                         saveDeletedAthletes();
@@ -6733,7 +6954,7 @@
                 validStatuses[c] = s.statuses[c] || s.statuses[display] || s.statuses[m] || 'pendiente';
             });
             s.statuses = validStatuses;
-            s.eventStart = s.eventStart || '08:00';
+            s.eventStart = normalizeEventStartTime(s.eventStart);
             s.minutesPerAthlete = parseInt(s.minutesPerAthlete, 10) || 4;
             s.baseMinutesPerModality = parseInt(s.baseMinutesPerModality, 10) || 12;
             return s;
@@ -7002,8 +7223,27 @@
             }).length;
         }
 
+        function normalizeEventStartTime(timeStr) {
+            if (!timeStr || typeof timeStr !== 'string') return '08:00';
+            const parts = timeStr.trim().split(':');
+            const h = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10);
+            if (!Number.isFinite(h) || !Number.isFinite(m) || h < 0 || h > 23 || m < 0 || m > 59) return '08:00';
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function captureScheduleSettingsFromInputs() {
+            if (!eventSchedule || currentUserRole !== 'admin') return;
+            const startRaw = document.getElementById('sched-event-start')?.value;
+            if (startRaw) eventSchedule.eventStart = normalizeEventStartTime(startRaw);
+            const perAthlete = parseInt(document.getElementById('sched-min-per-athlete')?.value, 10);
+            const baseMin = parseInt(document.getElementById('sched-base-minutes')?.value, 10);
+            if (Number.isFinite(perAthlete) && perAthlete > 0) eventSchedule.minutesPerAthlete = perAthlete;
+            if (Number.isFinite(baseMin) && baseMin > 0) eventSchedule.baseMinutesPerModality = baseMin;
+        }
+
         function parseTimeToMinutes(timeStr) {
-            const [h, m] = (timeStr || '08:00').split(':').map(Number);
+            const [h, m] = normalizeEventStartTime(timeStr).split(':').map(Number);
             return (h || 0) * 60 + (m || 0);
         }
 
@@ -7075,12 +7315,15 @@
 
         function persistSchedule(notify = false, logAction = '') {
             if (!eventSchedule) return;
+            captureScheduleSettingsFromInputs();
             eventSchedule.updatedAt = Date.now();
             saveScheduleLocal();
             markSocketOp('edit', SCHEDULE_ID);
             showScheduleSyncStatus(true);
             if (socket?.connected && isDiscordFullyReady()) {
-                socket.emit('guardarCronogramaDesdeWeb', eventSchedule);
+                socket.emit('guardarCronogramaDesdeWeb', withAuth(eventSchedule), (res) => {
+                    if (res?.ok === false) showToast(res.error || 'No se pudo guardar el cronograma', 'error');
+                });
             } else {
                 showToast('Sin conexión al servidor o Discord no listo. Cronograma guardado solo en este navegador.', 'error');
                 reconnectDiscord();
@@ -7099,7 +7342,7 @@
             syncScheduleSettingsInputs();
             renderScheduleLiveWidget();
             if (currentSection === 7) renderScheduleSection();
-            else refreshEntireAppFromDiscord();
+            else if (notify) refreshEntireAppFromDiscord();
             if (notify) {
                 showScheduleSyncStatus(false);
                 showToast('Cronograma actualizado desde Discord', 'info');
@@ -7111,16 +7354,14 @@
             const startEl = document.getElementById('sched-event-start');
             const perAthlete = document.getElementById('sched-min-per-athlete');
             const baseMin = document.getElementById('sched-base-minutes');
-            if (startEl) startEl.value = eventSchedule.eventStart;
+            if (startEl) startEl.value = normalizeEventStartTime(eventSchedule.eventStart);
             if (perAthlete) perAthlete.value = eventSchedule.minutesPerAthlete;
             if (baseMin) baseMin.value = eventSchedule.baseMinutesPerModality;
         }
 
         function onScheduleSettingsChange() {
             if (!eventSchedule || currentUserRole !== 'admin') return;
-            eventSchedule.eventStart = document.getElementById('sched-event-start')?.value || '08:00';
-            eventSchedule.minutesPerAthlete = parseInt(document.getElementById('sched-min-per-athlete')?.value, 10) || 4;
-            eventSchedule.baseMinutesPerModality = parseInt(document.getElementById('sched-base-minutes')?.value, 10) || 12;
+            captureScheduleSettingsFromInputs();
             persistSchedule();
         }
 
