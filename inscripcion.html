@@ -408,28 +408,8 @@
             }
         }
 
-        function validatePreForm() {
-            const errors = [];
-            if (!document.getElementById('lastName').value.trim()) errors.push('Ingrese sus apellidos');
-            if (!document.getElementById('firstName').value.trim()) errors.push('Ingrese sus nombres');
-            const idCard = document.getElementById('idCard').value.trim();
-            if (!idCard || idCard.length < 6) errors.push('Ingrese cédula o pasaporte válido');
-            if (!document.getElementById('birthDate').value) errors.push('Seleccione fecha de nacimiento');
-            if (!document.getElementById('sex').value) errors.push('Seleccione sexo');
-            const phone = document.getElementById('phone').value.trim();
-            if (!/^09\d{8}$/.test(phone)) errors.push('Teléfono ecuatoriano válido requerido (09xxxxxxxx)');
-            if (!document.getElementById('modality-select').value) errors.push('Seleccione modalidad');
-            return errors;
-        }
-
         async function submitRegistration() {
             if (submitting || registrationsClosed) return;
-
-            const validationErrors = validatePreForm();
-            if (validationErrors.length) {
-                showError(validationErrors.join('. '));
-                return;
-            }
 
             const lastName = document.getElementById('lastName').value.trim();
             const firstName = document.getElementById('firstName').value.trim();
@@ -440,11 +420,11 @@
             selectedModality = document.getElementById('modality-select').value || selectedModality;
 
             const payload = {
-                lastName,
-                firstName,
-                idCard,
-                birthDate,
-                sex,
+                lastName: lastName || 'Sin apellido',
+                firstName: firstName || 'Sin nombre',
+                idCard: idCard || 'Pendiente',
+                birthDate: birthDate || '',
+                sex: sex || 'Pendiente',
                 phone,
                 nationality: document.getElementById('nationality').value.trim() || 'Ecuatoriana',
                 province: document.getElementById('province').value.trim() || 'Manabí',

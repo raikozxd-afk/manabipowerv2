@@ -69,12 +69,6 @@ app.post('/api/inscripciones', async (req, res) => {
             return;
         }
 
-        const validationErrors = validatePublicPreInscription(req.body);
-        if (validationErrors.length) {
-            res.status(400).json({ ok: false, error: validationErrors.join('. ') });
-            return;
-        }
-
         const preChannel = await getPreInscriptionChannel();
         if (!preChannel) {
             res.status(503).json({ ok: false, error: 'Canal de pre-inscripciones no configurado. Contacte a la organización.' });
@@ -314,20 +308,6 @@ function checkInscriptionRateLimit(req) {
     entry.count += 1;
     inscriptionRateLimit.set(ip, entry);
     return entry.count <= INSCRIPTION_RATE_MAX;
-}
-
-function validatePublicPreInscription(body) {
-    const errors = [];
-    if (!String(body?.lastName || '').trim()) errors.push('Apellidos requeridos');
-    if (!String(body?.firstName || '').trim()) errors.push('Nombres requeridos');
-    const idCard = String(body?.idCard || '').trim();
-    if (!idCard || idCard.length < 6) errors.push('Cédula o pasaporte requerido (mínimo 6 caracteres)');
-    if (!String(body?.birthDate || '').trim()) errors.push('Fecha de nacimiento requerida');
-    if (!String(body?.sex || '').trim()) errors.push('Sexo requerido');
-    const phone = String(body?.phone || '').trim();
-    if (!/^09\d{8}$/.test(phone)) errors.push('Teléfono ecuatoriano válido requerido (09xxxxxxxx)');
-    if (!String(body?.modality || '').trim()) errors.push('Modalidad requerida');
-    return errors;
 }
 
 function extractAuthToken(payload) {
